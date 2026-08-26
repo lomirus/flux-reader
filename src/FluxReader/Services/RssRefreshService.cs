@@ -10,12 +10,23 @@ namespace FluxReader.Services;
 public sealed class RssRefreshService : IDisposable
 {
     private readonly HttpClient _httpClient;
-    private readonly RssFeedParser _parser = new();
+    private readonly LocalizationService _localization;
+    private readonly RssFeedParser _parser;
     private readonly RssRepository _repository;
 
-    public RssRefreshService(RssRepository repository)
+    public RssRefreshService(RssRepository repository, LocalizationService localization)
     {
         _repository = repository;
+        _localization = localization;
+        _parser = new RssFeedParser(key => _localization.GetString(key switch
+        {
+            RssParserString.EmptyContent => "FeedContentEmpty",
+            RssParserString.ParseFailed => "FeedParseFailed",
+            RssParserString.InvalidFormat => "InvalidFeedFormat",
+            RssParserString.MissingRssChannel => "MissingRssChannel",
+            RssParserString.UntitledArticle => "UntitledArticle",
+            _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
+        }));
         _httpClient = new HttpClient(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
@@ -39,7 +50,7 @@ public sealed class RssRefreshService : IDisposable
         var download = await DownloadAsync(feedUri, null, null, cancellationToken);
         if (download.ParsedFeed is null)
         {
-            throw new InvalidOperationException("订阅服务器返回了空内容。");
+            throw new InvalidOperationException(_localization.GetString("EmptyFeedResponse"));
         }
 
         return await _repository.AddFeedAsync(
@@ -66,7 +77,7 @@ public sealed class RssRefreshService : IDisposable
         }
 
         var parsedFeed = download.ParsedFeed
-                         ?? throw new InvalidOperationException("订阅服务器返回了空内容。");
+                         ?? throw new InvalidOperationException(_localization.GetString("EmptyFeedResponse"));
         var insertedTitles = await _repository.UpdateFeedAsync(
             feed,
             parsedFeed,
@@ -112,11 +123,11 @@ public sealed class RssRefreshService : IDisposable
             false);
     }
 
-    private static void EnsureSupportedUri(Uri uri)
+    private void EnsureSupportedUri(Uri uri)
     {
         if (!uri.IsAbsoluteUri || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
         {
-            throw new ArgumentException("请输入有效的 HTTP 或 HTTPS 订阅地址。", nameof(uri));
+            throw new ArgumentException(_localization.GetString("InvalidFeedAddress"), nameof(uri));
         }
     }
 

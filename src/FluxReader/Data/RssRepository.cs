@@ -1,6 +1,7 @@
 using System.Globalization;
 using FluxReader.Core.Models;
 using FluxReader.Models;
+using FluxReader.Services;
 using Microsoft.Data.Sqlite;
 
 namespace FluxReader.Data;
@@ -8,11 +9,13 @@ namespace FluxReader.Data;
 public sealed class RssRepository
 {
     private readonly string _connectionString;
+    private readonly LocalizationService _localization;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    public RssRepository(string databasePath)
+    public RssRepository(string databasePath, LocalizationService localization)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(databasePath);
+        _localization = localization;
         Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
         _connectionString = new SqliteConnectionStringBuilder
         {
@@ -207,7 +210,8 @@ public sealed class RssRepository
                 command.CommandText = "SELECT id FROM feeds WHERE url = $url COLLATE NOCASE;";
                 command.Parameters.AddWithValue("$url", feedUri.AbsoluteUri);
                 feedId = (long)(await command.ExecuteScalarAsync(cancellationToken)
-                                ?? throw new InvalidOperationException("订阅保存失败。"));
+                                ?? throw new InvalidOperationException(
+                                    _localization.GetString("SubscriptionSaveFailed")));
             }
 
             var feed = new Feed

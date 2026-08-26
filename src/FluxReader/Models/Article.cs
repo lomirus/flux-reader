@@ -44,4 +44,10 @@ public sealed partial class Article : ObservableObject
     public string DisplayContent => string.IsNullOrWhiteSpace(Content) ? Summary : Content;
 
     public string UnreadGlyph => IsRead ? string.Empty : "●";
+
+    public void RefreshLocalization()
+    {
+        OnPropertyChanged(nameof(PublishedDisplay));
+        OnPropertyChanged(nameof(Byline));
+    }
 }

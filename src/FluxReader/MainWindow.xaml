@@ -27,9 +27,9 @@
             Padding="16,0">
             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                 <Image
+                    x:Name="BrandIcon"
                     Width="24"
-                    Height="24"
-                    AutomationProperties.Name="FluxReader 图标">
+                    Height="24">
                     <Image.Source>
                         <SvgImageSource UriSource="ms-appx:///Assets/fluxreader-icon.svg" />
                     </Image.Source>
@@ -50,30 +50,30 @@
             </Grid.ColumnDefinitions>
 
             <Button
+                x:Name="AddFeedButton"
                 Grid.Column="0"
-                Click="AddFeed_Click"
-                ToolTipService.ToolTip="添加订阅">
+                Click="AddFeed_Click">
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <FontIcon FontSize="14" Glyph="&#xE710;" />
-                    <TextBlock Text="添加订阅" />
+                    <TextBlock x:Name="AddFeedButtonText" />
                 </StackPanel>
             </Button>
             <Button
+                x:Name="RefreshButton"
                 Grid.Column="1"
-                Command="{Binding RefreshCommand}"
-                ToolTipService.ToolTip="刷新所有订阅">
+                Command="{Binding RefreshCommand}">
                 <FontIcon FontSize="14" Glyph="&#xE72C;" />
             </Button>
             <Button
+                x:Name="MarkAllReadButton"
                 Grid.Column="2"
-                Command="{Binding MarkAllReadCommand}"
-                ToolTipService.ToolTip="全部标为已读">
+                Command="{Binding MarkAllReadCommand}">
                 <FontIcon FontSize="14" Glyph="&#xE73E;" />
             </Button>
             <Button
+                x:Name="DeleteFeedButton"
                 Grid.Column="3"
-                Click="DeleteFeed_Click"
-                ToolTipService.ToolTip="移除当前订阅">
+                Click="DeleteFeed_Click">
                 <FontIcon FontSize="14" Glyph="&#xE74D;" />
             </Button>
 
@@ -84,10 +84,9 @@
                 Margin="8,0"
                 IsActive="{Binding IsBusy}" />
             <Button
+                x:Name="SettingsButton"
                 Grid.Column="6"
-                AutomationProperties.Name="设置"
-                Click="Settings_Click"
-                ToolTipService.ToolTip="设置">
+                Click="Settings_Click">
                 <FontIcon FontSize="14" Glyph="&#xE713;" />
             </Button>
         </Grid>
@@ -123,7 +122,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <FontIcon FontSize="16" Glyph="&#xE8F1;" />
-                        <TextBlock Grid.Column="1" Text="所有文章" />
+                        <TextBlock x:Name="AllArticlesText" Grid.Column="1" />
                     </Grid>
                 </Button>
                 <Button
@@ -138,17 +137,17 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <FontIcon FontSize="16" Glyph="&#xE8C3;" />
-                        <TextBlock Grid.Column="1" Text="未读文章" />
+                        <TextBlock x:Name="UnreadArticlesText" Grid.Column="1" />
                         <TextBlock Grid.Column="2" Opacity="0.7" Text="{Binding UnreadTotal}" />
                     </Grid>
                 </Button>
                 <TextBlock
+                    x:Name="FeedsHeaderText"
                     Grid.Row="3"
                     Margin="8,0,0,8"
                     FontSize="12"
                     FontWeight="SemiBold"
-                    Opacity="0.65"
-                    Text="订阅源" />
+                    Opacity="0.65" />
                 <ListView
                     x:Name="FeedList"
                     Grid.Row="4"
@@ -191,14 +190,13 @@
                     HorizontalAlignment="Center"
                     Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
                 <Thumb
-                    AutomationProperties.Name="调整订阅栏宽度"
+                    x:Name="FeedPaneSplitterThumb"
                     Background="Transparent"
                     DoubleTapped="FeedPaneSplitter_DoubleTapped"
                     DragCompleted="PaneSplitter_DragCompleted"
                     DragDelta="FeedPaneSplitter_DragDelta"
                     IsTabStop="True"
-                    KeyDown="FeedPaneSplitter_KeyDown"
-                    ToolTipService.ToolTip="拖动调整宽度；双击恢复默认值" />
+                    KeyDown="FeedPaneSplitter_KeyDown" />
             </controls:HorizontalResizeSplitter>
 
             <Grid Grid.Column="2">
@@ -283,14 +281,13 @@
                     HorizontalAlignment="Center"
                     Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
                 <Thumb
-                    AutomationProperties.Name="调整文章列表宽度"
+                    x:Name="ArticleListPaneSplitterThumb"
                     Background="Transparent"
                     DoubleTapped="ArticleListPaneSplitter_DoubleTapped"
                     DragCompleted="PaneSplitter_DragCompleted"
                     DragDelta="ArticleListPaneSplitter_DragDelta"
                     IsTabStop="True"
-                    KeyDown="ArticleListPaneSplitter_KeyDown"
-                    ToolTipService.ToolTip="拖动调整宽度；双击恢复默认值" />
+                    KeyDown="ArticleListPaneSplitter_KeyDown" />
             </controls:HorizontalResizeSplitter>
 
             <Grid Grid.Column="4" Padding="28,18,28,24">
@@ -300,8 +297,8 @@
                         VerticalAlignment="Center"
                         Spacing="10">
                         <FontIcon FontSize="48" Glyph="&#xE8A5;" Opacity="0.3" />
-                        <TextBlock FontSize="20" FontWeight="SemiBold" Text="选择一篇文章" />
-                        <TextBlock Opacity="0.6" Text="文章内容将在这里显示" />
+                        <TextBlock x:Name="EmptyArticleTitleText" FontSize="20" FontWeight="SemiBold" />
+                        <TextBlock x:Name="EmptyArticleDescriptionText" Opacity="0.6" />
                     </StackPanel>
                 </Grid>
 
@@ -327,7 +324,7 @@
                     <StackPanel Grid.Row="2" Margin="0,16,0,16" Orientation="Horizontal" Spacing="8">
                         <Button Command="{Binding OpenArticleCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="在浏览器中打开" />
+                                <TextBlock x:Name="OpenInBrowserText" />
                                 <FontIcon FontSize="12" Glyph="&#xE8A7;" />
                             </StackPanel>
                         </Button>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="assembly"><xsd:complexType><xsd:attribute name="alias" type="xsd:string" /><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /><xsd:element name="comment" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" /><xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" /><xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppIconAutomation" xml:space="preserve"><value>FluxReader icon</value></data>
+  <data name="AddFeed" xml:space="preserve"><value>Add feed</value></data>
+  <data name="RefreshAllFeeds" xml:space="preserve"><value>Refresh all feeds</value></data>
+  <data name="MarkAllRead" xml:space="preserve"><value>Mark all as read</value></data>
+  <data name="RemoveCurrentFeed" xml:space="preserve"><value>Remove current feed</value></data>
+  <data name="Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="AllArticles" xml:space="preserve"><value>All articles</value></data>
+  <data name="UnreadArticles" xml:space="preserve"><value>Unread articles</value></data>
+  <data name="Feeds" xml:space="preserve"><value>Feeds</value></data>
+  <data name="ResizeFeedPane" xml:space="preserve"><value>Resize feed pane</value></data>
+  <data name="ResizeArticleListPane" xml:space="preserve"><value>Resize article list pane</value></data>
+  <data name="ResizePaneTooltip" xml:space="preserve"><value>Drag to resize; double-click to reset</value></data>
+  <data name="SelectArticle" xml:space="preserve"><value>Select an article</value></data>
+  <data name="ArticleContentHint" xml:space="preserve"><value>Article content will appear here</value></data>
+  <data name="OpenInBrowser" xml:space="preserve"><value>Open in browser</value></data>
+  <data name="FeedAddress" xml:space="preserve"><value>RSS or Atom address</value></data>
+  <data name="Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="RemoveFeedTitle" xml:space="preserve"><value>Remove feed?</value></data>
+  <data name="RemoveFeedMessage" xml:space="preserve"><value>“{0}” and its locally stored articles will be deleted.</value></data>
+  <data name="Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="ApplicationTheme" xml:space="preserve"><value>App theme</value></data>
+  <data name="ThemeDescription" xml:space="preserve"><value>Choose the color mode FluxReader uses. Use system setting follows Windows automatically.</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>Use system setting</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="ApplicationLanguage" xml:space="preserve"><value>App language</value></data>
+  <data name="LanguageDescription" xml:space="preserve"><value>Choose FluxReader's display language. Changes take effect immediately.</value></data>
+  <data name="LanguageSimplifiedChinese" xml:space="preserve"><value>Simplified Chinese</value></data>
+  <data name="LanguageTraditionalChinese" xml:space="preserve"><value>Traditional Chinese</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="ArticleCountOne" xml:space="preserve"><value>{0} article</value></data>
+  <data name="ArticleCountOther" xml:space="preserve"><value>{0} articles</value></data>
+  <data name="NotificationUnavailable" xml:space="preserve"><value>Windows notifications are unavailable. Details were written to notifications.log; reading and refreshing are unaffected.</value></data>
+  <data name="InitializationFailed" xml:space="preserve"><value>Initialization failed: {0}</value></data>
+  <data name="InvalidFeedAddress" xml:space="preserve"><value>Enter a valid HTTP or HTTPS feed address.</value></data>
+  <data name="SubscribedToFeed" xml:space="preserve"><value>Subscribed to “{0}”.</value></data>
+  <data name="AddFeedFailed" xml:space="preserve"><value>Couldn't add the feed: {0}</value></data>
+  <data name="AddFeedFirst" xml:space="preserve"><value>Add an RSS or Atom feed first.</value></data>
+  <data name="RefreshCompleteOne" xml:space="preserve"><value>Refresh complete. Found {0} new article.</value></data>
+  <data name="RefreshCompleteOther" xml:space="preserve"><value>Refresh complete. Found {0} new articles.</value></data>
+  <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>Refresh complete. New articles: {0}; failed feeds: {1}.</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>Marked all articles in the current scope as read.</value></data>
+  <data name="ArticleLinkUnavailable" xml:space="preserve"><value>This article doesn't have an original link to open.</value></data>
+  <data name="FeedRemoved" xml:space="preserve"><value>Removed “{0}”.</value></data>
+  <data name="EmptyFeedResponse" xml:space="preserve"><value>The feed server returned an empty response.</value></data>
+  <data name="SubscriptionSaveFailed" xml:space="preserve"><value>Couldn't save the feed.</value></data>
+  <data name="FeedContentEmpty" xml:space="preserve"><value>The feed content is empty.</value></data>
+  <data name="FeedParseFailed" xml:space="preserve"><value>Couldn't parse this RSS or Atom feed.</value></data>
+  <data name="InvalidFeedFormat" xml:space="preserve"><value>This address isn't a valid RSS or Atom feed.</value></data>
+  <data name="MissingRssChannel" xml:space="preserve"><value>The RSS feed is missing its channel element.</value></data>
+  <data name="UntitledArticle" xml:space="preserve"><value>Untitled article</value></data>
+  <data name="NotificationNewArticleOne" xml:space="preserve"><value>Found {0} new article</value></data>
+  <data name="NotificationNewArticleOther" xml:space="preserve"><value>Found {0} new articles</value></data>
+  <data name="NotificationOpenFluxReader" xml:space="preserve"><value>Open FluxReader to view it</value></data>
+</root>

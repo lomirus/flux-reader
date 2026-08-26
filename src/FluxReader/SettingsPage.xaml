@@ -15,24 +15,23 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Button
+                x:Name="BackButton"
                 Width="32"
                 Height="32"
                 Padding="0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
-                AutomationProperties.Name="返回"
                 Background="Transparent"
                 BorderThickness="0"
-                Click="BackButton_Click"
-                ToolTipService.ToolTip="返回">
+                Click="BackButton_Click">
                 <FontIcon FontSize="14" Glyph="&#xE72B;" />
             </Button>
             <TextBlock
+                x:Name="SettingsTitleText"
                 Grid.Column="1"
                 VerticalAlignment="Center"
                 FontSize="18"
-                FontWeight="SemiBold"
-                Text="设置" />
+                FontWeight="SemiBold" />
         </Grid>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -42,9 +41,9 @@
                 HorizontalAlignment="Center"
                 Spacing="12">
                 <TextBlock
+                    x:Name="AppearanceHeaderText"
                     FontSize="14"
-                    FontWeight="SemiBold"
-                    Text="外观" />
+                    FontWeight="SemiBold" />
 
                 <Border
                     Padding="20"
@@ -58,11 +57,11 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Spacing="4">
-                            <TextBlock FontWeight="SemiBold" Text="应用主题" />
+                            <TextBlock x:Name="ThemeTitleText" FontWeight="SemiBold" />
                             <TextBlock
+                                x:Name="ThemeDescriptionText"
                                 MaxWidth="460"
                                 Opacity="0.65"
-                                Text="选择 FluxReader 使用的颜色模式。跟随系统会随 Windows 设置自动切换。"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                         <ComboBox
@@ -70,11 +69,48 @@
                             Grid.Column="1"
                             MinWidth="128"
                             VerticalAlignment="Center"
-                            AutomationProperties.Name="应用主题"
                             SelectionChanged="ThemeSelector_SelectionChanged">
-                            <ComboBoxItem Content="跟随系统" />
-                            <ComboBoxItem Content="亮色" />
-                            <ComboBoxItem Content="暗色" />
+                            <ComboBoxItem x:Name="SystemThemeItem" />
+                            <ComboBoxItem x:Name="LightThemeItem" />
+                            <ComboBoxItem x:Name="DarkThemeItem" />
+                        </ComboBox>
+                    </Grid>
+                </Border>
+
+                <TextBlock
+                    x:Name="LanguageHeaderText"
+                    Margin="0,12,0,0"
+                    FontSize="14"
+                    FontWeight="SemiBold" />
+
+                <Border
+                    Padding="20"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="4">
+                            <TextBlock x:Name="LanguageTitleText" FontWeight="SemiBold" />
+                            <TextBlock
+                                x:Name="LanguageDescriptionText"
+                                MaxWidth="460"
+                                Opacity="0.65"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ComboBox
+                            x:Name="LanguageSelector"
+                            Grid.Column="1"
+                            MinWidth="152"
+                            VerticalAlignment="Center"
+                            SelectionChanged="LanguageSelector_SelectionChanged">
+                            <ComboBoxItem x:Name="SimplifiedChineseItem" />
+                            <ComboBoxItem x:Name="TraditionalChineseItem" />
+                            <ComboBoxItem x:Name="EnglishItem" />
                         </ComboBox>
                     </Grid>
                 </Border>

@@ -6,7 +6,7 @@ namespace FluxReader.Core.Tests;
 [TestClass]
 public sealed class RssFeedParserTests
 {
-    private readonly RssFeedParser _parser = new();
+    private readonly RssFeedParser _parser = new(key => key.ToString());
 
     [TestMethod]
     public async Task ParseAsync_Rss2_ExtractsArticleAndPlainText()

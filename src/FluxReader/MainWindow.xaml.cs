@@ -3,6 +3,7 @@ using FluxReader.Services;
 using FluxReader.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
@@ -39,8 +40,13 @@ public sealed partial class MainWindow : Window
         UpdateTitleBarButtonColors();
 
         var app = App.Current;
-        ViewModel = new MainViewModel(app.Repository, app.RefreshService, app.Notifications);
+        ViewModel = new MainViewModel(
+            app.Repository,
+            app.RefreshService,
+            app.Notifications,
+            app.Localization);
         RootGrid.DataContext = ViewModel;
+        ApplyLocalization();
         RootGrid.Loaded += RootGrid_Loaded;
         _refreshTimer.Tick += RefreshTimer_Tick;
         Closed += MainWindow_Closed;
@@ -61,6 +67,14 @@ public sealed partial class MainWindow : Window
     {
         RootGrid.Loaded -= RootGrid_Loaded;
         _settings = await App.Current.Settings.LoadAsync(_lifetime.Token);
+        AppLanguage? languagePreference = _settings.Language is { } savedLanguage && Enum.IsDefined(savedLanguage)
+            ? savedLanguage
+            : null;
+        _settings = _settings with { Language = languagePreference };
+        App.Current.Localization.SetLanguage(
+            App.Current.Localization.ResolveLanguage(languagePreference));
+        ApplyLocalization();
+        ViewModel.ApplyLocalization();
         ApplyTheme(_settings.Theme);
         ApplySavedPaneWidths();
         _settingsLoaded = true;
@@ -70,18 +84,19 @@ public sealed partial class MainWindow : Window
 
     private async void AddFeed_Click(object sender, RoutedEventArgs e)
     {
+        var localization = App.Current.Localization;
         var input = new TextBox
         {
-            Header = "RSS 或 Atom 地址",
+            Header = localization.GetString("FeedAddress"),
             PlaceholderText = "https://example.com/feed.xml"
         };
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
-            Title = "添加订阅",
+            Title = localization.GetString("AddFeed"),
             Content = input,
-            PrimaryButtonText = "添加",
-            CloseButtonText = "取消",
+            PrimaryButtonText = localization.GetString("Add"),
+            CloseButtonText = localization.GetString("Cancel"),
             DefaultButton = ContentDialogButton.Primary
         };
 
@@ -100,13 +115,14 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        var localization = App.Current.Localization;
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
-            Title = "移除订阅？",
-            Content = $"“{ViewModel.SelectedFeed.Title}”及其本地文章将被删除。",
-            PrimaryButtonText = "移除",
-            CloseButtonText = "取消",
+            Title = localization.GetString("RemoveFeedTitle"),
+            Content = localization.Format("RemoveFeedMessage", ViewModel.SelectedFeed.Title),
+            PrimaryButtonText = localization.GetString("Remove"),
+            CloseButtonText = localization.GetString("Cancel"),
             DefaultButton = ContentDialogButton.Close
         };
 
@@ -168,9 +184,10 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        settingsPage.Initialize(_settings.Theme);
+        settingsPage.Initialize(_settings.Theme, App.Current.Localization.CurrentLanguage);
         settingsPage.BackRequested += SettingsPage_BackRequested;
         settingsPage.ThemeChanged += SettingsPage_ThemeChanged;
+        settingsPage.LanguageChanged += SettingsPage_LanguageChanged;
         SettingsFrame.Visibility = Visibility.Visible;
     }
 
@@ -187,6 +204,22 @@ public sealed partial class MainWindow : Window
         await SaveSettingsAsync();
     }
 
+    private async void SettingsPage_LanguageChanged(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        var language = settingsPage.SelectedLanguage;
+        App.Current.Localization.SetLanguage(language);
+        _settings = _settings with { Language = language };
+        ApplyLocalization();
+        ViewModel.ApplyLocalization();
+        settingsPage.ApplyLocalization();
+        await SaveSettingsAsync();
+    }
+
     private void SettingsPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
 
     private void CloseSettingsPage()
@@ -195,6 +228,7 @@ public sealed partial class MainWindow : Window
         {
             settingsPage.BackRequested -= SettingsPage_BackRequested;
             settingsPage.ThemeChanged -= SettingsPage_ThemeChanged;
+            settingsPage.LanguageChanged -= SettingsPage_LanguageChanged;
         }
 
         SettingsFrame.Visibility = Visibility.Collapsed;
@@ -210,6 +244,39 @@ public sealed partial class MainWindow : Window
             AppTheme.Dark => ElementTheme.Dark,
             _ => ElementTheme.Default
         };
+    }
+
+    private void ApplyLocalization()
+    {
+        var localization = App.Current.Localization;
+        RootGrid.Language = localization.LanguageTag;
+        AutomationProperties.SetName(BrandIcon, localization.GetString("AppIconAutomation"));
+
+        var addFeed = localization.GetString("AddFeed");
+        AddFeedButtonText.Text = addFeed;
+        ToolTipService.SetToolTip(AddFeedButton, addFeed);
+        ToolTipService.SetToolTip(RefreshButton, localization.GetString("RefreshAllFeeds"));
+        ToolTipService.SetToolTip(MarkAllReadButton, localization.GetString("MarkAllRead"));
+        ToolTipService.SetToolTip(DeleteFeedButton, localization.GetString("RemoveCurrentFeed"));
+
+        var settings = localization.GetString("Settings");
+        AutomationProperties.SetName(SettingsButton, settings);
+        ToolTipService.SetToolTip(SettingsButton, settings);
+        AllArticlesText.Text = localization.GetString("AllArticles");
+        UnreadArticlesText.Text = localization.GetString("UnreadArticles");
+        FeedsHeaderText.Text = localization.GetString("Feeds");
+
+        var resizeTooltip = localization.GetString("ResizePaneTooltip");
+        AutomationProperties.SetName(FeedPaneSplitterThumb, localization.GetString("ResizeFeedPane"));
+        ToolTipService.SetToolTip(FeedPaneSplitterThumb, resizeTooltip);
+        AutomationProperties.SetName(
+            ArticleListPaneSplitterThumb,
+            localization.GetString("ResizeArticleListPane"));
+        ToolTipService.SetToolTip(ArticleListPaneSplitterThumb, resizeTooltip);
+
+        EmptyArticleTitleText.Text = localization.GetString("SelectArticle");
+        EmptyArticleDescriptionText.Text = localization.GetString("ArticleContentHint");
+        OpenInBrowserText.Text = localization.GetString("OpenInBrowser");
     }
 
     private void RootGrid_ActualThemeChanged(FrameworkElement sender, object args) =>

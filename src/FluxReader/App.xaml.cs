@@ -16,11 +16,13 @@ public partial class App : Application
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "FluxReader");
-        Repository = new RssRepository(Path.Combine(dataDirectory, "reader.db"));
+        Localization = new LocalizationService();
+        Repository = new RssRepository(Path.Combine(dataDirectory, "reader.db"), Localization);
         Settings = new SettingsService(Path.Combine(dataDirectory, "settings.json"));
-        RefreshService = new RssRefreshService(Repository);
+        RefreshService = new RssRefreshService(Repository, Localization);
         _notificationService = new NotificationService(
-            Path.Combine(dataDirectory, "notifications.log"));
+            Path.Combine(dataDirectory, "notifications.log"),
+            Localization);
         _notificationService.Activated += NotificationService_Activated;
         _notificationService.Register();
     }
@@ -28,6 +30,8 @@ public partial class App : Application
     public static new App Current => (App)Application.Current;
 
     public RssRepository Repository { get; }
+
+    public LocalizationService Localization { get; }
 
     public RssRefreshService RefreshService { get; }
 

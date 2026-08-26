@@ -10,6 +10,13 @@ namespace FluxReader.Core.Services;
 public sealed class RssFeedParser
 {
     private const long MaximumDocumentCharacters = 20_000_000;
+    private readonly Func<RssParserString, string> _getString;
+
+    public RssFeedParser(Func<RssParserString, string> getString)
+    {
+        ArgumentNullException.ThrowIfNull(getString);
+        _getString = getString;
+    }
 
     public async Task<ParsedFeed> ParseAsync(Stream stream, Uri sourceUri, CancellationToken cancellationToken = default)
     {
@@ -34,7 +41,7 @@ public sealed class RssFeedParser
                 LoadOptions.SetBaseUri,
                 cancellationToken);
 
-            var root = document.Root ?? throw new RssParseException("订阅内容为空。");
+            var root = document.Root ?? throw new RssParseException(_getString(RssParserString.EmptyContent));
             return root.Name.LocalName.Equals("feed", StringComparison.OrdinalIgnoreCase)
                 ? ParseAtom(root, sourceUri)
                 : ParseRss(root, sourceUri);
@@ -45,11 +52,11 @@ public sealed class RssFeedParser
         }
         catch (Exception exception) when (exception is XmlException or InvalidOperationException)
         {
-            throw new RssParseException("无法解析该 RSS/Atom 订阅。", exception);
+            throw new RssParseException(_getString(RssParserString.ParseFailed), exception);
         }
     }
 
-    private static ParsedFeed ParseRss(XElement root, Uri sourceUri)
+    private ParsedFeed ParseRss(XElement root, Uri sourceUri)
     {
         var rootName = root.Name.LocalName;
         var isRdf = rootName.Equals("RDF", StringComparison.OrdinalIgnoreCase);
@@ -57,12 +64,13 @@ public sealed class RssFeedParser
                     rootName.Equals("channel", StringComparison.OrdinalIgnoreCase);
         if (!isRdf && !isRss)
         {
-            throw new RssParseException("该地址不是有效的 RSS 或 Atom 订阅。");
+            throw new RssParseException(_getString(RssParserString.InvalidFormat));
         }
 
         var channel = rootName.Equals("channel", StringComparison.OrdinalIgnoreCase)
             ? root
-            : Child(root, "channel") ?? throw new RssParseException("RSS 订阅缺少 channel 元素。");
+            : Child(root, "channel")
+              ?? throw new RssParseException(_getString(RssParserString.MissingRssChannel));
         var title = CleanTitle(Value(channel, "title"), sourceUri.Host);
         var siteUri = ParseUri(Value(channel, "link"), sourceUri);
         var description = HtmlTextConverter.ToPlainText(Value(channel, "description"), 4_000);
@@ -74,10 +82,10 @@ public sealed class RssFeedParser
         return new ParsedFeed(title, siteUri, description, articles);
     }
 
-    private static ParsedArticle ParseRssItem(XElement item, Uri sourceUri)
+    private ParsedArticle ParseRssItem(XElement item, Uri sourceUri)
     {
         var link = ParseUri(Value(item, "link"), sourceUri);
-        var title = CleanTitle(Value(item, "title"), "无标题文章");
+        var title = CleanTitle(Value(item, "title"), _getString(RssParserString.UntitledArticle));
         var author = FirstValue(item, "creator", "author");
         var publishedAt = ParseDate(FirstValue(item, "pubDate", "date", "published", "updated"));
         var summaryMarkup = FirstValue(item, "description", "summary");
@@ -97,7 +105,7 @@ public sealed class RssFeedParser
             content);
     }
 
-    private static ParsedFeed ParseAtom(XElement root, Uri sourceUri)
+    private ParsedFeed ParseAtom(XElement root, Uri sourceUri)
     {
         var title = CleanTitle(Value(root, "title"), sourceUri.Host);
         var siteUri = AtomLink(root, sourceUri);
@@ -109,10 +117,10 @@ public sealed class RssFeedParser
         return new ParsedFeed(title, siteUri, description, articles);
     }
 
-    private static ParsedArticle ParseAtomEntry(XElement entry, Uri sourceUri)
+    private ParsedArticle ParseAtomEntry(XElement entry, Uri sourceUri)
     {
         var link = AtomLink(entry, sourceUri);
-        var title = CleanTitle(Value(entry, "title"), "无标题文章");
+        var title = CleanTitle(Value(entry, "title"), _getString(RssParserString.UntitledArticle));
         var authorElement = Child(entry, "author");
         var author = authorElement is null ? string.Empty : FirstValue(authorElement, "name", "email");
         var publishedAt = ParseDate(FirstValue(entry, "published", "updated", "issued", "modified"));

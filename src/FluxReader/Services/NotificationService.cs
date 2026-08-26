@@ -5,14 +5,16 @@ namespace FluxReader.Services;
 
 public sealed class NotificationService : IDisposable
 {
+    private readonly LocalizationService _localization;
     private readonly string _logPath;
     private readonly object _logSync = new();
     private bool _registered;
 
-    public NotificationService(string logPath)
+    public NotificationService(string logPath, LocalizationService localization)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(logPath);
         _logPath = logPath;
+        _localization = localization;
     }
 
     public event EventHandler? Activated;
@@ -48,8 +50,10 @@ public sealed class NotificationService : IDisposable
         {
             var builder = new AppNotificationBuilder()
                 .AddArgument("action", "open")
-                .AddText($"发现 {count} 篇新文章")
-                .AddText(string.IsNullOrWhiteSpace(latestTitle) ? "打开 FluxReader 查看" : latestTitle);
+                .AddText(_localization.FormatNewArticleNotification(count))
+                .AddText(string.IsNullOrWhiteSpace(latestTitle)
+                    ? _localization.GetString("NotificationOpenFluxReader")
+                    : latestTitle);
             var notification = builder.BuildNotification();
             notification.Expiration = DateTimeOffset.Now.AddHours(8);
             AppNotificationManager.Default.Show(notification);

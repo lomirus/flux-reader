@@ -10,6 +10,7 @@ namespace FluxReader.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
+    private readonly LocalizationService _localization;
     private readonly NotificationService _notifications;
     private readonly RssRefreshService _refreshService;
     private readonly RssRepository _repository;
@@ -35,7 +36,7 @@ public sealed partial class MainViewModel : ObservableObject
     public partial string StatusMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string ArticleCountText { get; set; } = "0 篇文章";
+    public partial string ArticleCountText { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial int UnreadTotal { get; set; }
@@ -43,11 +44,14 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(
         RssRepository repository,
         RssRefreshService refreshService,
-        NotificationService notifications)
+        NotificationService notifications,
+        LocalizationService localization)
     {
         _repository = repository;
         _refreshService = refreshService;
         _notifications = notifications;
+        _localization = localization;
+        ApplyLocalization();
     }
 
     public ObservableCollection<Feed> Feeds { get; } = [];
@@ -56,9 +60,20 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string ArticleListTitle => SelectedFeed?.Title ?? CurrentFilter switch
     {
-        ArticleFilter.Unread => "未读文章",
-        _ => "所有文章"
+        ArticleFilter.Unread => _localization.GetString("UnreadArticles"),
+        _ => _localization.GetString("AllArticles")
     };
+
+    public void ApplyLocalization()
+    {
+        OnPropertyChanged(nameof(ArticleListTitle));
+        UpdateArticleCount();
+        IsStatusOpen = false;
+        foreach (var article in Articles)
+        {
+            article.RefreshLocalization();
+        }
+    }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -75,12 +90,12 @@ public sealed partial class MainViewModel : ObservableObject
             await ReloadArticlesAsync(cancellationToken);
             if (!_notifications.IsAvailable)
             {
-                ShowStatus("Windows 系统通知当前不可用，错误已写入 notifications.log；阅读和刷新功能不受影响。");
+                ShowStatus(_localization.GetString("NotificationUnavailable"));
             }
         }
         catch (Exception exception)
         {
-            ShowStatus($"初始化失败：{exception.Message}");
+            ShowStatus(_localization.Format("InitializationFailed", exception.Message));
         }
         finally
         {
@@ -98,7 +113,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (!Uri.TryCreate(input.Trim(), UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
         {
-            ShowStatus("请输入有效的 HTTP 或 HTTPS 订阅地址。");
+            ShowStatus(_localization.GetString("InvalidFeedAddress"));
             return;
         }
 
@@ -109,11 +124,11 @@ public sealed partial class MainViewModel : ObservableObject
             CurrentFilter = ArticleFilter.All;
             await ReloadFeedsAsync(feed.Id, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus($"已订阅“{feed.Title}”。");
+            ShowStatus(_localization.Format("SubscribedToFeed", feed.Title));
         }
         catch (Exception exception)
         {
-            ShowStatus($"添加订阅失败：{exception.Message}");
+            ShowStatus(_localization.Format("AddFeedFailed", exception.Message));
         }
         finally
         {
@@ -154,7 +169,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (CurrentFilter == ArticleFilter.Unread)
         {
-            ArticleCountText = $"{Articles.Count(articleItem => !articleItem.IsRead)} 篇文章";
+            UpdateArticleCount(Articles.Count(articleItem => !articleItem.IsRead));
         }
     }
 
@@ -165,7 +180,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             if (Feeds.Count == 0)
             {
-                ShowStatus("请先添加一个 RSS 或 Atom 订阅。");
+                ShowStatus(_localization.GetString("AddFeedFirst"));
             }
 
             return;
@@ -201,8 +216,8 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             ShowStatus(errorCount == 0
-                ? $"刷新完成，发现 {newTitles.Length} 篇新文章。"
-                : $"刷新完成，发现 {newTitles.Length} 篇新文章；{errorCount} 个订阅失败。");
+                ? _localization.FormatRefreshComplete(newTitles.Length)
+                : _localization.Format("RefreshCompleteWithErrors", newTitles.Length, errorCount));
         }
         finally
         {
@@ -236,11 +251,11 @@ public sealed partial class MainViewModel : ObservableObject
         if (CurrentFilter == ArticleFilter.Unread)
         {
             Articles.Clear();
-            ArticleCountText = "0 篇文章";
+            UpdateArticleCount();
             SelectedArticle = null;
         }
 
-        ShowStatus("已将当前范围内的文章标为已读。");
+        ShowStatus(_localization.GetString("MarkedAllRead"));
     }
 
     [RelayCommand]
@@ -249,7 +264,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (SelectedArticle is null ||
             !Uri.TryCreate(SelectedArticle.Link, UriKind.Absolute, out var uri))
         {
-            ShowStatus("这篇文章没有可打开的原始链接。");
+            ShowStatus(_localization.GetString("ArticleLinkUnavailable"));
             return;
         }
 
@@ -272,7 +287,7 @@ public sealed partial class MainViewModel : ObservableObject
             CurrentFilter = ArticleFilter.All;
             await ReloadFeedsAsync(null, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus($"已移除“{title}”。");
+            ShowStatus(_localization.Format("FeedRemoved", title));
         }
         finally
         {
@@ -305,9 +320,12 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         SelectedArticle = null;
-        ArticleCountText = $"{Articles.Count} 篇文章";
+        UpdateArticleCount();
         OnPropertyChanged(nameof(ArticleListTitle));
     }
+
+    private void UpdateArticleCount(int? count = null) =>
+        ArticleCountText = _localization.FormatArticleCount(count ?? Articles.Count);
 
     private void ShowStatus(string message)
     {
