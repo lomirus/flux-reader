@@ -307,11 +307,43 @@ public sealed class RssRepository
             },
             cancellationToken);
 
-    public Task MarkAllReadAsync(long? feedId, CancellationToken cancellationToken = default) =>
-        ExecuteAsync(
-            "UPDATE articles SET is_read = 1 WHERE $feed_id IS NULL OR feed_id = $feed_id;",
-            command => command.Parameters.AddWithValue("$feed_id", feedId is null ? DBNull.Value : feedId.Value),
-            cancellationToken);
+    public async Task MarkArticlesReadAsync(
+        IReadOnlyList<long> articleIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (articleIds.Count == 0)
+        {
+            return;
+        }
+
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var transaction = connection.BeginTransaction();
+            foreach (var batch in articleIds.Chunk(500))
+            {
+                await using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+                var parameterNames = new string[batch.Length];
+                for (var index = 0; index < batch.Length; index++)
+                {
+                    var parameterName = $"$id{index}";
+                    parameterNames[index] = parameterName;
+                    command.Parameters.AddWithValue(parameterName, batch[index]);
+                }
+
+                command.CommandText = $"UPDATE articles SET is_read = 1 WHERE id IN ({string.Join(", ", parameterNames)});";
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
 
     public Task DeleteFeedAsync(long feedId, CancellationToken cancellationToken = default) =>
         ExecuteAsync(

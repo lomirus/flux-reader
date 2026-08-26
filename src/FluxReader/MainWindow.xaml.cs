@@ -258,7 +258,6 @@ public sealed partial class MainWindow : Window
         AddFeedButtonText.Text = addFeed;
         ToolTipService.SetToolTip(AddFeedButton, addFeed);
         ToolTipService.SetToolTip(RefreshButton, localization.GetString("RefreshAllFeeds"));
-        ToolTipService.SetToolTip(MarkAllReadButton, localization.GetString("MarkAllRead"));
         ToolTipService.SetToolTip(DeleteFeedButton, localization.GetString("RemoveCurrentFeed"));
 
         var settings = localization.GetString("Settings");
@@ -270,6 +269,10 @@ public sealed partial class MainWindow : Window
         var showUnreadOnly = localization.GetString("ShowUnreadOnly");
         AutomationProperties.SetName(UnreadFilterToggleButton, showUnreadOnly);
         ToolTipService.SetToolTip(UnreadFilterToggleButton, showUnreadOnly);
+
+        var markAllRead = localization.GetString("MarkAllRead");
+        AutomationProperties.SetName(MarkCurrentListReadButton, markAllRead);
+        ToolTipService.SetToolTip(MarkCurrentListReadButton, markAllRead);
 
         var resizeTooltip = localization.GetString("ResizePaneTooltip");
         AutomationProperties.SetName(FeedPaneSplitterThumb, localization.GetString("ResizeFeedPane"));

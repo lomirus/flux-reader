@@ -61,7 +61,7 @@
   <data name="RefreshCompleteOne" xml:space="preserve"><value>Odświeżanie zakończone. Znaleziono {0} nowy artykuł.</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>Odświeżanie zakończone. Nowe artykuły: {0}.</value></data>
   <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>Odświeżanie zakończone. Nowe artykuły: {0}; kanały z błędami: {1}.</value></data>
-  <data name="MarkedAllRead" xml:space="preserve"><value>Wszystkie artykuły w bieżącym zakresie oznaczono jako przeczytane.</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>Artykuły na bieżącej liście oznaczono jako przeczytane.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>Ten artykuł nie ma oryginalnego linku, który można otworzyć.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>Usunięto „{0}”.</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>Serwer kanału zwrócił pustą odpowiedź.</value></data>

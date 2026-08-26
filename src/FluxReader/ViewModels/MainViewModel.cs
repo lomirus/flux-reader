@@ -232,24 +232,26 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task MarkAllReadAsync()
+    private async Task MarkCurrentListReadAsync()
     {
         if (IsBusy)
         {
             return;
         }
 
-        await _repository.MarkAllReadAsync(SelectedFeed?.Id);
-        foreach (var article in Articles)
+        var unreadArticles = Articles.Where(article => !article.IsRead).ToArray();
+        await _repository.MarkArticlesReadAsync(unreadArticles.Select(article => article.Id).ToArray());
+        foreach (var article in unreadArticles)
         {
             article.IsRead = true;
         }
 
-        foreach (var feed in Feeds)
+        foreach (var unreadGroup in unreadArticles.GroupBy(article => article.FeedId))
         {
-            if (SelectedFeed is null || feed.Id == SelectedFeed.Id)
+            var feed = Feeds.FirstOrDefault(item => item.Id == unreadGroup.Key);
+            if (feed is not null)
             {
-                feed.UnreadCount = 0;
+                feed.UnreadCount = Math.Max(0, feed.UnreadCount - unreadGroup.Count());
             }
         }
 

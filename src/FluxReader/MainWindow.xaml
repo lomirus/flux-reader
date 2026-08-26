@@ -43,7 +43,6 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -65,27 +64,21 @@
                 <FontIcon FontSize="14" Glyph="&#xE72C;" />
             </Button>
             <Button
-                x:Name="MarkAllReadButton"
-                Grid.Column="2"
-                Command="{Binding MarkAllReadCommand}">
-                <FontIcon FontSize="14" Glyph="&#xE73E;" />
-            </Button>
-            <Button
                 x:Name="DeleteFeedButton"
-                Grid.Column="3"
+                Grid.Column="2"
                 Click="DeleteFeed_Click">
                 <FontIcon FontSize="14" Glyph="&#xE74D;" />
             </Button>
 
             <ProgressRing
-                Grid.Column="5"
+                Grid.Column="4"
                 Width="20"
                 Height="20"
                 Margin="8,0"
                 IsActive="{Binding IsBusy}" />
             <Button
                 x:Name="SettingsButton"
-                Grid.Column="6"
+                Grid.Column="5"
                 Click="Settings_Click">
                 <FontIcon FontSize="14" Glyph="&#xE713;" />
             </Button>
@@ -192,24 +185,35 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         FontSize="20"
                         FontWeight="SemiBold"
                         Text="{Binding ArticleListTitle}" />
-                    <ToggleButton
-                        x:Name="UnreadFilterToggleButton"
+                    <Button
+                        x:Name="MarkCurrentListReadButton"
                         Grid.Column="1"
                         Width="32"
                         Height="32"
                         Margin="8,0"
+                        Padding="0"
+                        Command="{Binding MarkCurrentListReadCommand}">
+                        <FontIcon FontSize="14" Glyph="&#xE73E;" />
+                    </Button>
+                    <ToggleButton
+                        x:Name="UnreadFilterToggleButton"
+                        Grid.Column="2"
+                        Width="32"
+                        Height="32"
                         Padding="0"
                         Click="UnreadFilterToggle_Click"
                         IsChecked="{Binding IsUnreadFilterEnabled, Mode=OneWay}">
                         <FontIcon FontSize="14" Glyph="&#xE8C3;" />
                     </ToggleButton>
                     <TextBlock
-                        Grid.Column="2"
+                        Grid.Column="3"
+                        Margin="8,0,0,0"
                         VerticalAlignment="Center"
                         Opacity="0.6"
                         Text="{Binding ArticleCountText}" />

@@ -61,7 +61,7 @@
   <data name="RefreshCompleteOne" xml:space="preserve"><value>更新が完了しました。新しい記事が {0} 件見つかりました。</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>更新が完了しました。新しい記事が {0} 件見つかりました。</value></data>
   <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>更新が完了しました。新しい記事: {0} 件、失敗したフィード: {1} 件。</value></data>
-  <data name="MarkedAllRead" xml:space="preserve"><value>現在の範囲にあるすべての記事を既読にしました。</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>現在のリストにある記事を既読にしました。</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>この記事には開くことのできる元のリンクがありません。</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>「{0}」を削除しました。</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>フィードサーバーから空の応答が返されました。</value></data>

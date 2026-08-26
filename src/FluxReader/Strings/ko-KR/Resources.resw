@@ -61,7 +61,7 @@
   <data name="RefreshCompleteOne" xml:space="preserve"><value>새로 고침을 완료했습니다. 새 기사 {0}개를 찾았습니다.</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>새로 고침을 완료했습니다. 새 기사 {0}개를 찾았습니다.</value></data>
   <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>새로 고침을 완료했습니다. 새 기사: {0}개, 실패한 피드: {1}개.</value></data>
-  <data name="MarkedAllRead" xml:space="preserve"><value>현재 범위의 모든 기사를 읽음으로 표시했습니다.</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>현재 목록의 기사를 읽음으로 표시했습니다.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>이 기사에는 열 수 있는 원본 링크가 없습니다.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>“{0}”을(를) 제거했습니다.</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>피드 서버가 빈 응답을 반환했습니다.</value></data>

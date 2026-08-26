@@ -61,7 +61,7 @@
   <data name="RefreshCompleteOne" xml:space="preserve"><value>Actualización completada. Se encontró {0} artículo nuevo.</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>Actualización completada. Se encontraron {0} artículos nuevos.</value></data>
   <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>Actualización completada. Artículos nuevos: {0}; fuentes con errores: {1}.</value></data>
-  <data name="MarkedAllRead" xml:space="preserve"><value>Todos los artículos del ámbito actual se marcaron como leídos.</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>Los artículos de la lista actual se marcaron como leídos.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>Este artículo no tiene un enlace original para abrir.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>Se eliminó “{0}”.</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>El servidor de la fuente devolvió una respuesta vacía.</value></data>

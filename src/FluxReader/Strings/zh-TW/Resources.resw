@@ -61,7 +61,7 @@
   <data name="RefreshCompleteOne" xml:space="preserve"><value>重新整理完成，發現 {0} 篇新文章。</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>重新整理完成，發現 {0} 篇新文章。</value></data>
   <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>重新整理完成；新文章：{0}；失敗的訂閱：{1}。</value></data>
-  <data name="MarkedAllRead" xml:space="preserve"><value>已將目前範圍內的文章標示為已讀。</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>已將目前清單中的文章標示為已讀。</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>這篇文章沒有可開啟的原始連結。</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>已移除「{0}」。</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>訂閱伺服器傳回了空白內容。</value></data>

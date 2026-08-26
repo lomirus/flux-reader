@@ -61,7 +61,7 @@
   <data name="RefreshCompleteOne" xml:space="preserve"><value>刷新完成，发现 {0} 篇新文章。</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>刷新完成，发现 {0} 篇新文章。</value></data>
   <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>刷新完成；新文章：{0}；失败的订阅：{1}。</value></data>
-  <data name="MarkedAllRead" xml:space="preserve"><value>已将当前范围内的文章标为已读。</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>已将当前列表中的文章标为已读。</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>这篇文章没有可打开的原始链接。</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>已移除“{0}”。</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>订阅服务器返回了空内容。</value></data>
