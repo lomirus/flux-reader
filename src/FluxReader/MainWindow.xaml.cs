@@ -1,7 +1,9 @@
 using FluxReader.Models;
 using FluxReader.Services;
 using FluxReader.ViewModels;
+using FluxReader.Interop;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -90,11 +92,15 @@ public sealed partial class MainWindow : Window
             Header = localization.GetString("FeedAddress"),
             PlaceholderText = "https://example.com/feed.xml"
         };
+        var groupSelector = CreateGroupSelector(null);
+        var content = new StackPanel { Spacing = 12 };
+        content.Children.Add(input);
+        content.Children.Add(groupSelector);
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
             Title = localization.GetString("AddFeed"),
-            Content = input,
+            Content = content,
             PrimaryButtonText = localization.GetString("Add"),
             CloseButtonText = localization.GetString("Cancel"),
             DefaultButton = ContentDialogButton.Primary
@@ -102,8 +108,34 @@ public sealed partial class MainWindow : Window
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
-            await ViewModel.AddFeedAsync(input.Text, _lifetime.Token);
-            FeedList.SelectedItem = ViewModel.SelectedFeed;
+            await ViewModel.AddFeedAsync(input.Text, GetSelectedGroupId(groupSelector), _lifetime.Token);
+            FeedTree.SelectedItem = ViewModel.SelectedNavigationItem;
+            HideArticleReader();
+        }
+    }
+
+    private async void AddGroup_Click(object sender, RoutedEventArgs e)
+    {
+        var localization = App.Current.Localization;
+        var input = new TextBox
+        {
+            Header = localization.GetString("GroupName"),
+            MaxLength = 100
+        };
+        var dialog = new ContentDialog
+        {
+            XamlRoot = RootGrid.XamlRoot,
+            Title = localization.GetString("AddGroup"),
+            Content = input,
+            PrimaryButtonText = localization.GetString("Create"),
+            CloseButtonText = localization.GetString("Cancel"),
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            await ViewModel.AddFeedGroupAsync(input.Text, _lifetime.Token);
+            FeedTree.SelectedItem = ViewModel.SelectedNavigationItem;
             HideArticleReader();
         }
     }
@@ -115,34 +147,84 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var localization = App.Current.Localization;
-        var dialog = new ContentDialog
-        {
-            XamlRoot = RootGrid.XamlRoot,
-            Title = localization.GetString("RemoveFeedTitle"),
-            Content = localization.Format("RemoveFeedMessage", ViewModel.SelectedFeed.Title),
-            PrimaryButtonText = localization.GetString("Remove"),
-            CloseButtonText = localization.GetString("Cancel"),
-            DefaultButton = ContentDialogButton.Close
-        };
-
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
-        {
-            await ViewModel.DeleteSelectedFeedAsync(_lifetime.Token);
-            FeedList.SelectedItem = null;
-            HideArticleReader();
-        }
+        await ConfirmDeleteFeedAsync(ViewModel.SelectedFeed);
     }
 
-    private async void FeedList_ItemClick(object sender, ItemClickEventArgs e)
+    private async void FeedTree_SelectionChanged(TreeView sender, TreeViewSelectionChangedEventArgs args)
     {
-        if (e.ClickedItem is not Feed feed)
+        var selectedItem = args.AddedItems.LastOrDefault();
+        var item = selectedItem as FeedNavigationItem ??
+                   (selectedItem as TreeViewNode)?.Content as FeedNavigationItem ??
+                   sender.SelectedItem as FeedNavigationItem;
+        if (item is null)
         {
             return;
         }
 
-        await ViewModel.SelectFeedAsync(feed, _lifetime.Token);
+        if (item.Feed is not null)
+        {
+            if (ViewModel.SelectedFeed?.Id == item.Feed.Id && ViewModel.SelectedGroup is null)
+            {
+                return;
+            }
+
+            await ViewModel.SelectFeedAsync(item.Feed, _lifetime.Token);
+        }
+        else if (item.Group is not null)
+        {
+            if (ViewModel.SelectedGroup?.Id == item.Group.Id && ViewModel.SelectedFeed is null)
+            {
+                return;
+            }
+
+            await ViewModel.SelectGroupAsync(item.Group, _lifetime.Token);
+        }
+
         HideArticleReader();
+    }
+
+    private void NavigationItemMenu_Opened(object sender, object e)
+    {
+        // TODO(winui): Remove this workaround after microsoft-ui-xaml#9542 is fixed
+        // and the project uses a Windows App SDK version that contains the fix.
+        // Opening a ContextFlyout can currently leave a loading or resize cursor
+        // active until the pointer moves again.
+        NativeCursor.SetArrow();
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, NativeCursor.SetArrow);
+    }
+
+    private async void PrimaryNavigationItemMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuFlyoutItem { Tag: FeedNavigationItem item })
+        {
+            return;
+        }
+
+        if (item.Feed is not null)
+        {
+            await ChangeFeedGroupAsync(item.Feed);
+        }
+        else if (item.Group is not null)
+        {
+            await RenameGroupAsync(item.Group);
+        }
+    }
+
+    private async void RemoveNavigationItemMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuFlyoutItem { Tag: FeedNavigationItem item })
+        {
+            return;
+        }
+
+        if (item.Feed is not null)
+        {
+            await ConfirmDeleteFeedAsync(item.Feed);
+        }
+        else if (item.Group is not null)
+        {
+            await ConfirmDeleteGroupAsync(item.Group);
+        }
     }
 
     private async void ArticleList_ItemClick(object sender, ItemClickEventArgs e)
@@ -159,7 +241,7 @@ public sealed partial class MainWindow : Window
 
     private async void AllArticles_Click(object sender, RoutedEventArgs e)
     {
-        FeedList.SelectedItem = null;
+        FeedTree.SelectedItem = null;
         await ViewModel.SelectAllArticlesAsync(_lifetime.Token);
         HideArticleReader();
     }
@@ -255,10 +337,14 @@ public sealed partial class MainWindow : Window
         AutomationProperties.SetName(BrandIcon, localization.GetString("AppIconAutomation"));
 
         var addFeed = localization.GetString("AddFeed");
-        AddFeedButtonText.Text = addFeed;
+        AutomationProperties.SetName(AddFeedButton, addFeed);
         ToolTipService.SetToolTip(AddFeedButton, addFeed);
         ToolTipService.SetToolTip(RefreshButton, localization.GetString("RefreshAllFeeds"));
         ToolTipService.SetToolTip(DeleteFeedButton, localization.GetString("RemoveCurrentFeed"));
+
+        var addGroup = localization.GetString("AddGroup");
+        AutomationProperties.SetName(AddGroupButton, addGroup);
+        ToolTipService.SetToolTip(AddGroupButton, addGroup);
 
         var settings = localization.GetString("Settings");
         AutomationProperties.SetName(SettingsButton, settings);
@@ -303,6 +389,128 @@ public sealed partial class MainWindow : Window
         ArticleList.SelectedItem = null;
         ArticleEmptyView.Visibility = Visibility.Visible;
         ArticleReaderView.Visibility = Visibility.Collapsed;
+    }
+
+    private ComboBox CreateGroupSelector(long? selectedGroupId)
+    {
+        var selector = new ComboBox
+        {
+            Header = App.Current.Localization.GetString("FeedGroup"),
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        selector.Items.Add(new ComboBoxItem
+        {
+            Content = App.Current.Localization.GetString("NoGroup")
+        });
+        var selectedIndex = 0;
+        foreach (var group in ViewModel.FeedGroups)
+        {
+            selector.Items.Add(new ComboBoxItem
+            {
+                Content = group.Name,
+                Tag = group.Id
+            });
+            if (group.Id == selectedGroupId)
+            {
+                selectedIndex = selector.Items.Count - 1;
+            }
+        }
+
+        selector.SelectedIndex = selectedIndex;
+        return selector;
+    }
+
+    private static long? GetSelectedGroupId(ComboBox selector) =>
+        selector.SelectedItem is ComboBoxItem { Tag: long groupId } ? groupId : null;
+
+    private async Task ChangeFeedGroupAsync(Feed feed)
+    {
+        var localization = App.Current.Localization;
+        var groupSelector = CreateGroupSelector(feed.GroupId);
+        var dialog = new ContentDialog
+        {
+            XamlRoot = RootGrid.XamlRoot,
+            Title = localization.GetString("ChangeGroup"),
+            Content = groupSelector,
+            PrimaryButtonText = localization.GetString("Save"),
+            CloseButtonText = localization.GetString("Cancel"),
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            await ViewModel.SetFeedGroupAsync(feed, GetSelectedGroupId(groupSelector), _lifetime.Token);
+            FeedTree.SelectedItem = ViewModel.SelectedNavigationItem;
+            HideArticleReader();
+        }
+    }
+
+    private async Task RenameGroupAsync(FeedGroup group)
+    {
+        var localization = App.Current.Localization;
+        var input = new TextBox
+        {
+            Header = localization.GetString("GroupName"),
+            MaxLength = 100,
+            Text = group.Name
+        };
+        var dialog = new ContentDialog
+        {
+            XamlRoot = RootGrid.XamlRoot,
+            Title = localization.GetString("RenameGroup"),
+            Content = input,
+            PrimaryButtonText = localization.GetString("Save"),
+            CloseButtonText = localization.GetString("Cancel"),
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            await ViewModel.RenameFeedGroupAsync(group, input.Text, _lifetime.Token);
+            FeedTree.SelectedItem = ViewModel.SelectedNavigationItem;
+        }
+    }
+
+    private async Task ConfirmDeleteFeedAsync(Feed feed)
+    {
+        var localization = App.Current.Localization;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = RootGrid.XamlRoot,
+            Title = localization.GetString("RemoveFeedTitle"),
+            Content = localization.Format("RemoveFeedMessage", feed.Title),
+            PrimaryButtonText = localization.GetString("Remove"),
+            CloseButtonText = localization.GetString("Cancel"),
+            DefaultButton = ContentDialogButton.Close
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            await ViewModel.DeleteFeedAsync(feed, _lifetime.Token);
+            FeedTree.SelectedItem = null;
+            HideArticleReader();
+        }
+    }
+
+    private async Task ConfirmDeleteGroupAsync(FeedGroup group)
+    {
+        var localization = App.Current.Localization;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = RootGrid.XamlRoot,
+            Title = localization.GetString("RemoveGroupTitle"),
+            Content = localization.Format("RemoveGroupMessage", group.Name),
+            PrimaryButtonText = localization.GetString("Remove"),
+            CloseButtonText = localization.GetString("Cancel"),
+            DefaultButton = ContentDialogButton.Close
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            await ViewModel.DeleteFeedGroupAsync(group, _lifetime.Token);
+            FeedTree.SelectedItem = null;
+            HideArticleReader();
+        }
     }
 
     private void FeedPaneSplitter_DragDelta(object sender, DragDeltaEventArgs e) =>

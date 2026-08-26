@@ -40,6 +40,23 @@
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Remove feed?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>“{0}” and its locally stored articles will be deleted.</value></data>
   <data name="Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="AddGroup" xml:space="preserve"><value>Add group</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Group name</value></data>
+  <data name="FeedGroup" xml:space="preserve"><value>Group (optional)</value></data>
+  <data name="NoGroup" xml:space="preserve"><value>No group</value></data>
+  <data name="Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Save" xml:space="preserve"><value>Save</value></data>
+  <data name="ChangeGroup" xml:space="preserve"><value>Change group</value></data>
+  <data name="RenameGroup" xml:space="preserve"><value>Rename group</value></data>
+  <data name="RemoveGroup" xml:space="preserve"><value>Remove group</value></data>
+  <data name="RemoveGroupTitle" xml:space="preserve"><value>Remove group?</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>“{0}” will be removed. Its feeds will be moved to No group.</value></data>
+  <data name="InvalidGroupName" xml:space="preserve"><value>Enter a group name.</value></data>
+  <data name="GroupCreated" xml:space="preserve"><value>Created group “{0}”.</value></data>
+  <data name="GroupRenamed" xml:space="preserve"><value>Renamed group to “{0}”.</value></data>
+  <data name="GroupRemoved" xml:space="preserve"><value>Removed group “{0}”.</value></data>
+  <data name="FeedGroupChanged" xml:space="preserve"><value>Changed the group for “{0}”.</value></data>
+  <data name="GroupOperationFailed" xml:space="preserve"><value>Couldn't update feed groups: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Back</value></data>
   <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>App theme</value></data>

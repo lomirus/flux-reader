@@ -40,6 +40,23 @@
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Удалить ленту?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>«{0}» и сохранённые локально статьи будут удалены.</value></data>
   <data name="Remove" xml:space="preserve"><value>Удалить</value></data>
+  <data name="AddGroup" xml:space="preserve"><value>Добавить группу</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Название группы</value></data>
+  <data name="FeedGroup" xml:space="preserve"><value>Группа (необязательно)</value></data>
+  <data name="NoGroup" xml:space="preserve"><value>Без группы</value></data>
+  <data name="Create" xml:space="preserve"><value>Создать</value></data>
+  <data name="Save" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="ChangeGroup" xml:space="preserve"><value>Изменить группу</value></data>
+  <data name="RenameGroup" xml:space="preserve"><value>Переименовать группу</value></data>
+  <data name="RemoveGroup" xml:space="preserve"><value>Удалить группу</value></data>
+  <data name="RemoveGroupTitle" xml:space="preserve"><value>Удалить группу?</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>Группа «{0}» будет удалена. Её ленты будут перемещены в раздел «Без группы».</value></data>
+  <data name="InvalidGroupName" xml:space="preserve"><value>Введите название группы.</value></data>
+  <data name="GroupCreated" xml:space="preserve"><value>Группа «{0}» создана.</value></data>
+  <data name="GroupRenamed" xml:space="preserve"><value>Группа переименована в «{0}».</value></data>
+  <data name="GroupRemoved" xml:space="preserve"><value>Группа «{0}» удалена.</value></data>
+  <data name="FeedGroupChanged" xml:space="preserve"><value>Группа для «{0}» изменена.</value></data>
+  <data name="GroupOperationFailed" xml:space="preserve"><value>Не удалось обновить группы лент: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Назад</value></data>
   <data name="Appearance" xml:space="preserve"><value>Внешний вид</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Тема приложения</value></data>

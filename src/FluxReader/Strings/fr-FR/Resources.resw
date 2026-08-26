@@ -40,6 +40,23 @@
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Supprimer le flux ?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>« {0} » et ses articles stockés localement seront supprimés.</value></data>
   <data name="Remove" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="AddGroup" xml:space="preserve"><value>Ajouter un groupe</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Nom du groupe</value></data>
+  <data name="FeedGroup" xml:space="preserve"><value>Groupe (facultatif)</value></data>
+  <data name="NoGroup" xml:space="preserve"><value>Aucun groupe</value></data>
+  <data name="Create" xml:space="preserve"><value>Créer</value></data>
+  <data name="Save" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="ChangeGroup" xml:space="preserve"><value>Changer de groupe</value></data>
+  <data name="RenameGroup" xml:space="preserve"><value>Renommer le groupe</value></data>
+  <data name="RemoveGroup" xml:space="preserve"><value>Supprimer le groupe</value></data>
+  <data name="RemoveGroupTitle" xml:space="preserve"><value>Supprimer le groupe ?</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>« {0} » sera supprimé. Ses flux seront déplacés vers Aucun groupe.</value></data>
+  <data name="InvalidGroupName" xml:space="preserve"><value>Saisissez un nom de groupe.</value></data>
+  <data name="GroupCreated" xml:space="preserve"><value>Groupe « {0} » créé.</value></data>
+  <data name="GroupRenamed" xml:space="preserve"><value>Groupe renommé en « {0} ».</value></data>
+  <data name="GroupRemoved" xml:space="preserve"><value>Groupe « {0} » supprimé.</value></data>
+  <data name="FeedGroupChanged" xml:space="preserve"><value>Le groupe de « {0} » a été modifié.</value></data>
+  <data name="GroupOperationFailed" xml:space="preserve"><value>Impossible de mettre à jour les groupes de flux : {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Retour</value></data>
   <data name="Appearance" xml:space="preserve"><value>Apparence</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Thème de l’application</value></data>

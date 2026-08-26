@@ -8,6 +8,8 @@ public sealed partial class Feed : ObservableObject
 
     public required string Url { get; init; }
 
+    public long? GroupId { get; init; }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(UnreadDisplay))]
     public partial string Title { get; set; } = string.Empty;

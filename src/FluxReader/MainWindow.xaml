@@ -43,6 +43,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -52,34 +53,37 @@
                 x:Name="AddFeedButton"
                 Grid.Column="0"
                 Click="AddFeed_Click">
-                <StackPanel Orientation="Horizontal" Spacing="7">
-                    <FontIcon FontSize="14" Glyph="&#xE710;" />
-                    <TextBlock x:Name="AddFeedButtonText" />
-                </StackPanel>
+                <FontIcon FontSize="14" Glyph="&#xE710;" />
+            </Button>
+            <Button
+                x:Name="AddGroupButton"
+                Grid.Column="1"
+                Click="AddGroup_Click">
+                <FontIcon FontSize="14" Glyph="&#xE8F4;" />
             </Button>
             <Button
                 x:Name="RefreshButton"
-                Grid.Column="1"
+                Grid.Column="2"
                 Command="{Binding RefreshCommand}">
                 <FontIcon FontSize="14" Glyph="&#xE72C;" />
             </Button>
             <Button
                 x:Name="DeleteFeedButton"
-                Grid.Column="2"
+                Grid.Column="3"
                 Click="DeleteFeed_Click"
                 IsEnabled="{Binding CanDeleteSelectedFeed}">
                 <FontIcon FontSize="14" Glyph="&#xE74D;" />
             </Button>
 
             <ProgressRing
-                Grid.Column="4"
+                Grid.Column="5"
                 Width="20"
                 Height="20"
                 Margin="8,0"
                 IsActive="{Binding IsBusy}" />
             <Button
                 x:Name="SettingsButton"
-                Grid.Column="5"
+                Grid.Column="6"
                 Click="Settings_Click">
                 <FontIcon FontSize="14" Glyph="&#xE713;" />
             </Button>
@@ -125,40 +129,69 @@
                     FontSize="12"
                     FontWeight="SemiBold"
                     Opacity="0.65" />
-                <ListView
-                    x:Name="FeedList"
+                <TreeView
+                    x:Name="FeedTree"
                     Grid.Row="3"
-                    IsItemClickEnabled="True"
-                    ItemClick="FeedList_ItemClick"
-                    ItemsSource="{Binding Feeds}"
+                    ItemsSource="{Binding FeedNavigationItems}"
+                    SelectedItem="{Binding SelectedNavigationItem, Mode=TwoWay}"
+                    SelectionChanged="FeedTree_SelectionChanged"
                     SelectionMode="Single">
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="Padding" Value="8" />
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Feed">
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <FontIcon FontSize="14" Glyph="&#xE789;" />
-                                <TextBlock
-                                    Grid.Column="1"
-                                    Text="{x:Bind Title}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Grid.Column="2"
-                                    Opacity="0.65"
-                                    Text="{x:Bind UnreadDisplay, Mode=OneWay}" />
-                            </Grid>
+                    <TreeView.ItemTemplate>
+                        <DataTemplate x:DataType="models:FeedNavigationItem">
+                            <TreeViewItem
+                                HorizontalContentAlignment="Stretch"
+                                IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
+                                ItemsSource="{x:Bind Children}">
+                                <TreeViewItem.ContextFlyout>
+                                    <MenuFlyout Opened="NavigationItemMenu_Opened">
+                                        <MenuFlyoutItem
+                                            Click="PrimaryNavigationItemMenu_Click"
+                                            Text="{x:Bind PrimaryActionText}"
+                                            Tag="{x:Bind}">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="{x:Bind PrimaryActionGlyph}" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem
+                                            Click="RemoveNavigationItemMenu_Click"
+                                            Text="{x:Bind RemoveActionText}"
+                                            Tag="{x:Bind}">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="&#xE74D;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                    </MenuFlyout>
+                                </TreeViewItem.ContextFlyout>
+                                <TreeViewItem.Content>
+                                    <Grid
+                                        MinWidth="140"
+                                        ColumnSpacing="8"
+                                        Tag="{x:Bind}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            Glyph="{x:Bind Glyph}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Text="{x:Bind Title, Mode=OneWay}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            Opacity="0.65"
+                                            Text="{x:Bind UnreadDisplay, Mode=OneWay}" />
+                                    </Grid>
+                                </TreeViewItem.Content>
+                            </TreeViewItem>
                         </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                    </TreeView.ItemTemplate>
+                </TreeView>
             </Grid>
 
             <controls:HorizontalResizeSplitter Grid.Column="1">

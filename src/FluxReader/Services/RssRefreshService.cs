@@ -44,7 +44,10 @@ public sealed class RssRefreshService : IDisposable
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/xml", 0.8));
     }
 
-    public async Task<Feed> AddFeedAsync(Uri feedUri, CancellationToken cancellationToken = default)
+    public async Task<Feed> AddFeedAsync(
+        Uri feedUri,
+        long? groupId,
+        CancellationToken cancellationToken = default)
     {
         EnsureSupportedUri(feedUri);
         var download = await DownloadAsync(feedUri, null, null, cancellationToken);
@@ -58,6 +61,7 @@ public sealed class RssRefreshService : IDisposable
             download.ParsedFeed,
             download.ETag,
             download.LastModifiedAt,
+            groupId,
             cancellationToken);
     }
 

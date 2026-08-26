@@ -37,12 +37,19 @@ public sealed class RssRepository
                 PRAGMA journal_mode = WAL;
                 PRAGMA synchronous = NORMAL;
 
+                CREATE TABLE IF NOT EXISTS feed_groups (
+                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name        TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                    created_utc TEXT NOT NULL
+                );
+
                 CREATE TABLE IF NOT EXISTS feeds (
                     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
                     url                 TEXT NOT NULL COLLATE NOCASE UNIQUE,
                     title               TEXT NOT NULL,
                     site_url            TEXT NOT NULL DEFAULT '',
                     description         TEXT NOT NULL DEFAULT '',
+                    group_id            INTEGER NULL REFERENCES feed_groups(id) ON DELETE SET NULL,
                     created_utc         TEXT NOT NULL,
                     last_refreshed_utc  TEXT NULL,
                     etag                TEXT NULL,
@@ -68,8 +75,43 @@ public sealed class RssRepository
                     ON articles(feed_id, published_utc DESC);
                 CREATE INDEX IF NOT EXISTS ix_articles_unread
                     ON articles(is_read, published_utc DESC);
+                CREATE INDEX IF NOT EXISTS ix_feeds_group
+                    ON feeds(group_id, title COLLATE NOCASE);
                 """;
             await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<IReadOnlyList<FeedGroup>> GetFeedGroupsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT id, name
+                FROM feed_groups
+                ORDER BY name COLLATE NOCASE;
+                """;
+
+            var groups = new List<FeedGroup>();
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                groups.Add(new FeedGroup
+                {
+                    Id = reader.GetInt64(0),
+                    Name = reader.GetString(1)
+                });
+            }
+
+            return groups;
         }
         finally
         {
@@ -86,7 +128,7 @@ public sealed class RssRepository
             await using var command = connection.CreateCommand();
             command.CommandText = """
                 SELECT f.id, f.url, f.title, f.site_url, f.description,
-                       f.last_refreshed_utc, f.etag, f.last_modified_utc,
+                       f.group_id, f.last_refreshed_utc, f.etag, f.last_modified_utc,
                        SUM(CASE WHEN a.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
                 FROM feeds f
                 LEFT JOIN articles a ON a.feed_id = f.id
@@ -105,10 +147,11 @@ public sealed class RssRepository
                     Title = reader.GetString(2),
                     SiteUrl = reader.GetString(3),
                     Description = reader.GetString(4),
-                    LastRefreshedAt = ReadDate(reader, 5),
-                    ETag = ReadNullableString(reader, 6),
-                    LastModifiedAt = ReadDate(reader, 7),
-                    UnreadCount = reader.GetInt32(8)
+                    GroupId = reader.IsDBNull(5) ? null : reader.GetInt64(5),
+                    LastRefreshedAt = ReadDate(reader, 6),
+                    ETag = ReadNullableString(reader, 7),
+                    LastModifiedAt = ReadDate(reader, 8),
+                    UnreadCount = reader.GetInt32(9)
                 });
             }
 
@@ -122,6 +165,7 @@ public sealed class RssRepository
 
     public async Task<IReadOnlyList<Article>> GetArticlesAsync(
         long? feedId,
+        long? groupId,
         ArticleFilter filter,
         CancellationToken cancellationToken = default)
     {
@@ -137,11 +181,13 @@ public sealed class RssRepository
                 FROM articles a
                 INNER JOIN feeds f ON f.id = a.feed_id
                 WHERE ($feed_id IS NULL OR a.feed_id = $feed_id)
+                  AND ($group_id IS NULL OR f.group_id = $group_id)
                   AND ($filter <> 1 OR a.is_read = 0)
                 ORDER BY COALESCE(a.published_utc, a.inserted_utc) DESC
                 LIMIT 2000;
                 """;
             command.Parameters.AddWithValue("$feed_id", feedId is null ? DBNull.Value : feedId.Value);
+            command.Parameters.AddWithValue("$group_id", groupId is null ? DBNull.Value : groupId.Value);
             command.Parameters.AddWithValue("$filter", (int)filter);
 
             var articles = new List<Article>();
@@ -177,6 +223,7 @@ public sealed class RssRepository
         ParsedFeed parsedFeed,
         string? etag,
         DateTimeOffset? lastModifiedAt,
+        long? groupId,
         CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken);
@@ -188,19 +235,20 @@ public sealed class RssRepository
                 command.CommandText = """
                     INSERT INTO feeds (
                         url, title, site_url, description, created_utc,
-                        last_refreshed_utc, etag, last_modified_utc)
+                        last_refreshed_utc, etag, last_modified_utc, group_id)
                     VALUES (
                         $url, $title, $site_url, $description, $now,
-                        $now, $etag, $last_modified)
+                        $now, $etag, $last_modified, $group_id)
                     ON CONFLICT(url) DO UPDATE SET
                         title = excluded.title,
                         site_url = excluded.site_url,
                         description = excluded.description,
                         last_refreshed_utc = excluded.last_refreshed_utc,
                         etag = excluded.etag,
-                        last_modified_utc = excluded.last_modified_utc;
+                        last_modified_utc = excluded.last_modified_utc,
+                        group_id = excluded.group_id;
                     """;
-                AddFeedParameters(command, feedUri, parsedFeed, etag, lastModifiedAt);
+                AddFeedParameters(command, feedUri, parsedFeed, etag, lastModifiedAt, groupId);
                 await command.ExecuteNonQueryAsync(cancellationToken);
             }
 
@@ -218,6 +266,7 @@ public sealed class RssRepository
             {
                 Id = feedId,
                 Url = feedUri.AbsoluteUri,
+                GroupId = groupId,
                 Title = parsedFeed.Title,
                 SiteUrl = parsedFeed.SiteUri?.AbsoluteUri ?? string.Empty,
                 Description = parsedFeed.Description,
@@ -351,6 +400,65 @@ public sealed class RssRepository
             command => command.Parameters.AddWithValue("$id", feedId),
             cancellationToken);
 
+    public async Task<FeedGroup> AddFeedGroupAsync(
+        string name,
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                INSERT INTO feed_groups (name, created_utc)
+                VALUES ($name, $created)
+                RETURNING id;
+                """;
+            command.Parameters.AddWithValue("$name", name);
+            command.Parameters.AddWithValue("$created", FormatDate(DateTimeOffset.UtcNow));
+            var id = (long)(await command.ExecuteScalarAsync(cancellationToken)
+                            ?? throw new InvalidOperationException(
+                                _localization.GetString("GroupOperationFailed")));
+            return new FeedGroup { Id = id, Name = name };
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public Task RenameFeedGroupAsync(
+        long groupId,
+        string name,
+        CancellationToken cancellationToken = default) =>
+        ExecuteAsync(
+            "UPDATE feed_groups SET name = $name WHERE id = $id;",
+            command =>
+            {
+                command.Parameters.AddWithValue("$id", groupId);
+                command.Parameters.AddWithValue("$name", name);
+            },
+            cancellationToken);
+
+    public Task DeleteFeedGroupAsync(long groupId, CancellationToken cancellationToken = default) =>
+        ExecuteAsync(
+            "DELETE FROM feed_groups WHERE id = $id;",
+            command => command.Parameters.AddWithValue("$id", groupId),
+            cancellationToken);
+
+    public Task SetFeedGroupAsync(
+        long feedId,
+        long? groupId,
+        CancellationToken cancellationToken = default) =>
+        ExecuteAsync(
+            "UPDATE feeds SET group_id = $group_id WHERE id = $id;",
+            command =>
+            {
+                command.Parameters.AddWithValue("$id", feedId);
+                command.Parameters.AddWithValue("$group_id", groupId is null ? DBNull.Value : groupId.Value);
+            },
+            cancellationToken);
+
     private async Task ExecuteAsync(
         string sql,
         Action<SqliteCommand> bind,
@@ -424,7 +532,8 @@ public sealed class RssRepository
         Uri feedUri,
         ParsedFeed parsedFeed,
         string? etag,
-        DateTimeOffset? lastModifiedAt)
+        DateTimeOffset? lastModifiedAt,
+        long? groupId)
     {
         var now = DateTimeOffset.UtcNow;
         command.Parameters.AddWithValue("$url", feedUri.AbsoluteUri);
@@ -434,6 +543,7 @@ public sealed class RssRepository
         command.Parameters.AddWithValue("$now", FormatDate(now));
         command.Parameters.AddWithValue("$etag", (object?)etag ?? DBNull.Value);
         command.Parameters.AddWithValue("$last_modified", FormatNullableDate(lastModifiedAt));
+        command.Parameters.AddWithValue("$group_id", groupId is null ? DBNull.Value : groupId.Value);
     }
 
     private static string FormatDate(DateTimeOffset value) => value.ToString("O", CultureInfo.InvariantCulture);

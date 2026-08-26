@@ -40,6 +40,23 @@
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Usunąć kanał?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>„{0}” oraz artykuły zapisane lokalnie zostaną usunięte.</value></data>
   <data name="Remove" xml:space="preserve"><value>Usuń</value></data>
+  <data name="AddGroup" xml:space="preserve"><value>Dodaj grupę</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Nazwa grupy</value></data>
+  <data name="FeedGroup" xml:space="preserve"><value>Grupa (opcjonalnie)</value></data>
+  <data name="NoGroup" xml:space="preserve"><value>Bez grupy</value></data>
+  <data name="Create" xml:space="preserve"><value>Utwórz</value></data>
+  <data name="Save" xml:space="preserve"><value>Zapisz</value></data>
+  <data name="ChangeGroup" xml:space="preserve"><value>Zmień grupę</value></data>
+  <data name="RenameGroup" xml:space="preserve"><value>Zmień nazwę grupy</value></data>
+  <data name="RemoveGroup" xml:space="preserve"><value>Usuń grupę</value></data>
+  <data name="RemoveGroupTitle" xml:space="preserve"><value>Usunąć grupę?</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>Grupa „{0}” zostanie usunięta. Jej kanały zostaną przeniesione do Bez grupy.</value></data>
+  <data name="InvalidGroupName" xml:space="preserve"><value>Wprowadź nazwę grupy.</value></data>
+  <data name="GroupCreated" xml:space="preserve"><value>Utworzono grupę „{0}”.</value></data>
+  <data name="GroupRenamed" xml:space="preserve"><value>Zmieniono nazwę grupy na „{0}”.</value></data>
+  <data name="GroupRemoved" xml:space="preserve"><value>Usunięto grupę „{0}”.</value></data>
+  <data name="FeedGroupChanged" xml:space="preserve"><value>Zmieniono grupę kanału „{0}”.</value></data>
+  <data name="GroupOperationFailed" xml:space="preserve"><value>Nie udało się zaktualizować grup kanałów: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Wstecz</value></data>
   <data name="Appearance" xml:space="preserve"><value>Wygląd</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Motyw aplikacji</value></data>
