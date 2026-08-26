@@ -62,4 +62,5 @@ public sealed record AppSettings(
     AppTheme Theme = AppTheme.System,
     double FeedPaneWidth = 248,
     double ArticleListPaneWidth = 420,
-    AppLanguage? Language = null);
+    AppLanguage? Language = null,
+    int RefreshIntervalMinutes = 15);

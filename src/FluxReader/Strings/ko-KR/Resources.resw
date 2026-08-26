@@ -58,6 +58,9 @@
   <data name="GroupOperationFailed" xml:space="preserve"><value>피드 그룹을 업데이트하지 못했습니다: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>뒤로</value></data>
   <data name="Appearance" xml:space="preserve"><value>모양</value></data>
+  <data name="RefreshInterval" xml:space="preserve"><value>새로 고침 간격</value></data>
+  <data name="RefreshIntervalDescription" xml:space="preserve"><value>이 간격으로 모든 피드를 자동으로 새로 고칩니다.</value></data>
+  <data name="Minutes" xml:space="preserve"><value>분</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>앱 테마</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>FluxReader에서 사용할 색상 모드를 선택하세요. 시스템 설정은 Windows 설정을 자동으로 따릅니다.</value></data>
   <data name="ThemeSystem" xml:space="preserve"><value>시스템 설정 사용</value></data>

@@ -58,6 +58,9 @@
   <data name="GroupOperationFailed" xml:space="preserve"><value>No se pudieron actualizar los grupos de fuentes: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Volver</value></data>
   <data name="Appearance" xml:space="preserve"><value>Apariencia</value></data>
+  <data name="RefreshInterval" xml:space="preserve"><value>Intervalo de actualización</value></data>
+  <data name="RefreshIntervalDescription" xml:space="preserve"><value>Actualiza automáticamente todas las fuentes con este intervalo.</value></data>
+  <data name="Minutes" xml:space="preserve"><value>minutos</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Tema de la aplicación</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Elige el modo de color que usa FluxReader. La configuración del sistema sigue Windows automáticamente.</value></data>
   <data name="ThemeSystem" xml:space="preserve"><value>Usar configuración del sistema</value></data>

@@ -58,6 +58,9 @@
   <data name="GroupOperationFailed" xml:space="preserve"><value>Couldn't update feed groups: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Back</value></data>
   <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="RefreshInterval" xml:space="preserve"><value>Refresh interval</value></data>
+  <data name="RefreshIntervalDescription" xml:space="preserve"><value>Automatically refresh all feeds at this interval.</value></data>
+  <data name="Minutes" xml:space="preserve"><value>minutes</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>App theme</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Choose the color mode FluxReader uses. Use system setting follows Windows automatically.</value></data>
   <data name="ThemeSystem" xml:space="preserve"><value>Use system setting</value></data>

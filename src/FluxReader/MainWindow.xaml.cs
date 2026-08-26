@@ -22,11 +22,12 @@ public sealed partial class MainWindow : Window
     private const double MaximumArticleListPaneWidth = 720;
     private const double MinimumReaderPaneWidth = 360;
     private const double SplitterWidth = 8;
+    private const int DefaultRefreshIntervalMinutes = 15;
 
     private readonly CancellationTokenSource _lifetime = new();
     private readonly DispatcherTimer _refreshTimer = new()
     {
-        Interval = TimeSpan.FromMinutes(15)
+        Interval = TimeSpan.FromMinutes(DefaultRefreshIntervalMinutes)
     };
     private AppSettings _settings = new();
     private bool _settingsLoaded;
@@ -97,13 +98,18 @@ public sealed partial class MainWindow : Window
         AppLanguage? languagePreference = _settings.Language is { } savedLanguage && Enum.IsDefined(savedLanguage)
             ? savedLanguage
             : null;
-        _settings = _settings with { Language = languagePreference };
+        _settings = _settings with
+        {
+            Language = languagePreference,
+            RefreshIntervalMinutes = NormalizeRefreshInterval(_settings.RefreshIntervalMinutes)
+        };
         App.Current.Localization.SetLanguage(
             App.Current.Localization.ResolveLanguage(languagePreference));
         ApplyLocalization();
         ViewModel.ApplyLocalization();
         ApplyTheme(_settings.Theme);
         ApplySavedPaneWidths();
+        ApplyRefreshInterval(_settings.RefreshIntervalMinutes);
         _settingsLoaded = true;
         await ViewModel.InitializeAsync(_lifetime.Token);
         if (ViewModel.Feeds.Count > 0 && ViewModel.RefreshCommand.CanExecute(null))
@@ -288,10 +294,14 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        settingsPage.Initialize(_settings.Theme, App.Current.Localization.CurrentLanguage);
+        settingsPage.Initialize(
+            _settings.Theme,
+            App.Current.Localization.CurrentLanguage,
+            _settings.RefreshIntervalMinutes);
         settingsPage.BackRequested += SettingsPage_BackRequested;
         settingsPage.ThemeChanged += SettingsPage_ThemeChanged;
         settingsPage.LanguageChanged += SettingsPage_LanguageChanged;
+        settingsPage.RefreshIntervalChanged += SettingsPage_RefreshIntervalChanged;
         SettingsFrame.Visibility = Visibility.Visible;
     }
 
@@ -341,6 +351,19 @@ public sealed partial class MainWindow : Window
         await SaveSettingsAsync();
     }
 
+    private async void SettingsPage_RefreshIntervalChanged(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        var refreshIntervalMinutes = NormalizeRefreshInterval(settingsPage.RefreshIntervalMinutes);
+        ApplyRefreshInterval(refreshIntervalMinutes);
+        _settings = _settings with { RefreshIntervalMinutes = refreshIntervalMinutes };
+        await SaveSettingsAsync();
+    }
+
     private void SettingsPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
 
     private void AboutPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
@@ -352,6 +375,7 @@ public sealed partial class MainWindow : Window
             settingsPage.BackRequested -= SettingsPage_BackRequested;
             settingsPage.ThemeChanged -= SettingsPage_ThemeChanged;
             settingsPage.LanguageChanged -= SettingsPage_LanguageChanged;
+            settingsPage.RefreshIntervalChanged -= SettingsPage_RefreshIntervalChanged;
         }
         else if (SettingsFrame.Content is AboutPage aboutPage)
         {
@@ -371,6 +395,21 @@ public sealed partial class MainWindow : Window
             AppTheme.Dark => ElementTheme.Dark,
             _ => ElementTheme.Default
         };
+    }
+
+    private void ApplyRefreshInterval(int refreshIntervalMinutes)
+    {
+        var restartTimer = _refreshTimer.IsEnabled;
+        if (restartTimer)
+        {
+            _refreshTimer.Stop();
+        }
+
+        _refreshTimer.Interval = TimeSpan.FromMinutes(refreshIntervalMinutes);
+        if (restartTimer)
+        {
+            _refreshTimer.Start();
+        }
     }
 
     private void ApplyLocalization()
@@ -675,6 +714,9 @@ public sealed partial class MainWindow : Window
     }
 
     private static bool IsValidSavedWidth(double width) => double.IsFinite(width) && width > 0;
+
+    private static int NormalizeRefreshInterval(int refreshIntervalMinutes) =>
+        refreshIntervalMinutes > 0 ? refreshIntervalMinutes : DefaultRefreshIntervalMinutes;
 
     private static bool TryGetKeyboardResizeDelta(KeyRoutedEventArgs e, out double delta)
     {

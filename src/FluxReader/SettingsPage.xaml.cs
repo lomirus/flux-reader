@@ -3,16 +3,24 @@ using FluxReader.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
+using Windows.Globalization.NumberFormatting;
 
 namespace FluxReader;
 
 public sealed partial class SettingsPage : Page
 {
     private bool _initialized;
+    private int _refreshIntervalMinutes;
 
     public SettingsPage()
     {
         InitializeComponent();
+        RefreshIntervalNumberBox.NumberFormatter = new DecimalFormatter
+        {
+            FractionDigits = 0,
+            IntegerDigits = 1,
+            IsGrouped = false
+        };
     }
 
     public event EventHandler? BackRequested;
@@ -21,14 +29,20 @@ public sealed partial class SettingsPage : Page
 
     public event EventHandler? LanguageChanged;
 
+    public event EventHandler? RefreshIntervalChanged;
+
     public AppTheme SelectedTheme => (AppTheme)ThemeSelector.SelectedIndex;
 
     public AppLanguage SelectedLanguage => (AppLanguage)LanguageSelector.SelectedIndex;
 
-    public void Initialize(AppTheme theme, AppLanguage language)
+    public int RefreshIntervalMinutes => _refreshIntervalMinutes;
+
+    public void Initialize(AppTheme theme, AppLanguage language, int refreshIntervalMinutes)
     {
         ThemeSelector.SelectedIndex = (int)theme;
         LanguageSelector.SelectedIndex = (int)language;
+        _refreshIntervalMinutes = refreshIntervalMinutes;
+        RefreshIntervalNumberBox.Value = refreshIntervalMinutes;
         _initialized = true;
         ApplyLocalization();
     }
@@ -49,6 +63,13 @@ public sealed partial class SettingsPage : Page
         LightThemeItem.Content = localization.GetString("ThemeLight");
         DarkThemeItem.Content = localization.GetString("ThemeDark");
         RefreshThemeSelectionBox();
+        FeedsHeaderText.Text = localization.GetString("Feeds");
+        RefreshIntervalTitleText.Text = localization.GetString("RefreshInterval");
+        RefreshIntervalDescriptionText.Text = localization.GetString("RefreshIntervalDescription");
+        RefreshIntervalUnitText.Text = localization.GetString("Minutes");
+        AutomationProperties.SetName(
+            RefreshIntervalNumberBox,
+            localization.GetString("RefreshInterval"));
         LanguageHeaderText.Text = localization.GetString("Language");
         LanguageTitleText.Text = localization.GetString("ApplicationLanguage");
         LanguageDescriptionText.Text = localization.GetString("LanguageDescription");
@@ -94,5 +115,35 @@ public sealed partial class SettingsPage : Page
         {
             LanguageChanged?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    private void RefreshIntervalNumberBox_ValueChanged(
+        NumberBox sender,
+        NumberBoxValueChangedEventArgs args)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        if (!double.IsFinite(args.NewValue) ||
+            args.NewValue < 1 ||
+            args.NewValue > int.MaxValue ||
+            args.NewValue != Math.Truncate(args.NewValue))
+        {
+            _initialized = false;
+            sender.Value = _refreshIntervalMinutes;
+            _initialized = true;
+            return;
+        }
+
+        var refreshIntervalMinutes = (int)args.NewValue;
+        if (refreshIntervalMinutes == _refreshIntervalMinutes)
+        {
+            return;
+        }
+
+        _refreshIntervalMinutes = refreshIntervalMinutes;
+        RefreshIntervalChanged?.Invoke(this, EventArgs.Empty);
     }
 }
