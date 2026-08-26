@@ -60,6 +60,7 @@
                             <TextBlock x:Name="ThemeTitleText" FontWeight="SemiBold" />
                             <TextBlock
                                 x:Name="ThemeDescriptionText"
+                                HorizontalAlignment="Left"
                                 MaxWidth="460"
                                 Opacity="0.65"
                                 TextWrapping="Wrap" />
@@ -98,6 +99,7 @@
                             <TextBlock x:Name="LanguageTitleText" FontWeight="SemiBold" />
                             <TextBlock
                                 x:Name="LanguageDescriptionText"
+                                HorizontalAlignment="Left"
                                 MaxWidth="460"
                                 Opacity="0.65"
                                 TextWrapping="Wrap" />
