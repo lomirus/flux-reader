@@ -63,7 +63,6 @@ public sealed partial class MainWindow : Window
         _settings = await App.Current.Settings.LoadAsync(_lifetime.Token);
         ApplyTheme(_settings.Theme);
         ApplySavedPaneWidths();
-        ThemeSelector.SelectedIndex = (int)_settings.Theme;
         _settingsLoaded = true;
         await ViewModel.InitializeAsync(_lifetime.Token);
         _refreshTimer.Start();
@@ -156,17 +155,51 @@ public sealed partial class MainWindow : Window
         HideArticleReader();
     }
 
-    private async void ThemeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void Settings_Click(object sender, RoutedEventArgs e)
     {
-        if (!_settingsLoaded || ThemeSelector.SelectedIndex < 0)
+        if (!_settingsLoaded || SettingsFrame.Visibility == Visibility.Visible)
         {
             return;
         }
 
-        var theme = (AppTheme)ThemeSelector.SelectedIndex;
+        SettingsFrame.Navigate(typeof(SettingsPage));
+        if (SettingsFrame.Content is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        settingsPage.Initialize(_settings.Theme);
+        settingsPage.BackRequested += SettingsPage_BackRequested;
+        settingsPage.ThemeChanged += SettingsPage_ThemeChanged;
+        SettingsFrame.Visibility = Visibility.Visible;
+    }
+
+    private async void SettingsPage_ThemeChanged(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        var theme = settingsPage.SelectedTheme;
         ApplyTheme(theme);
         _settings = _settings with { Theme = theme };
         await SaveSettingsAsync();
+    }
+
+    private void SettingsPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
+
+    private void CloseSettingsPage()
+    {
+        if (SettingsFrame.Content is SettingsPage settingsPage)
+        {
+            settingsPage.BackRequested -= SettingsPage_BackRequested;
+            settingsPage.ThemeChanged -= SettingsPage_ThemeChanged;
+        }
+
+        SettingsFrame.Visibility = Visibility.Collapsed;
+        SettingsFrame.Content = null;
+        SettingsFrame.BackStack.Clear();
     }
 
     private void ApplyTheme(AppTheme theme)
@@ -327,6 +360,7 @@ public sealed partial class MainWindow : Window
     private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
         Closed -= MainWindow_Closed;
+        CloseSettingsPage();
         RootGrid.ActualThemeChanged -= RootGrid_ActualThemeChanged;
         _refreshTimer.Stop();
         _refreshTimer.Tick -= RefreshTimer_Tick;

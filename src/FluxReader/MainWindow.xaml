@@ -83,16 +83,13 @@
                 Height="20"
                 Margin="8,0"
                 IsActive="{Binding IsBusy}" />
-            <ComboBox
-                x:Name="ThemeSelector"
+            <Button
                 Grid.Column="6"
-                MinWidth="104"
-                SelectionChanged="ThemeSelector_SelectionChanged"
-                ToolTipService.ToolTip="应用主题">
-                <ComboBoxItem Content="跟随系统" />
-                <ComboBoxItem Content="亮色" />
-                <ComboBoxItem Content="暗色" />
-            </ComboBox>
+                AutomationProperties.Name="设置"
+                Click="Settings_Click"
+                ToolTipService.ToolTip="设置">
+                <FontIcon FontSize="14" Glyph="&#xE713;" />
+            </Button>
         </Grid>
 
         <Grid
@@ -357,5 +354,12 @@
             IsOpen="{Binding IsStatusOpen, Mode=TwoWay}"
             Message="{Binding StatusMessage}"
             Severity="Informational" />
+
+        <Frame
+            x:Name="SettingsFrame"
+            Grid.Row="1"
+            Grid.RowSpan="2"
+            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+            Visibility="Collapsed" />
     </Grid>
 </Window>
