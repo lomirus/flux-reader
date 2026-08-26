@@ -4,6 +4,25 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="WideSettingsLayout">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="824" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="SettingsContent.Width" Value="760" />
+                        <Setter Target="SettingsContent.HorizontalAlignment" Value="Center" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="NarrowSettingsLayout">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -34,11 +53,16 @@
                 FontWeight="SemiBold" />
         </Grid>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer
+            Grid.Row="1"
+            HorizontalContentAlignment="Stretch"
+            HorizontalScrollBarVisibility="Disabled"
+            HorizontalScrollMode="Disabled"
+            VerticalScrollBarVisibility="Auto">
             <StackPanel
-                MaxWidth="760"
+                x:Name="SettingsContent"
                 Margin="32,24,32,40"
-                HorizontalAlignment="Center"
+                HorizontalAlignment="Stretch"
                 Spacing="12">
                 <TextBlock
                     x:Name="AppearanceHeaderText"
