@@ -52,9 +52,6 @@ public sealed partial class SettingsPage : Page
         LanguageTitleText.Text = localization.GetString("ApplicationLanguage");
         LanguageDescriptionText.Text = localization.GetString("LanguageDescription");
         AutomationProperties.SetName(LanguageSelector, localization.GetString("ApplicationLanguage"));
-        SimplifiedChineseItem.Content = localization.GetString("LanguageSimplifiedChinese");
-        TraditionalChineseItem.Content = localization.GetString("LanguageTraditionalChinese");
-        EnglishItem.Content = localization.GetString("LanguageEnglish");
     }
 
     private void BackButton_Click(object sender, RoutedEventArgs e) =>

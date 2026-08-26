@@ -105,12 +105,22 @@
                         <ComboBox
                             x:Name="LanguageSelector"
                             Grid.Column="1"
-                            MinWidth="152"
+                            MinWidth="220"
                             VerticalAlignment="Center"
                             SelectionChanged="LanguageSelector_SelectionChanged">
-                            <ComboBoxItem x:Name="SimplifiedChineseItem" />
-                            <ComboBoxItem x:Name="TraditionalChineseItem" />
-                            <ComboBoxItem x:Name="EnglishItem" />
+                            <ComboBoxItem Content="简体中文" />
+                            <ComboBoxItem Content="繁體中文" />
+                            <ComboBoxItem Content="English" />
+                            <ComboBoxItem Content="Français" />
+                            <ComboBoxItem Content="Deutsch" />
+                            <ComboBoxItem Content="Italiano" />
+                            <ComboBoxItem Content="Español (España)" />
+                            <ComboBoxItem Content="Español (Latinoamérica)" />
+                            <ComboBoxItem Content="Português (Brasil)" />
+                            <ComboBoxItem Content="Polski" />
+                            <ComboBoxItem Content="Русский" />
+                            <ComboBoxItem Content="日本語" />
+                            <ComboBoxItem Content="한국어" />
                         </ComboBox>
                     </Grid>
                 </Border>

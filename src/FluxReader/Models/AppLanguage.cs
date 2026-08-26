@@ -4,5 +4,15 @@ public enum AppLanguage
 {
     SimplifiedChinese,
     TraditionalChinese,
-    English
+    English,
+    French,
+    German,
+    Italian,
+    SpanishSpain,
+    SpanishLatinAmerica,
+    PortugueseBrazil,
+    Polish,
+    Russian,
+    Japanese,
+    Korean
 }

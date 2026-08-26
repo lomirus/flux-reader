@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="assembly"><xsd:complexType><xsd:attribute name="alias" type="xsd:string" /><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /><xsd:element name="comment" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" /><xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" /><xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppIconAutomation" xml:space="preserve"><value>Значок FluxReader</value></data>
+  <data name="AddFeed" xml:space="preserve"><value>Добавить ленту</value></data>
+  <data name="RefreshAllFeeds" xml:space="preserve"><value>Обновить все ленты</value></data>
+  <data name="MarkAllRead" xml:space="preserve"><value>Отметить всё как прочитанное</value></data>
+  <data name="RemoveCurrentFeed" xml:space="preserve"><value>Удалить текущую ленту</value></data>
+  <data name="Settings" xml:space="preserve"><value>Параметры</value></data>
+  <data name="AllArticles" xml:space="preserve"><value>Все статьи</value></data>
+  <data name="UnreadArticles" xml:space="preserve"><value>Непрочитанные статьи</value></data>
+  <data name="Feeds" xml:space="preserve"><value>Ленты</value></data>
+  <data name="ResizeFeedPane" xml:space="preserve"><value>Изменить размер области лент</value></data>
+  <data name="ResizeArticleListPane" xml:space="preserve"><value>Изменить размер области списка статей</value></data>
+  <data name="ResizePaneTooltip" xml:space="preserve"><value>Перетащите, чтобы изменить размер; дважды щёлкните, чтобы сбросить</value></data>
+  <data name="SelectArticle" xml:space="preserve"><value>Выберите статью</value></data>
+  <data name="ArticleContentHint" xml:space="preserve"><value>Здесь появится содержимое статьи</value></data>
+  <data name="OpenInBrowser" xml:space="preserve"><value>Открыть в браузере</value></data>
+  <data name="FeedAddress" xml:space="preserve"><value>Адрес RSS- или Atom-ленты</value></data>
+  <data name="Add" xml:space="preserve"><value>Добавить</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="RemoveFeedTitle" xml:space="preserve"><value>Удалить ленту?</value></data>
+  <data name="RemoveFeedMessage" xml:space="preserve"><value>«{0}» и сохранённые локально статьи будут удалены.</value></data>
+  <data name="Remove" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Внешний вид</value></data>
+  <data name="ApplicationTheme" xml:space="preserve"><value>Тема приложения</value></data>
+  <data name="ThemeDescription" xml:space="preserve"><value>Выберите цветовой режим FluxReader. Системная настройка автоматически соответствует настройке Windows.</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>Использовать системную настройку</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Светлая</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Тёмная</value></data>
+  <data name="Language" xml:space="preserve"><value>Язык</value></data>
+  <data name="ApplicationLanguage" xml:space="preserve"><value>Язык приложения</value></data>
+  <data name="LanguageDescription" xml:space="preserve"><value>Выберите язык интерфейса FluxReader. Изменения применяются сразу.</value></data>
+  <data name="ArticleCountOne" xml:space="preserve"><value>{0} статья</value></data>
+  <data name="ArticleCountOther" xml:space="preserve"><value>Статей: {0}</value></data>
+  <data name="NotificationUnavailable" xml:space="preserve"><value>Уведомления Windows недоступны. Подробности записаны в notifications.log; это не влияет на чтение и обновление.</value></data>
+  <data name="InitializationFailed" xml:space="preserve"><value>Не удалось выполнить инициализацию: {0}</value></data>
+  <data name="InvalidFeedAddress" xml:space="preserve"><value>Введите допустимый адрес HTTP- или HTTPS-ленты.</value></data>
+  <data name="SubscribedToFeed" xml:space="preserve"><value>Вы подписались на «{0}».</value></data>
+  <data name="AddFeedFailed" xml:space="preserve"><value>Не удалось добавить ленту: {0}</value></data>
+  <data name="AddFeedFirst" xml:space="preserve"><value>Сначала добавьте RSS- или Atom-ленту.</value></data>
+  <data name="RefreshCompleteOne" xml:space="preserve"><value>Обновление завершено. Найдена {0} новая статья.</value></data>
+  <data name="RefreshCompleteOther" xml:space="preserve"><value>Обновление завершено. Новых статей: {0}.</value></data>
+  <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>Обновление завершено. Новых статей: {0}; лент с ошибками: {1}.</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>Все статьи в текущей области отмечены как прочитанные.</value></data>
+  <data name="ArticleLinkUnavailable" xml:space="preserve"><value>У этой статьи нет исходной ссылки, которую можно открыть.</value></data>
+  <data name="FeedRemoved" xml:space="preserve"><value>«{0}» удалена.</value></data>
+  <data name="EmptyFeedResponse" xml:space="preserve"><value>Сервер ленты вернул пустой ответ.</value></data>
+  <data name="SubscriptionSaveFailed" xml:space="preserve"><value>Не удалось сохранить ленту.</value></data>
+  <data name="FeedContentEmpty" xml:space="preserve"><value>Содержимое ленты пусто.</value></data>
+  <data name="FeedParseFailed" xml:space="preserve"><value>Не удалось обработать эту RSS- или Atom-ленту.</value></data>
+  <data name="InvalidFeedFormat" xml:space="preserve"><value>Этот адрес не является допустимой RSS- или Atom-лентой.</value></data>
+  <data name="MissingRssChannel" xml:space="preserve"><value>В RSS-ленте отсутствует элемент channel.</value></data>
+  <data name="UntitledArticle" xml:space="preserve"><value>Статья без названия</value></data>
+  <data name="NotificationNewArticleOne" xml:space="preserve"><value>Найдена {0} новая статья</value></data>
+  <data name="NotificationNewArticleOther" xml:space="preserve"><value>Новые статьи: {0}</value></data>
+  <data name="NotificationOpenFluxReader" xml:space="preserve"><value>Откройте FluxReader, чтобы посмотреть подробности</value></data>
+</root>

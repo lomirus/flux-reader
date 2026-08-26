@@ -43,11 +43,10 @@ public sealed class LocalizationService
         CultureInfo.DefaultThreadCurrentUICulture = CurrentCulture;
     }
 
-    public AppLanguage ResolveLanguage(AppLanguage? language) => language switch
-    {
-        AppLanguage.SimplifiedChinese or AppLanguage.TraditionalChinese or AppLanguage.English => language.Value,
-        _ => DetectedSystemLanguage
-    };
+    public AppLanguage ResolveLanguage(AppLanguage? language) =>
+        language is { } value && Enum.IsDefined(value)
+            ? value
+            : DetectedSystemLanguage;
 
     public string GetString(string key) =>
         _resources.GetValue(key, _resourceContext).ValueAsString;
@@ -66,34 +65,60 @@ public sealed class LocalizationService
 
     internal static AppLanguage DetectSystemLanguage(string languageTag)
     {
-        if (languageTag.StartsWith("en", StringComparison.OrdinalIgnoreCase))
+        var subtags = languageTag.Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries);
+        if (subtags.Length == 0)
         {
             return AppLanguage.English;
         }
 
-        if (!languageTag.StartsWith("zh", StringComparison.OrdinalIgnoreCase))
+        var language = subtags[0];
+        if (language.Equals("zh", StringComparison.OrdinalIgnoreCase))
         {
-            return AppLanguage.English;
+            return subtags.Any(subtag =>
+                    subtag.Equals("Hant", StringComparison.OrdinalIgnoreCase) ||
+                    subtag.Equals("CHT", StringComparison.OrdinalIgnoreCase) ||
+                    subtag.Equals("TW", StringComparison.OrdinalIgnoreCase) ||
+                    subtag.Equals("HK", StringComparison.OrdinalIgnoreCase) ||
+                    subtag.Equals("MO", StringComparison.OrdinalIgnoreCase))
+                ? AppLanguage.TraditionalChinese
+                : AppLanguage.SimplifiedChinese;
         }
 
-        var subtags = languageTag.Split('-', StringSplitOptions.RemoveEmptyEntries);
-        if (subtags.Any(subtag =>
-                subtag.Equals("Hant", StringComparison.OrdinalIgnoreCase) ||
-                subtag.Equals("CHT", StringComparison.OrdinalIgnoreCase) ||
-                subtag.Equals("TW", StringComparison.OrdinalIgnoreCase) ||
-                subtag.Equals("HK", StringComparison.OrdinalIgnoreCase) ||
-                subtag.Equals("MO", StringComparison.OrdinalIgnoreCase)))
+        if (language.Equals("es", StringComparison.OrdinalIgnoreCase))
         {
-            return AppLanguage.TraditionalChinese;
+            return subtags.Any(subtag => subtag.Equals("ES", StringComparison.OrdinalIgnoreCase))
+                ? AppLanguage.SpanishSpain
+                : AppLanguage.SpanishLatinAmerica;
         }
 
-        return AppLanguage.SimplifiedChinese;
+        return language.ToLowerInvariant() switch
+        {
+            "fr" => AppLanguage.French,
+            "de" => AppLanguage.German,
+            "it" => AppLanguage.Italian,
+            "pt" => AppLanguage.PortugueseBrazil,
+            "pl" => AppLanguage.Polish,
+            "ru" => AppLanguage.Russian,
+            "ja" => AppLanguage.Japanese,
+            "ko" => AppLanguage.Korean,
+            _ => AppLanguage.English
+        };
     }
 
     private static string GetLanguageTag(AppLanguage language) => language switch
     {
         AppLanguage.TraditionalChinese => "zh-TW",
         AppLanguage.English => "en-US",
+        AppLanguage.French => "fr-FR",
+        AppLanguage.German => "de-DE",
+        AppLanguage.Italian => "it-IT",
+        AppLanguage.SpanishSpain => "es-ES",
+        AppLanguage.SpanishLatinAmerica => "es-419",
+        AppLanguage.PortugueseBrazil => "pt-BR",
+        AppLanguage.Polish => "pl-PL",
+        AppLanguage.Russian => "ru-RU",
+        AppLanguage.Japanese => "ja-JP",
+        AppLanguage.Korean => "ko-KR",
         _ => "zh-CN"
     };
 }

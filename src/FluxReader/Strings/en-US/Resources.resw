@@ -48,9 +48,6 @@
   <data name="Language" xml:space="preserve"><value>Language</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>App language</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>Choose FluxReader's display language. Changes take effect immediately.</value></data>
-  <data name="LanguageSimplifiedChinese" xml:space="preserve"><value>Simplified Chinese</value></data>
-  <data name="LanguageTraditionalChinese" xml:space="preserve"><value>Traditional Chinese</value></data>
-  <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="ArticleCountOne" xml:space="preserve"><value>{0} article</value></data>
   <data name="ArticleCountOther" xml:space="preserve"><value>{0} articles</value></data>
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows notifications are unavailable. Details were written to notifications.log; reading and refreshing are unaffected.</value></data>

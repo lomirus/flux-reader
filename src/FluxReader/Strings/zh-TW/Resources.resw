@@ -48,9 +48,6 @@
   <data name="Language" xml:space="preserve"><value>語言</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>應用程式語言</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>選擇 FluxReader 的顯示語言。變更會立即生效。</value></data>
-  <data name="LanguageSimplifiedChinese" xml:space="preserve"><value>簡體中文</value></data>
-  <data name="LanguageTraditionalChinese" xml:space="preserve"><value>繁體中文</value></data>
-  <data name="LanguageEnglish" xml:space="preserve"><value>英文</value></data>
   <data name="ArticleCountOne" xml:space="preserve"><value>{0} 篇文章</value></data>
   <data name="ArticleCountOther" xml:space="preserve"><value>{0} 篇文章</value></data>
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows 系統通知目前無法使用，錯誤已寫入 notifications.log；閱讀和重新整理功能不受影響。</value></data>

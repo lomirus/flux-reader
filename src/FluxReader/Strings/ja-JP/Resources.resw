@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="assembly"><xsd:complexType><xsd:attribute name="alias" type="xsd:string" /><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /><xsd:element name="comment" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" /><xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" /><xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppIconAutomation" xml:space="preserve"><value>FluxReader アイコン</value></data>
+  <data name="AddFeed" xml:space="preserve"><value>フィードを追加</value></data>
+  <data name="RefreshAllFeeds" xml:space="preserve"><value>すべてのフィードを更新</value></data>
+  <data name="MarkAllRead" xml:space="preserve"><value>すべて既読にする</value></data>
+  <data name="RemoveCurrentFeed" xml:space="preserve"><value>現在のフィードを削除</value></data>
+  <data name="Settings" xml:space="preserve"><value>設定</value></data>
+  <data name="AllArticles" xml:space="preserve"><value>すべての記事</value></data>
+  <data name="UnreadArticles" xml:space="preserve"><value>未読の記事</value></data>
+  <data name="Feeds" xml:space="preserve"><value>フィード</value></data>
+  <data name="ResizeFeedPane" xml:space="preserve"><value>フィードペインのサイズを変更</value></data>
+  <data name="ResizeArticleListPane" xml:space="preserve"><value>記事一覧ペインのサイズを変更</value></data>
+  <data name="ResizePaneTooltip" xml:space="preserve"><value>ドラッグしてサイズを変更、ダブルクリックしてリセット</value></data>
+  <data name="SelectArticle" xml:space="preserve"><value>記事を選択してください</value></data>
+  <data name="ArticleContentHint" xml:space="preserve"><value>記事の内容がここに表示されます</value></data>
+  <data name="OpenInBrowser" xml:space="preserve"><value>ブラウザーで開く</value></data>
+  <data name="FeedAddress" xml:space="preserve"><value>RSS または Atom のアドレス</value></data>
+  <data name="Add" xml:space="preserve"><value>追加</value></data>
+  <data name="Cancel" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="RemoveFeedTitle" xml:space="preserve"><value>フィードを削除しますか？</value></data>
+  <data name="RemoveFeedMessage" xml:space="preserve"><value>「{0}」とローカルに保存されている記事が削除されます。</value></data>
+  <data name="Remove" xml:space="preserve"><value>削除</value></data>
+  <data name="Back" xml:space="preserve"><value>戻る</value></data>
+  <data name="Appearance" xml:space="preserve"><value>外観</value></data>
+  <data name="ApplicationTheme" xml:space="preserve"><value>アプリのテーマ</value></data>
+  <data name="ThemeDescription" xml:space="preserve"><value>FluxReader で使用するカラーモードを選択します。システム設定を使用すると、Windows の設定に自動的に従います。</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>システム設定を使用</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>ライト</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>ダーク</value></data>
+  <data name="Language" xml:space="preserve"><value>言語</value></data>
+  <data name="ApplicationLanguage" xml:space="preserve"><value>アプリの言語</value></data>
+  <data name="LanguageDescription" xml:space="preserve"><value>FluxReader の表示言語を選択します。変更はすぐに反映されます。</value></data>
+  <data name="ArticleCountOne" xml:space="preserve"><value>記事 {0} 件</value></data>
+  <data name="ArticleCountOther" xml:space="preserve"><value>記事 {0} 件</value></data>
+  <data name="NotificationUnavailable" xml:space="preserve"><value>Windows 通知を利用できません。詳細は notifications.log に記録されました。閲覧と更新には影響しません。</value></data>
+  <data name="InitializationFailed" xml:space="preserve"><value>初期化に失敗しました: {0}</value></data>
+  <data name="InvalidFeedAddress" xml:space="preserve"><value>有効な HTTP または HTTPS のフィードアドレスを入力してください。</value></data>
+  <data name="SubscribedToFeed" xml:space="preserve"><value>「{0}」を購読しました。</value></data>
+  <data name="AddFeedFailed" xml:space="preserve"><value>フィードを追加できませんでした: {0}</value></data>
+  <data name="AddFeedFirst" xml:space="preserve"><value>先に RSS または Atom フィードを追加してください。</value></data>
+  <data name="RefreshCompleteOne" xml:space="preserve"><value>更新が完了しました。新しい記事が {0} 件見つかりました。</value></data>
+  <data name="RefreshCompleteOther" xml:space="preserve"><value>更新が完了しました。新しい記事が {0} 件見つかりました。</value></data>
+  <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>更新が完了しました。新しい記事: {0} 件、失敗したフィード: {1} 件。</value></data>
+  <data name="MarkedAllRead" xml:space="preserve"><value>現在の範囲にあるすべての記事を既読にしました。</value></data>
+  <data name="ArticleLinkUnavailable" xml:space="preserve"><value>この記事には開くことのできる元のリンクがありません。</value></data>
+  <data name="FeedRemoved" xml:space="preserve"><value>「{0}」を削除しました。</value></data>
+  <data name="EmptyFeedResponse" xml:space="preserve"><value>フィードサーバーから空の応答が返されました。</value></data>
+  <data name="SubscriptionSaveFailed" xml:space="preserve"><value>フィードを保存できませんでした。</value></data>
+  <data name="FeedContentEmpty" xml:space="preserve"><value>フィードの内容が空です。</value></data>
+  <data name="FeedParseFailed" xml:space="preserve"><value>この RSS または Atom フィードを解析できませんでした。</value></data>
+  <data name="InvalidFeedFormat" xml:space="preserve"><value>このアドレスは有効な RSS または Atom フィードではありません。</value></data>
+  <data name="MissingRssChannel" xml:space="preserve"><value>RSS フィードに channel 要素がありません。</value></data>
+  <data name="UntitledArticle" xml:space="preserve"><value>無題の記事</value></data>
+  <data name="NotificationNewArticleOne" xml:space="preserve"><value>新しい記事が {0} 件見つかりました</value></data>
+  <data name="NotificationNewArticleOther" xml:space="preserve"><value>新しい記事が {0} 件見つかりました</value></data>
+  <data name="NotificationOpenFluxReader" xml:space="preserve"><value>FluxReader を開いて確認してください</value></data>
+</root>
