@@ -31,6 +31,7 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         Title = "FluxReader";
+        SetWindowIcon();
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
 
@@ -43,6 +44,15 @@ public sealed partial class MainWindow : Window
     }
 
     public MainViewModel ViewModel { get; }
+
+    private void SetWindowIcon()
+    {
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "fluxreader-icon.ico");
+        if (File.Exists(iconPath))
+        {
+            AppWindow.SetIcon(iconPath);
+        }
+    }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {

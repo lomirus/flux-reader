@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1024"
+  height="1024"
+  viewBox="0 0 1024 1024"
+  fill="none"
+  role="img"
+  aria-labelledby="title description">
+  <title id="title">FluxReader app icon</title>
+  <desc id="description">A white flowing RSS signal on a blue-to-violet rounded square.</desc>
+
+  <defs>
+    <linearGradient id="background" x1="168" y1="104" x2="856" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#39C2F1" />
+      <stop offset="0.48" stop-color="#428DEB" />
+      <stop offset="1" stop-color="#6752DD" />
+    </linearGradient>
+
+    <radialGradient id="light" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(258 184) rotate(48) scale(770 690)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.28" />
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.04" />
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="signal" x1="280" y1="326" x2="718" y2="758" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" />
+      <stop offset="1" stop-color="#E9F8FF" />
+    </linearGradient>
+
+    <clipPath id="tile">
+      <rect x="56" y="56" width="912" height="912" rx="224" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <rect x="56" y="56" width="912" height="912" rx="224" fill="url(#background)" />
+    <rect x="56" y="56" width="912" height="912" rx="224" fill="url(#light)" />
+
+    <!-- Quiet background currents reinforce the idea of a changing information stream. -->
+    <path
+      d="M-40 730C150 622 262 626 416 700C590 784 760 780 1068 574"
+      stroke="#FFFFFF"
+      stroke-opacity="0.08"
+      stroke-width="26"
+      stroke-linecap="round" />
+    <path
+      d="M-70 826C146 708 290 726 438 796C622 884 816 842 1082 670"
+      stroke="#FFFFFF"
+      stroke-opacity="0.055"
+      stroke-width="14"
+      stroke-linecap="round" />
+  </g>
+
+  <!-- RSS geometry with round terminals keeps the mark legible at 16–32 px. -->
+  <circle cx="304" cy="724" r="68" fill="url(#signal)" />
+  <path
+    d="M304 548C401.2 548 480 626.8 480 724"
+    stroke="url(#signal)"
+    stroke-width="76"
+    stroke-linecap="round" />
+  <path
+    d="M304 354C508.3 354 674 519.7 674 724"
+    stroke="url(#signal)"
+    stroke-width="76"
+    stroke-linecap="round" />
+
+  <!-- A lighter outer current turns the familiar RSS signal into a FluxReader signature. -->
+  <path
+    d="M304 252C564.7 252 776 463.3 776 724"
+    stroke="#FFFFFF"
+    stroke-opacity="0.38"
+    stroke-width="32"
+    stroke-linecap="round" />
+
+  <rect
+    x="60"
+    y="60"
+    width="904"
+    height="904"
+    rx="220"
+    stroke="#FFFFFF"
+    stroke-opacity="0.20"
+    stroke-width="8" />
+</svg>

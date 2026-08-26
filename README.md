@@ -40,6 +40,8 @@ tests/
 - `reader.db`：订阅、文章、已读与收藏状态
 - `settings.json`：主题等轻量设置
 
+品牌图标的可编辑矢量源文件位于 `assets/brand/fluxreader-icon.svg`；由它生成的 Windows 多尺寸图标位于 `assets/brand/fluxreader-icon.ico`。
+
 ## 构建与运行
 
 前置条件：Windows 11、.NET 10 SDK、Windows SDK 10.0.26100，以及 Windows App SDK 2.4 Runtime。Visual Studio 用户可安装 WinUI 应用开发工作负载。

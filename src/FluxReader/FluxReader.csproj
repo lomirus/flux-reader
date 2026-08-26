@@ -10,7 +10,7 @@
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
-    <ApplicationIcon />
+    <ApplicationIcon>..\..\assets\brand\fluxreader-icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,5 +21,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FluxReader.Core\FluxReader.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\assets\brand\fluxreader-icon.svg" Link="Assets\fluxreader-icon.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\..\assets\brand\fluxreader-icon.ico" Link="Assets\fluxreader-icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 </Project>

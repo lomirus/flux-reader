@@ -25,7 +25,14 @@
             Height="48"
             Padding="16,0">
             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                <FontIcon FontSize="18" Glyph="&#xE7C3;" />
+                <Image
+                    Width="24"
+                    Height="24"
+                    AutomationProperties.Name="FluxReader 图标">
+                    <Image.Source>
+                        <SvgImageSource UriSource="ms-appx:///Assets/fluxreader-icon.svg" />
+                    </Image.Source>
+                </Image>
                 <TextBlock FontSize="14" FontWeight="SemiBold" Text="FluxReader" />
             </StackPanel>
         </Grid>
