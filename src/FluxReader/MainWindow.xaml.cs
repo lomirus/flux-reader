@@ -1,6 +1,7 @@
 using FluxReader.Models;
 using FluxReader.Services;
 using FluxReader.ViewModels;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -34,6 +35,8 @@ public sealed partial class MainWindow : Window
         SetWindowIcon();
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
+        RootGrid.ActualThemeChanged += RootGrid_ActualThemeChanged;
+        UpdateTitleBarButtonColors();
 
         var app = App.Current;
         ViewModel = new MainViewModel(app.Repository, app.RefreshService, app.Notifications);
@@ -176,6 +179,16 @@ public sealed partial class MainWindow : Window
         };
     }
 
+    private void RootGrid_ActualThemeChanged(FrameworkElement sender, object args) =>
+        UpdateTitleBarButtonColors();
+
+    private void UpdateTitleBarButtonColors()
+    {
+        var isDarkTheme = RootGrid.ActualTheme == ElementTheme.Dark;
+        AppWindow.TitleBar.ButtonForegroundColor = isDarkTheme ? Colors.White : Colors.Black;
+        AppWindow.TitleBar.ButtonInactiveForegroundColor = Colors.Gray;
+    }
+
     private void HideArticleReader()
     {
         ArticleList.SelectedItem = null;
@@ -314,6 +327,7 @@ public sealed partial class MainWindow : Window
     private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
         Closed -= MainWindow_Closed;
+        RootGrid.ActualThemeChanged -= RootGrid_ActualThemeChanged;
         _refreshTimer.Stop();
         _refreshTimer.Tick -= RefreshTimer_Tick;
         _lifetime.Cancel();
