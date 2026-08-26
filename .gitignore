@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.idea/
+.vscode/
+.dotnet/
+.nuget/
+.appdata/
+*.user
+*.suo
+*.pfx
+AppPackages/
+BundleArtifacts/

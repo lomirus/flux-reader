@@ -1,0 +1,344 @@
+<Window
+    x:Class="FluxReader.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FluxReader"
+    xmlns:models="using:FluxReader.Models"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid
+            x:Name="AppTitleBar"
+            Grid.Row="0"
+            Height="48"
+            Padding="16,0">
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <FontIcon FontSize="18" Glyph="&#xE7C3;" />
+                <TextBlock FontSize="14" FontWeight="SemiBold" Text="FluxReader" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="12,8" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button
+                Grid.Column="0"
+                Click="AddFeed_Click"
+                ToolTipService.ToolTip="添加订阅">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <FontIcon FontSize="14" Glyph="&#xE710;" />
+                    <TextBlock Text="添加订阅" />
+                </StackPanel>
+            </Button>
+            <Button
+                Grid.Column="1"
+                Command="{Binding RefreshCommand}"
+                ToolTipService.ToolTip="刷新所有订阅">
+                <FontIcon FontSize="14" Glyph="&#xE72C;" />
+            </Button>
+            <Button
+                Grid.Column="2"
+                Command="{Binding MarkAllReadCommand}"
+                ToolTipService.ToolTip="全部标为已读">
+                <FontIcon FontSize="14" Glyph="&#xE73E;" />
+            </Button>
+            <Button
+                Grid.Column="3"
+                Click="DeleteFeed_Click"
+                ToolTipService.ToolTip="移除当前订阅">
+                <FontIcon FontSize="14" Glyph="&#xE74D;" />
+            </Button>
+
+            <ProgressRing
+                Grid.Column="5"
+                Width="20"
+                Height="20"
+                Margin="8,0"
+                IsActive="{Binding IsBusy}" />
+            <ComboBox
+                x:Name="ThemeSelector"
+                Grid.Column="6"
+                MinWidth="104"
+                SelectionChanged="ThemeSelector_SelectionChanged"
+                ToolTipService.ToolTip="应用主题">
+                <ComboBoxItem Content="跟随系统" />
+                <ComboBoxItem Content="亮色" />
+                <ComboBoxItem Content="暗色" />
+            </ComboBox>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="248" />
+                <ColumnDefinition Width="1" />
+                <ColumnDefinition Width="420" />
+                <ColumnDefinition Width="1" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0" Padding="10,8,10,12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Button
+                    Grid.Row="0"
+                    HorizontalContentAlignment="Stretch"
+                    Click="AllArticles_Click">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon FontSize="16" Glyph="&#xE8F1;" />
+                        <TextBlock Grid.Column="1" Text="所有文章" />
+                    </Grid>
+                </Button>
+                <Button
+                    Grid.Row="1"
+                    Margin="0,4,0,0"
+                    HorizontalContentAlignment="Stretch"
+                    Click="UnreadArticles_Click">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon FontSize="16" Glyph="&#xE8C3;" />
+                        <TextBlock Grid.Column="1" Text="未读文章" />
+                        <TextBlock Grid.Column="2" Opacity="0.7" Text="{Binding UnreadTotal}" />
+                    </Grid>
+                </Button>
+                <Button
+                    Grid.Row="2"
+                    Margin="0,4,0,0"
+                    HorizontalContentAlignment="Stretch"
+                    Click="StarredArticles_Click">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon FontSize="16" Glyph="&#xE735;" />
+                        <TextBlock Grid.Column="1" Text="已收藏" />
+                    </Grid>
+                </Button>
+
+                <TextBlock
+                    Grid.Row="5"
+                    Margin="8,0,0,8"
+                    FontSize="12"
+                    FontWeight="SemiBold"
+                    Opacity="0.65"
+                    Text="订阅源" />
+                <ListView
+                    x:Name="FeedList"
+                    Grid.Row="6"
+                    IsItemClickEnabled="True"
+                    ItemClick="FeedList_ItemClick"
+                    ItemsSource="{Binding Feeds}"
+                    SelectionMode="Single">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="8" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Feed">
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon FontSize="14" Glyph="&#xE789;" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{x:Bind Title}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Opacity="0.65"
+                                    Text="{x:Bind UnreadDisplay, Mode=OneWay}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+
+            <Rectangle Grid.Column="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid Padding="16,12,12,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        FontSize="20"
+                        FontWeight="SemiBold"
+                        Text="{Binding ArticleListTitle}" />
+                    <TextBlock
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Opacity="0.6"
+                        Text="{Binding ArticleCountText}" />
+                </Grid>
+                <ListView
+                    x:Name="ArticleList"
+                    Grid.Row="1"
+                    IsItemClickEnabled="True"
+                    ItemClick="ArticleList_ItemClick"
+                    ItemsSource="{Binding Articles}"
+                    SelectionMode="Single">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Article">
+                            <Grid Padding="14,12" ColumnSpacing="9">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    Text="{x:Bind UnreadGlyph, Mode=OneWay}" />
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        MaxLines="2"
+                                        Text="{x:Bind Title}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Opacity="0.65"
+                                        Text="{x:Bind FeedTitle}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        MaxLines="2"
+                                        Opacity="0.6"
+                                        Text="{x:Bind Summary}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="5">
+                                    <TextBlock
+                                        FontSize="11"
+                                        Opacity="0.55"
+                                        Text="{x:Bind PublishedDisplay}" />
+                                    <TextBlock
+                                        HorizontalAlignment="Right"
+                                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        Text="{x:Bind StarGlyph, Mode=OneWay}" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+
+            <Rectangle Grid.Column="3" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+            <Grid Grid.Column="4" Padding="28,18,28,24">
+                <Grid x:Name="ArticleEmptyView">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="10">
+                        <FontIcon FontSize="48" Glyph="&#xE8A5;" Opacity="0.3" />
+                        <TextBlock FontSize="20" FontWeight="SemiBold" Text="选择一篇文章" />
+                        <TextBlock Opacity="0.6" Text="文章内容将在这里显示" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid x:Name="ArticleReaderView" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock
+                        FontSize="30"
+                        FontWeight="SemiBold"
+                        MaxLines="4"
+                        Text="{Binding SelectedArticle.Title}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Grid.Row="1"
+                        Margin="0,10,0,0"
+                        Opacity="0.6"
+                        Text="{Binding SelectedArticle.Byline}"
+                        TextWrapping="Wrap" />
+                    <StackPanel Grid.Row="2" Margin="0,16,0,16" Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding ToggleStarCommand}" Content="{Binding StarActionLabel}" />
+                        <Button Command="{Binding OpenArticleCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="在浏览器中打开" />
+                                <FontIcon FontSize="12" Glyph="&#xE8A7;" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                        <TextBlock
+                            FontFamily="{ThemeResource ContentControlThemeFontFamily}"
+                            FontSize="16"
+                            IsTextSelectionEnabled="True"
+                            LineHeight="26"
+                            Text="{Binding SelectedArticle.DisplayContent}"
+                            TextWrapping="Wrap" />
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <InfoBar
+            Grid.Row="2"
+            Margin="16"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            IsClosable="True"
+            IsOpen="{Binding IsStatusOpen, Mode=TwoWay}"
+            Message="{Binding StatusMessage}"
+            Severity="Informational" />
+    </Grid>
+</Window>
