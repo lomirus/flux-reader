@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 using FluxReader.Core.Models;
 using FluxReader.Core.Services;
 using FluxReader.Data;
@@ -9,6 +10,7 @@ namespace FluxReader.Services;
 
 public sealed class RssRefreshService : IDisposable
 {
+    private const int MaximumWebsiteHtmlCharacters = 1_000_000;
     private readonly HttpClient _httpClient;
     private readonly LocalizationService _localization;
     private readonly RssFeedParser _parser;
@@ -50,7 +52,7 @@ public sealed class RssRefreshService : IDisposable
         CancellationToken cancellationToken = default)
     {
         EnsureSupportedUri(feedUri);
-        var download = await DownloadAsync(feedUri, null, null, cancellationToken);
+        var download = await DownloadAsync(feedUri, null, null, null, cancellationToken);
         if (download.ParsedFeed is null)
         {
             throw new InvalidOperationException(_localization.GetString("EmptyFeedResponse"));
@@ -72,6 +74,7 @@ public sealed class RssRefreshService : IDisposable
             feedUri,
             feed.ETag,
             feed.LastModifiedAt,
+            TryCreateHttpUri(feed.IconUrl),
             cancellationToken);
 
         if (download.NotModified)
@@ -98,6 +101,7 @@ public sealed class RssRefreshService : IDisposable
         Uri uri,
         string? etag,
         DateTimeOffset? lastModifiedAt,
+        Uri? existingIconUri,
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -120,12 +124,82 @@ public sealed class RssRefreshService : IDisposable
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         var parsedFeed = await _parser.ParseAsync(stream, response.RequestMessage?.RequestUri ?? uri, cancellationToken);
+        if (parsedFeed.IconUri is null)
+        {
+            var siteUri = parsedFeed.SiteUri ?? response.RequestMessage?.RequestUri ?? uri;
+            var iconUri = existingIconUri ?? await DiscoverWebsiteIconAsync(siteUri, cancellationToken);
+            parsedFeed = parsedFeed with { IconUri = iconUri };
+        }
+
         return new FeedDownload(
             parsedFeed,
             response.Headers.ETag?.ToString(),
             response.Content.Headers.LastModified,
             false);
     }
+
+    private async Task<Uri> DiscoverWebsiteIconAsync(Uri siteUri, CancellationToken cancellationToken)
+    {
+        var defaultIconUri = CreateDefaultIconUri(siteUri);
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, siteUri);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+            using var response = await _httpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+            if (!response.IsSuccessStatusCode ||
+                response.Content.Headers.ContentLength > MaximumWebsiteHtmlCharacters * 4)
+            {
+                return defaultIconUri;
+            }
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
+            var html = await ReadLimitedAsync(reader, cancellationToken);
+            var finalPageUri = response.RequestMessage?.RequestUri ?? siteUri;
+            return WebsiteIconParser.FindIconUri(html, finalPageUri) ?? CreateDefaultIconUri(finalPageUri);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return defaultIconUri;
+        }
+        catch (Exception exception) when (exception is HttpRequestException or IOException or InvalidOperationException)
+        {
+            return defaultIconUri;
+        }
+    }
+
+    private static async Task<string> ReadLimitedAsync(
+        StreamReader reader,
+        CancellationToken cancellationToken)
+    {
+        var html = new StringBuilder();
+        var buffer = new char[8_192];
+        while (html.Length < MaximumWebsiteHtmlCharacters)
+        {
+            var remaining = Math.Min(buffer.Length, MaximumWebsiteHtmlCharacters - html.Length);
+            var read = await reader.ReadAsync(buffer.AsMemory(0, remaining), cancellationToken);
+            if (read == 0)
+            {
+                break;
+            }
+
+            html.Append(buffer, 0, read);
+        }
+
+        return html.ToString();
+    }
+
+    private static Uri CreateDefaultIconUri(Uri siteUri) =>
+        new(siteUri.GetLeftPart(UriPartial.Authority) + "/favicon.ico", UriKind.Absolute);
+
+    private static Uri? TryCreateHttpUri(string value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+            ? uri
+            : null;
 
     private void EnsureSupportedUri(Uri uri)
     {

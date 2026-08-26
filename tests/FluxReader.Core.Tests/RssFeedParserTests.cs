@@ -33,10 +33,45 @@ public sealed class RssFeedParserTests
         var result = await ParseAsync(xml);
 
         Assert.AreEqual("Example Feed", result.Title);
+        Assert.IsNull(result.IconUri);
         Assert.HasCount(1, result.Articles);
         Assert.AreEqual("Hello & WinUI", result.Articles[0].Title);
         Assert.AreEqual("A short summary.", result.Articles[0].Summary);
         Assert.AreEqual("Full article text.", result.Articles[0].Content);
+    }
+
+    [TestMethod]
+    public async Task ParseAsync_Rss2_ExtractsRelativeChannelImage()
+    {
+        const string xml = """
+            <rss version="2.0">
+              <channel>
+                <title>Example Feed</title>
+                <link>https://example.com/blog/</link>
+                <image><url>/assets/feed.png</url></image>
+              </channel>
+            </rss>
+            """;
+
+        var result = await ParseAsync(xml);
+
+        Assert.AreEqual(new Uri("https://example.com/assets/feed.png"), result.IconUri);
+    }
+
+    [TestMethod]
+    public async Task ParseAsync_Atom_PrefersIconOverLogo()
+    {
+        const string xml = """
+            <feed xmlns="http://www.w3.org/2005/Atom">
+              <title>Atom Feed</title>
+              <icon>/icon.png</icon>
+              <logo>/logo.png</logo>
+            </feed>
+            """;
+
+        var result = await ParseAsync(xml);
+
+        Assert.AreEqual(new Uri("https://example.com/icon.png"), result.IconUri);
     }
 
     [TestMethod]

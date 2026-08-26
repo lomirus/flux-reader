@@ -21,6 +21,9 @@ public sealed partial class Feed : ObservableObject
     public partial string Description { get; set; } = string.Empty;
 
     [ObservableProperty]
+    public partial string IconUrl { get; set; } = string.Empty;
+
+    [ObservableProperty]
     public partial DateTimeOffset? LastRefreshedAt { get; set; }
 
     [ObservableProperty]

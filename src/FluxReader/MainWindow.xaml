@@ -164,10 +164,21 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <FontIcon
-                                            VerticalAlignment="Center"
-                                            FontSize="14"
-                                            Glyph="{x:Bind Glyph}" />
+                                        <Grid Width="16" Height="16">
+                                            <FontIcon
+                                                VerticalAlignment="Center"
+                                                FontSize="14"
+                                                Glyph="{x:Bind Glyph}" />
+                                            <Border CornerRadius="3">
+                                                <Image
+                                                    Width="16"
+                                                    Height="16"
+                                                    ImageFailed="FeedIcon_ImageFailed"
+                                                    ImageOpened="FeedIcon_ImageOpened"
+                                                    Source="{x:Bind IconSource, Mode=OneWay}"
+                                                    Stretch="UniformToFill" />
+                                            </Border>
+                                        </Grid>
                                         <TextBlock
                                             Grid.Column="1"
                                             VerticalAlignment="Center"
@@ -213,10 +224,32 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock
-                        FontSize="20"
-                        FontWeight="SemiBold"
-                        Text="{Binding ArticleListTitle}" />
+                    <StackPanel
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="10">
+                        <Grid Width="24" Height="24">
+                            <FontIcon
+                                VerticalAlignment="Center"
+                                FontSize="20"
+                                Glyph="{Binding ArticleListGlyph}" />
+                            <Border CornerRadius="4">
+                                <Image
+                                    Width="24"
+                                    Height="24"
+                                    ImageFailed="FeedIcon_ImageFailed"
+                                    ImageOpened="FeedIcon_ImageOpened"
+                                    Source="{Binding SelectedNavigationItem.IconSource}"
+                                    Stretch="UniformToFill" />
+                            </Border>
+                        </Grid>
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="20"
+                            FontWeight="SemiBold"
+                            Text="{Binding ArticleListTitle}" />
+                    </StackPanel>
                     <Button
                         x:Name="MarkCurrentListReadButton"
                         Grid.Column="1"

@@ -25,6 +25,7 @@ public sealed partial class MainViewModel : ObservableObject
     public partial FeedGroup? SelectedGroup { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ArticleListGlyph))]
     public partial FeedNavigationItem? SelectedNavigationItem { get; set; }
 
     [ObservableProperty]
@@ -78,7 +79,9 @@ public sealed partial class MainViewModel : ObservableObject
         {
             ArticleFilter.Unread => _localization.GetString("UnreadArticles"),
             _ => _localization.GetString("AllArticles")
-        });
+         });
+
+    public string ArticleListGlyph => SelectedNavigationItem?.Glyph ?? "\uE8F1";
 
     public void ApplyLocalization()
     {

@@ -65,6 +65,28 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void FeedIcon_ImageOpened(object sender, RoutedEventArgs e)
+    {
+        SetFeedIconFallbackVisibility(sender, Visibility.Collapsed);
+    }
+
+    private void FeedIcon_ImageFailed(object sender, ExceptionRoutedEventArgs e)
+    {
+        SetFeedIconFallbackVisibility(sender, Visibility.Visible);
+    }
+
+    private static void SetFeedIconFallbackVisibility(object sender, Visibility visibility)
+    {
+        if (sender is Image { Parent: Border { Parent: Grid container } })
+        {
+            var fallback = container.Children.OfType<FontIcon>().FirstOrDefault();
+            if (fallback is not null)
+            {
+                fallback.Visibility = visibility;
+            }
+        }
+    }
+
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         RootGrid.Loaded -= RootGrid_Loaded;

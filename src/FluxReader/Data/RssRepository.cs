@@ -48,6 +48,7 @@ public sealed class RssRepository
                     url                 TEXT NOT NULL COLLATE NOCASE UNIQUE,
                     title               TEXT NOT NULL,
                     site_url            TEXT NOT NULL DEFAULT '',
+                    icon_url            TEXT NOT NULL DEFAULT '',
                     description         TEXT NOT NULL DEFAULT '',
                     group_id            INTEGER NULL REFERENCES feed_groups(id) ON DELETE SET NULL,
                     created_utc         TEXT NOT NULL,
@@ -127,7 +128,7 @@ public sealed class RssRepository
             await using var connection = await OpenConnectionAsync(cancellationToken);
             await using var command = connection.CreateCommand();
             command.CommandText = """
-                SELECT f.id, f.url, f.title, f.site_url, f.description,
+                SELECT f.id, f.url, f.title, f.site_url, f.icon_url, f.description,
                        f.group_id, f.last_refreshed_utc, f.etag, f.last_modified_utc,
                        SUM(CASE WHEN a.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
                 FROM feeds f
@@ -146,12 +147,13 @@ public sealed class RssRepository
                     Url = reader.GetString(1),
                     Title = reader.GetString(2),
                     SiteUrl = reader.GetString(3),
-                    Description = reader.GetString(4),
-                    GroupId = reader.IsDBNull(5) ? null : reader.GetInt64(5),
-                    LastRefreshedAt = ReadDate(reader, 6),
-                    ETag = ReadNullableString(reader, 7),
-                    LastModifiedAt = ReadDate(reader, 8),
-                    UnreadCount = reader.GetInt32(9)
+                    IconUrl = reader.GetString(4),
+                    Description = reader.GetString(5),
+                    GroupId = reader.IsDBNull(6) ? null : reader.GetInt64(6),
+                    LastRefreshedAt = ReadDate(reader, 7),
+                    ETag = ReadNullableString(reader, 8),
+                    LastModifiedAt = ReadDate(reader, 9),
+                    UnreadCount = reader.GetInt32(10)
                 });
             }
 
@@ -234,14 +236,15 @@ public sealed class RssRepository
             {
                 command.CommandText = """
                     INSERT INTO feeds (
-                        url, title, site_url, description, created_utc,
+                        url, title, site_url, icon_url, description, created_utc,
                         last_refreshed_utc, etag, last_modified_utc, group_id)
                     VALUES (
-                        $url, $title, $site_url, $description, $now,
+                        $url, $title, $site_url, $icon_url, $description, $now,
                         $now, $etag, $last_modified, $group_id)
                     ON CONFLICT(url) DO UPDATE SET
                         title = excluded.title,
                         site_url = excluded.site_url,
+                        icon_url = excluded.icon_url,
                         description = excluded.description,
                         last_refreshed_utc = excluded.last_refreshed_utc,
                         etag = excluded.etag,
@@ -269,6 +272,7 @@ public sealed class RssRepository
                 GroupId = groupId,
                 Title = parsedFeed.Title,
                 SiteUrl = parsedFeed.SiteUri?.AbsoluteUri ?? string.Empty,
+                IconUrl = parsedFeed.IconUri?.AbsoluteUri ?? string.Empty,
                 Description = parsedFeed.Description,
                 LastRefreshedAt = DateTimeOffset.UtcNow,
                 ETag = etag,
@@ -303,6 +307,7 @@ public sealed class RssRepository
                     UPDATE feeds SET
                         title = $title,
                         site_url = $site_url,
+                        icon_url = $icon_url,
                         description = $description,
                         last_refreshed_utc = $now,
                         etag = $etag,
@@ -312,6 +317,7 @@ public sealed class RssRepository
                 command.Parameters.AddWithValue("$id", feed.Id);
                 command.Parameters.AddWithValue("$title", parsedFeed.Title);
                 command.Parameters.AddWithValue("$site_url", parsedFeed.SiteUri?.AbsoluteUri ?? string.Empty);
+                command.Parameters.AddWithValue("$icon_url", parsedFeed.IconUri?.AbsoluteUri ?? string.Empty);
                 command.Parameters.AddWithValue("$description", parsedFeed.Description);
                 command.Parameters.AddWithValue("$now", FormatDate(DateTimeOffset.UtcNow));
                 command.Parameters.AddWithValue("$etag", (object?)etag ?? DBNull.Value);
@@ -539,6 +545,7 @@ public sealed class RssRepository
         command.Parameters.AddWithValue("$url", feedUri.AbsoluteUri);
         command.Parameters.AddWithValue("$title", parsedFeed.Title);
         command.Parameters.AddWithValue("$site_url", parsedFeed.SiteUri?.AbsoluteUri ?? string.Empty);
+        command.Parameters.AddWithValue("$icon_url", parsedFeed.IconUri?.AbsoluteUri ?? string.Empty);
         command.Parameters.AddWithValue("$description", parsedFeed.Description);
         command.Parameters.AddWithValue("$now", FormatDate(now));
         command.Parameters.AddWithValue("$etag", (object?)etag ?? DBNull.Value);

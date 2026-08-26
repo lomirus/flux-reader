@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace FluxReader.Models;
 
@@ -43,6 +45,8 @@ public sealed partial class FeedNavigationItem : ObservableObject
 
     public string Glyph => IsGroup ? "\uE8B7" : "\uE789";
 
+    public ImageSource? IconSource => CreateIconSource(Feed?.IconUrl);
+
     public string PrimaryActionGlyph => IsGroup ? "\uE70F" : "\uE8B7";
 
     public int UnreadCount => Feed?.UnreadCount ?? Children.Sum(child => child.UnreadCount);
@@ -72,6 +76,11 @@ public sealed partial class FeedNavigationItem : ObservableObject
             OnPropertyChanged(nameof(Title));
         }
 
+        if (e.PropertyName == nameof(FluxReader.Models.Feed.IconUrl))
+        {
+            OnPropertyChanged(nameof(IconSource));
+        }
+
         if (e.PropertyName == nameof(FluxReader.Models.Feed.UnreadCount) ||
             e.PropertyName == nameof(FluxReader.Models.Feed.UnreadDisplay))
         {
@@ -87,5 +96,18 @@ public sealed partial class FeedNavigationItem : ObservableObject
             OnPropertyChanged(nameof(UnreadCount));
             OnPropertyChanged(nameof(UnreadDisplay));
         }
+    }
+
+    private static ImageSource? CreateIconSource(string? value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+        {
+            return null;
+        }
+
+        return Path.GetExtension(uri.AbsolutePath).Equals(".svg", StringComparison.OrdinalIgnoreCase)
+            ? new SvgImageSource { UriSource = uri }
+            : new BitmapImage { UriSource = uri };
     }
 }

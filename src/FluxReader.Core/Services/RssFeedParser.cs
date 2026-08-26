@@ -73,13 +73,14 @@ public sealed class RssFeedParser
               ?? throw new RssParseException(_getString(RssParserString.MissingRssChannel));
         var title = CleanTitle(Value(channel, "title"), sourceUri.Host);
         var siteUri = ParseUri(Value(channel, "link"), sourceUri);
+        var iconUri = RssIcon(root, channel, sourceUri);
         var description = HtmlTextConverter.ToPlainText(Value(channel, "description"), 4_000);
         var itemParent = isRdf ? root : channel;
         var itemElements = itemParent.Elements().Where(element =>
             element.Name.LocalName.Equals("item", StringComparison.OrdinalIgnoreCase));
 
         var articles = itemElements.Select(item => ParseRssItem(item, sourceUri)).ToArray();
-        return new ParsedFeed(title, siteUri, description, articles);
+        return new ParsedFeed(title, siteUri, iconUri, description, articles);
     }
 
     private ParsedArticle ParseRssItem(XElement item, Uri sourceUri)
@@ -109,12 +110,13 @@ public sealed class RssFeedParser
     {
         var title = CleanTitle(Value(root, "title"), sourceUri.Host);
         var siteUri = AtomLink(root, sourceUri);
+        var iconUri = ParseUri(FirstValue(root, "icon", "logo"), sourceUri);
         var description = HtmlTextConverter.ToPlainText(FirstValue(root, "subtitle", "tagline"), 4_000);
         var entries = root.Elements().Where(element =>
             element.Name.LocalName.Equals("entry", StringComparison.OrdinalIgnoreCase));
 
         var articles = entries.Select(entry => ParseAtomEntry(entry, sourceUri)).ToArray();
-        return new ParsedFeed(title, siteUri, description, articles);
+        return new ParsedFeed(title, siteUri, iconUri, description, articles);
     }
 
     private ParsedArticle ParseAtomEntry(XElement entry, Uri sourceUri)
@@ -150,6 +152,23 @@ public sealed class RssFeedParser
                    ?? links.FirstOrDefault();
 
         return ParseUri((string?)link?.Attribute("href") ?? link?.Value, sourceUri);
+    }
+
+    private static Uri? RssIcon(XElement root, XElement channel, Uri sourceUri)
+    {
+        var image = Child(channel, "image") ??
+                    (root.Name.LocalName.Equals("RDF", StringComparison.OrdinalIgnoreCase)
+                        ? Child(root, "image")
+                        : null);
+        var imageUrl = image is null ? null : FirstValue(image, "url");
+        if (string.IsNullOrWhiteSpace(imageUrl) && image is not null)
+        {
+            imageUrl = (string?)image.Attributes().FirstOrDefault(attribute =>
+                attribute.Name.LocalName.Equals("resource", StringComparison.OrdinalIgnoreCase) ||
+                attribute.Name.LocalName.Equals("href", StringComparison.OrdinalIgnoreCase));
+        }
+
+        return ParseUri(imageUrl, sourceUri);
     }
 
     private static string BuildExternalId(string? id, Uri? link, string title, DateTimeOffset? publishedAt)
