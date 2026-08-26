@@ -32,6 +32,7 @@
   <data name="SelectArticle" xml:space="preserve"><value>Selecciona un artículo</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>El contenido del artículo aparecerá aquí</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>Abrir en el navegador</value></data>
+  <data name="MarkUnread" xml:space="preserve"><value>Marcar como no leído</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>Dirección RSS o Atom</value></data>
   <data name="Add" xml:space="preserve"><value>Añadir</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>

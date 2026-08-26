@@ -32,6 +32,7 @@
   <data name="SelectArticle" xml:space="preserve"><value>기사를 선택하세요</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>기사 내용이 여기에 표시됩니다</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>브라우저에서 열기</value></data>
+  <data name="MarkUnread" xml:space="preserve"><value>읽지 않음으로 표시</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS 또는 Atom 주소</value></data>
   <data name="Add" xml:space="preserve"><value>추가</value></data>
   <data name="Cancel" xml:space="preserve"><value>취소</value></data>

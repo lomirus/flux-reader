@@ -32,6 +32,7 @@
   <data name="SelectArticle" xml:space="preserve"><value>Выберите статью</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>Здесь появится содержимое статьи</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>Открыть в браузере</value></data>
+  <data name="MarkUnread" xml:space="preserve"><value>Отметить как непрочитанное</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>Адрес RSS- или Atom-ленты</value></data>
   <data name="Add" xml:space="preserve"><value>Добавить</value></data>
   <data name="Cancel" xml:space="preserve"><value>Отмена</value></data>

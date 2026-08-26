@@ -32,6 +32,7 @@
   <data name="SelectArticle" xml:space="preserve"><value>选择一篇文章</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>文章内容将在这里显示</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>在浏览器中打开</value></data>
+  <data name="MarkUnread" xml:space="preserve"><value>标为未读</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS 或 Atom 地址</value></data>
   <data name="Add" xml:space="preserve"><value>添加</value></data>
   <data name="Cancel" xml:space="preserve"><value>取消</value></data>

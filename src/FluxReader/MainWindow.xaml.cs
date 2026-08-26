@@ -277,6 +277,7 @@ public sealed partial class MainWindow : Window
         EmptyArticleTitleText.Text = localization.GetString("SelectArticle");
         EmptyArticleDescriptionText.Text = localization.GetString("ArticleContentHint");
         OpenInBrowserText.Text = localization.GetString("OpenInBrowser");
+        MarkUnreadText.Text = localization.GetString("MarkUnread");
     }
 
     private void RootGrid_ActualThemeChanged(FrameworkElement sender, object args) =>

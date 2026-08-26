@@ -259,6 +259,31 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task MarkSelectedArticleUnreadAsync()
+    {
+        var article = SelectedArticle;
+        if (article is null || !article.IsRead)
+        {
+            return;
+        }
+
+        await _repository.SetArticleReadAsync(article.Id, false);
+        article.IsRead = false;
+
+        var feed = Feeds.FirstOrDefault(item => item.Id == article.FeedId);
+        if (feed is not null)
+        {
+            feed.UnreadCount++;
+        }
+
+        UnreadTotal = Feeds.Sum(item => item.UnreadCount);
+        if (CurrentFilter == ArticleFilter.Unread)
+        {
+            UpdateArticleCount(Articles.Count(item => !item.IsRead));
+        }
+    }
+
+    [RelayCommand]
     private async Task OpenArticleAsync()
     {
         if (SelectedArticle is null ||

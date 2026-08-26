@@ -328,6 +328,15 @@
                                 <FontIcon FontSize="12" Glyph="&#xE8A7;" />
                             </StackPanel>
                         </Button>
+                        <Button
+                            x:Name="MarkUnreadButton"
+                            Command="{Binding MarkSelectedArticleUnreadCommand}"
+                            IsEnabled="{Binding SelectedArticle.IsRead}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock x:Name="MarkUnreadText" />
+                                <FontIcon FontSize="12" Glyph="&#xE8C3;" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                     <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
                         <TextBlock
