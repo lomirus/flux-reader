@@ -6,3 +6,4 @@ description: Apply FluxReader project conventions and coding style when planning
 # FluxReader Project Guidelines
 
 - Do not optimize prematurely.
+- The project has not been publicly released yet, so backward compatibility does not need to be considered.

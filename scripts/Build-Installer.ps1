@@ -112,19 +112,6 @@ New-Item -ItemType Directory -Force -Path @(
     $installerDirectory
 ) | Out-Null
 
-foreach ($obsoleteArtifact in @(
-    (Join-Path $installerDirectory "FluxReader-$Version-$Architecture.msi"),
-    (Join-Path $installerDirectory "FluxReader-$Version-$Architecture.wixpdb"),
-    (Join-Path $installerDirectory "FluxReader-$Version-$Architecture-framework-dependent.msi"),
-    (Join-Path $installerDirectory "FluxReader-$Version-$Architecture-framework-dependent.wixpdb"),
-    (Join-Path $installerDirectory "FluxReader-$Version-$Architecture-standalone.msi"),
-    (Join-Path $installerDirectory "FluxReader-$Version-$Architecture-standalone.wixpdb")
-)) {
-    if (Test-Path -LiteralPath $obsoleteArtifact) {
-        Remove-Item -LiteralPath $obsoleteArtifact -Force
-    }
-}
-
 function Invoke-DotNet {
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
 
