@@ -39,6 +39,7 @@ tests/
 
 - `reader.db`：订阅、文章与已读状态
 - `settings.json`：主题等轻量设置
+- `notifications.log`：Windows 系统通知注册、发送或注销失败的诊断信息（仅在失败时创建）
 
 品牌图标的可编辑矢量源文件位于 `assets/brand/fluxreader-icon.svg`；由它生成的 Windows 多尺寸图标位于 `assets/brand/fluxreader-icon.ico`。
 

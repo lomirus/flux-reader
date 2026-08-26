@@ -75,7 +75,7 @@ public sealed partial class MainViewModel : ObservableObject
             await ReloadArticlesAsync(cancellationToken);
             if (!_notifications.IsAvailable)
             {
-                ShowStatus("Windows 系统通知当前不可用，阅读和刷新功能不受影响。");
+                ShowStatus("Windows 系统通知当前不可用，错误已写入 notifications.log；阅读和刷新功能不受影响。");
             }
         }
         catch (Exception exception)

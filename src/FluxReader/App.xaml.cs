@@ -19,7 +19,8 @@ public partial class App : Application
         Repository = new RssRepository(Path.Combine(dataDirectory, "reader.db"));
         Settings = new SettingsService(Path.Combine(dataDirectory, "settings.json"));
         RefreshService = new RssRefreshService(Repository);
-        _notificationService = new NotificationService();
+        _notificationService = new NotificationService(
+            Path.Combine(dataDirectory, "notifications.log"));
         _notificationService.Activated += NotificationService_Activated;
         _notificationService.Register();
     }

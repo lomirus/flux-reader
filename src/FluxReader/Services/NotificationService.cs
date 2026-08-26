@@ -5,11 +5,21 @@ namespace FluxReader.Services;
 
 public sealed class NotificationService : IDisposable
 {
+    private readonly string _logPath;
+    private readonly object _logSync = new();
     private bool _registered;
+
+    public NotificationService(string logPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(logPath);
+        _logPath = logPath;
+    }
 
     public event EventHandler? Activated;
 
     public bool IsAvailable => _registered;
+
+    public string LogPath => _logPath;
 
     public void Register()
     {
@@ -19,10 +29,11 @@ public sealed class NotificationService : IDisposable
             AppNotificationManager.Default.Register();
             _registered = true;
         }
-        catch
+        catch (Exception exception)
         {
             AppNotificationManager.Default.NotificationInvoked -= OnNotificationInvoked;
             _registered = false;
+            LogFailure("Register", exception);
         }
     }
 
@@ -43,9 +54,9 @@ public sealed class NotificationService : IDisposable
             notification.Expiration = DateTimeOffset.Now.AddHours(8);
             AppNotificationManager.Default.Show(notification);
         }
-        catch
+        catch (Exception exception)
         {
-            // Notifications are an optional surface; a disabled notification center must not break refresh.
+            LogFailure("Show", exception);
         }
     }
 
@@ -56,11 +67,50 @@ public sealed class NotificationService : IDisposable
             return;
         }
 
-        AppNotificationManager.Default.NotificationInvoked -= OnNotificationInvoked;
-        AppNotificationManager.Default.Unregister();
-        _registered = false;
+        try
+        {
+            AppNotificationManager.Default.NotificationInvoked -= OnNotificationInvoked;
+            AppNotificationManager.Default.Unregister();
+        }
+        catch (Exception exception)
+        {
+            LogFailure("Unregister", exception);
+        }
+        finally
+        {
+            _registered = false;
+        }
     }
 
     private void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args) =>
         Activated?.Invoke(this, EventArgs.Empty);
+
+    private void LogFailure(string operation, Exception exception)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(_logPath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var entry = $"""
+                [{DateTimeOffset.Now:O}] {operation} failed
+                Exception: {exception.GetType().FullName}
+                HResult: 0x{exception.HResult:X8}
+                {exception}
+
+                """;
+
+            lock (_logSync)
+            {
+                File.AppendAllText(_logPath, entry);
+            }
+        }
+        catch
+        {
+            // Logging must not turn optional notification failures into application failures.
+        }
+    }
 }
