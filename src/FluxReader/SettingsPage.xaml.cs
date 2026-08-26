@@ -31,6 +31,10 @@ public sealed partial class SettingsPage : Page
 
     public event EventHandler? RefreshIntervalChanged;
 
+    public event EventHandler? ImportSubscriptionsRequested;
+
+    public event EventHandler? ExportSubscriptionsRequested;
+
     public AppTheme SelectedTheme => (AppTheme)ThemeSelector.SelectedIndex;
 
     public AppLanguage SelectedLanguage => (AppLanguage)LanguageSelector.SelectedIndex;
@@ -70,10 +74,45 @@ public sealed partial class SettingsPage : Page
         AutomationProperties.SetName(
             RefreshIntervalNumberBox,
             localization.GetString("RefreshInterval"));
+        SubscriptionManagementTitleText.Text = localization.GetString("SubscriptionManagement");
+        SubscriptionManagementDescriptionText.Text = localization.GetString("SubscriptionManagementDescription");
+        ImportSubscriptionsButton.Content = localization.GetString("ImportSubscriptions");
+        ExportSubscriptionsButton.Content = localization.GetString("ExportSubscriptions");
+        AutomationProperties.SetName(
+            ImportSubscriptionsButton,
+            localization.GetString("ImportSubscriptions"));
+        AutomationProperties.SetName(
+            ExportSubscriptionsButton,
+            localization.GetString("ExportSubscriptions"));
         LanguageHeaderText.Text = localization.GetString("Language");
         LanguageTitleText.Text = localization.GetString("ApplicationLanguage");
         LanguageDescriptionText.Text = localization.GetString("LanguageDescription");
         AutomationProperties.SetName(LanguageSelector, localization.GetString("ApplicationLanguage"));
+    }
+
+    public void SetSubscriptionActionsEnabled(bool isEnabled)
+    {
+        ImportSubscriptionsButton.IsEnabled = isEnabled;
+        ExportSubscriptionsButton.IsEnabled = isEnabled;
+        SubscriptionProgressRing.IsActive = !isEnabled;
+        SubscriptionProgressRing.Visibility = isEnabled
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        if (!isEnabled)
+        {
+            SubscriptionStatusBar.IsOpen = false;
+            SubscriptionStatusBar.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    public void ShowSubscriptionStatus(string message, bool isError)
+    {
+        SubscriptionStatusBar.Message = message;
+        SubscriptionStatusBar.Severity = isError
+            ? InfoBarSeverity.Error
+            : InfoBarSeverity.Success;
+        SubscriptionStatusBar.Visibility = Visibility.Visible;
+        SubscriptionStatusBar.IsOpen = true;
     }
 
     private void RefreshThemeSelectionBox()
@@ -100,6 +139,15 @@ public sealed partial class SettingsPage : Page
 
     private void BackButton_Click(object sender, RoutedEventArgs e) =>
         BackRequested?.Invoke(this, EventArgs.Empty);
+
+    private void ImportSubscriptionsButton_Click(object sender, RoutedEventArgs e) =>
+        ImportSubscriptionsRequested?.Invoke(this, EventArgs.Empty);
+
+    private void ExportSubscriptionsButton_Click(object sender, RoutedEventArgs e) =>
+        ExportSubscriptionsRequested?.Invoke(this, EventArgs.Empty);
+
+    private void SubscriptionStatusBar_Closed(InfoBar sender, InfoBarClosedEventArgs args) =>
+        sender.Visibility = Visibility.Collapsed;
 
     private void ThemeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

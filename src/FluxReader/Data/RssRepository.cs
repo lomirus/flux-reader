@@ -288,6 +288,47 @@ public sealed class RssRepository
         }
     }
 
+    public async Task<long?> AddImportedFeedAsync(
+        SubscriptionOutline subscription,
+        long? groupId,
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                INSERT INTO feeds (
+                    url, title, site_url, icon_url, description, group_id, created_utc)
+                VALUES (
+                    $url, $title, $site_url, '', '', $group_id, $created)
+                ON CONFLICT(url) DO NOTHING
+                RETURNING id;
+                """;
+            command.Parameters.AddWithValue("$url", subscription.FeedUri.AbsoluteUri);
+            command.Parameters.AddWithValue(
+                "$title",
+                string.IsNullOrWhiteSpace(subscription.Title)
+                    ? subscription.FeedUri.Host
+                    : subscription.Title.Trim());
+            command.Parameters.AddWithValue(
+                "$site_url",
+                subscription.SiteUri?.AbsoluteUri ?? string.Empty);
+            command.Parameters.AddWithValue(
+                "$group_id",
+                groupId is null ? DBNull.Value : groupId.Value);
+            command.Parameters.AddWithValue("$created", FormatDate(DateTimeOffset.UtcNow));
+            return await command.ExecuteScalarAsync(cancellationToken) is long feedId
+                ? feedId
+                : null;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<IReadOnlyList<string>> UpdateFeedAsync(
         Feed feed,
         ParsedFeed parsedFeed,

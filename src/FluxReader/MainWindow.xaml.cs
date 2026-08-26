@@ -1,3 +1,5 @@
+using System.Xml;
+using FluxReader.Core.Services;
 using FluxReader.Models;
 using FluxReader.Services;
 using FluxReader.ViewModels;
@@ -9,6 +11,9 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace FluxReader;
 
@@ -302,6 +307,8 @@ public sealed partial class MainWindow : Window
         settingsPage.ThemeChanged += SettingsPage_ThemeChanged;
         settingsPage.LanguageChanged += SettingsPage_LanguageChanged;
         settingsPage.RefreshIntervalChanged += SettingsPage_RefreshIntervalChanged;
+        settingsPage.ImportSubscriptionsRequested += SettingsPage_ImportSubscriptionsRequested;
+        settingsPage.ExportSubscriptionsRequested += SettingsPage_ExportSubscriptionsRequested;
         SettingsFrame.Visibility = Visibility.Visible;
     }
 
@@ -364,6 +371,144 @@ public sealed partial class MainWindow : Window
         await SaveSettingsAsync();
     }
 
+    private async void SettingsPage_ImportSubscriptionsRequested(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        var localization = App.Current.Localization;
+        if (ViewModel.IsBusy)
+        {
+            settingsPage.ShowSubscriptionStatus(
+                localization.GetString("SubscriptionOperationBusy"),
+                isError: true);
+            return;
+        }
+
+        settingsPage.SetSubscriptionActionsEnabled(false);
+        try
+        {
+            var picker = new FileOpenPicker
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                ViewMode = PickerViewMode.List
+            };
+            picker.FileTypeFilter.Add(".opml");
+            picker.FileTypeFilter.Add(".xml");
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+            var file = await picker.PickSingleFileAsync();
+            if (file is null)
+            {
+                return;
+            }
+
+            var content = await FileIO.ReadTextAsync(file);
+            var document = OpmlSubscriptionSerializer.Parse(content);
+            if (document.Subscriptions.Count == 0)
+            {
+                settingsPage.ShowSubscriptionStatus(
+                    localization.GetString("NoValidSubscriptionsInFile"),
+                    isError: true);
+                return;
+            }
+
+            var result = await ViewModel.ImportSubscriptionsAsync(document, _lifetime.Token);
+            settingsPage.ShowSubscriptionStatus(
+                localization.Format(
+                    "SubscriptionImportComplete",
+                    result.ImportedCount,
+                    result.SkippedCount,
+                    result.FailedCount),
+                isError: result.FailedCount > 0);
+            ViewModel.RefreshImportedFeedsInBackground(
+                result.ImportedFeedIds,
+                _lifetime.Token);
+        }
+        catch (Exception exception) when (exception is XmlException or FormatException or ArgumentException)
+        {
+            settingsPage.ShowSubscriptionStatus(
+                localization.GetString("InvalidSubscriptionFile"),
+                isError: true);
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            settingsPage.ShowSubscriptionStatus(
+                localization.Format("SubscriptionImportFailed", exception.Message),
+                isError: true);
+        }
+        finally
+        {
+            settingsPage.SetSubscriptionActionsEnabled(true);
+        }
+    }
+
+    private async void SettingsPage_ExportSubscriptionsRequested(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        var localization = App.Current.Localization;
+        if (ViewModel.IsBusy)
+        {
+            settingsPage.ShowSubscriptionStatus(
+                localization.GetString("SubscriptionOperationBusy"),
+                isError: true);
+            return;
+        }
+
+        var subscriptions = ViewModel.GetSubscriptionsForExport();
+        if (subscriptions.Count == 0)
+        {
+            settingsPage.ShowSubscriptionStatus(
+                localization.GetString("NoSubscriptionsToExport"),
+                isError: true);
+            return;
+        }
+
+        settingsPage.SetSubscriptionActionsEnabled(false);
+        try
+        {
+            var picker = new FileSavePicker
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                SuggestedFileName = "FluxReader-subscriptions"
+            };
+            picker.FileTypeChoices.Add("OPML", new List<string> { ".opml" });
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+            var file = await picker.PickSaveFileAsync();
+            if (file is null)
+            {
+                return;
+            }
+
+            var content = OpmlSubscriptionSerializer.Serialize(subscriptions);
+            await FileIO.WriteTextAsync(file, content);
+            settingsPage.ShowSubscriptionStatus(
+                localization.Format("SubscriptionExportComplete", subscriptions.Count),
+                isError: false);
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            settingsPage.ShowSubscriptionStatus(
+                localization.Format("SubscriptionExportFailed", exception.Message),
+                isError: true);
+        }
+        finally
+        {
+            settingsPage.SetSubscriptionActionsEnabled(true);
+        }
+    }
+
     private void SettingsPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
 
     private void AboutPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
@@ -376,6 +521,8 @@ public sealed partial class MainWindow : Window
             settingsPage.ThemeChanged -= SettingsPage_ThemeChanged;
             settingsPage.LanguageChanged -= SettingsPage_LanguageChanged;
             settingsPage.RefreshIntervalChanged -= SettingsPage_RefreshIntervalChanged;
+            settingsPage.ImportSubscriptionsRequested -= SettingsPage_ImportSubscriptionsRequested;
+            settingsPage.ExportSubscriptionsRequested -= SettingsPage_ExportSubscriptionsRequested;
         }
         else if (SettingsFrame.Content is AboutPage aboutPage)
         {

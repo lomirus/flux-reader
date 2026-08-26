@@ -6,6 +6,7 @@ FluxReader 是一个只面向 Windows 11 的本地 RSS/Atom 阅读器。界面�
 
 - 添加、移除和刷新 RSS 2.0、RSS 1.0/RDF、Atom 订阅
 - 使用可选的一级分组整理订阅；支持新建、重命名、移除分组和调整订阅所属分组
+- 通过 OPML 文件导入、导出订阅，并保留一级分组；嵌套文件夹在导入时合并为一级分组路径
 - 所有文章、未读文章、按订阅源浏览，以及筛选单个订阅源的未读文章
 - 阅读状态与文章正文的本地持久化
 - ETag / Last-Modified 条件请求，避免重复下载
@@ -31,7 +32,7 @@ FluxReader 是一个只面向 Windows 11 的本地 RSS/Atom 阅读器。界面�
 
 ```text
 src/
-  FluxReader.Core/       RSS/Atom 解析与正文清理，无 UI 依赖
+  FluxReader.Core/       RSS/Atom 与 OPML 解析、正文清理，无 UI 依赖
   FluxReader/            WinUI 3 应用、SQLite、刷新、通知与 MVVM
 installer/
   FluxReader.Installer/  由 Setup 内嵌的 WiX 应用 MSI
@@ -93,4 +94,4 @@ git push origin v0.1.0
 
 - 自动刷新仅在应用运行期间执行；关闭应用后的后台刷新需要后续增加 MSIX 后台任务。
 - 正文以安全的本地纯文本方式阅读，不执行订阅中的 HTML、脚本或第三方嵌入内容。
-- 暂未包含 OPML 导入/导出、网站订阅自动发现、嵌套分组、搜索和跨设备同步。
+- 暂未包含网站订阅自动发现、应用内嵌套分组、搜索和跨设备同步。

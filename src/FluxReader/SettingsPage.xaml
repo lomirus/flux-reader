@@ -13,12 +13,16 @@
                     <VisualState.Setters>
                         <Setter Target="SettingsContent.Width" Value="760" />
                         <Setter Target="SettingsContent.HorizontalAlignment" Value="Center" />
+                        <Setter Target="SubscriptionActions.Orientation" Value="Horizontal" />
                     </VisualState.Setters>
                 </VisualState>
                 <VisualState x:Name="NarrowSettingsLayout">
                     <VisualState.StateTriggers>
                         <AdaptiveTrigger MinWindowWidth="0" />
                     </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="SubscriptionActions.Orientation" Value="Vertical" />
+                    </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
@@ -148,6 +152,58 @@
                                 VerticalAlignment="Center" />
                         </StackPanel>
                     </Grid>
+                </Border>
+
+                <Border
+                    Padding="20"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Spacing="4">
+                                <TextBlock x:Name="SubscriptionManagementTitleText" FontWeight="SemiBold" />
+                                <TextBlock
+                                    x:Name="SubscriptionManagementDescriptionText"
+                                    HorizontalAlignment="Left"
+                                    MaxWidth="420"
+                                    Opacity="0.65"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel
+                                x:Name="SubscriptionActions"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Spacing="8">
+                                <ProgressRing
+                                    x:Name="SubscriptionProgressRing"
+                                    Width="20"
+                                    Height="20"
+                                    HorizontalAlignment="Center"
+                                    IsActive="False"
+                                    Visibility="Collapsed" />
+                                <Button
+                                    x:Name="ImportSubscriptionsButton"
+                                    HorizontalAlignment="Stretch"
+                                    Click="ImportSubscriptionsButton_Click" />
+                                <Button
+                                    x:Name="ExportSubscriptionsButton"
+                                    HorizontalAlignment="Stretch"
+                                    Click="ExportSubscriptionsButton_Click" />
+                            </StackPanel>
+                        </Grid>
+                        <InfoBar
+                            x:Name="SubscriptionStatusBar"
+                            Closed="SubscriptionStatusBar_Closed"
+                            IsClosable="True"
+                            IsOpen="False"
+                            Visibility="Collapsed" />
+                    </StackPanel>
                 </Border>
 
                 <TextBlock

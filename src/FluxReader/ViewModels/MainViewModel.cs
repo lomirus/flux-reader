@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FluxReader.Core.Models;
 using FluxReader.Data;
 using FluxReader.Models;
 using FluxReader.Services;
@@ -152,6 +153,101 @@ public sealed partial class MainViewModel : ObservableObject
         catch (Exception exception)
         {
             ShowStatus(_localization.Format("AddFeedFailed", exception.Message));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public IReadOnlyList<SubscriptionOutline> GetSubscriptionsForExport()
+    {
+        var groupNames = FeedGroups.ToDictionary(group => group.Id, group => group.Name);
+        return Feeds
+            .Select(feed => new SubscriptionOutline(
+                feed.Title,
+                new Uri(feed.Url),
+                TryCreateHttpUri(feed.SiteUrl),
+                feed.GroupId is { } groupId && groupNames.TryGetValue(groupId, out var groupName)
+                    ? groupName
+                    : null))
+            .ToArray();
+    }
+
+    public async Task<SubscriptionImportResult> ImportSubscriptionsAsync(
+        SubscriptionDocument document,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        if (IsBusy)
+        {
+            throw new InvalidOperationException(_localization.GetString("SubscriptionOperationBusy"));
+        }
+
+        IsBusy = true;
+        var importedCount = 0;
+        var skippedCount = document.SkippedOutlineCount;
+        var failedCount = 0;
+        var importedFeedIds = new List<long>();
+        try
+        {
+            var existingFeedUris = new HashSet<string>(
+                Feeds.Select(feed => feed.Url),
+                StringComparer.OrdinalIgnoreCase);
+            var groupIds = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+            foreach (var group in FeedGroups)
+            {
+                groupIds.TryAdd(group.Name, group.Id);
+            }
+
+            foreach (var subscription in document.Subscriptions)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (existingFeedUris.Contains(subscription.FeedUri.AbsoluteUri))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                try
+                {
+                    var groupId = await GetOrCreateImportedGroupIdAsync(
+                        subscription.Group,
+                        groupIds,
+                        cancellationToken);
+                    var importedFeedId = await _repository.AddImportedFeedAsync(
+                        subscription,
+                        groupId,
+                        cancellationToken);
+                    if (importedFeedId is null)
+                    {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    existingFeedUris.Add(subscription.FeedUri.AbsoluteUri);
+                    importedFeedIds.Add(importedFeedId.Value);
+                    importedCount++;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception)
+                {
+                    failedCount++;
+                }
+            }
+
+            var selectedFeedId = SelectedFeed?.Id;
+            var selectedGroupId = SelectedGroup?.Id;
+            await ReloadFeedsAsync(selectedFeedId, selectedGroupId, cancellationToken);
+            await ReloadArticlesAsync(cancellationToken);
+            return new SubscriptionImportResult(
+                importedCount,
+                skippedCount,
+                failedCount,
+                importedFeedIds);
         }
         finally
         {
@@ -592,9 +688,99 @@ public sealed partial class MainViewModel : ObservableObject
             .SelectMany(item => item.IsGroup ? item.Children : [item])
             .FirstOrDefault(item => item.Feed?.Id == feedId);
 
+    public void RefreshImportedFeedsInBackground(
+        IReadOnlyList<long> feedIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (feedIds.Count > 0)
+        {
+            _ = RefreshImportedFeedsCoreAsync(feedIds, cancellationToken);
+        }
+    }
+
+    private async Task RefreshImportedFeedsCoreAsync(
+        IReadOnlyList<long> feedIds,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var importedFeedIds = feedIds.ToHashSet();
+            var importedFeeds = Feeds
+                .Where(feed => importedFeedIds.Contains(feed.Id))
+                .ToArray();
+            var refreshTasks = importedFeeds.Select(async feed =>
+            {
+                try
+                {
+                    await _refreshService.RefreshAsync(feed, cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                }
+                catch (Exception)
+                {
+                }
+            });
+            await Task.WhenAll(refreshTasks);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            var selectedFeedId = SelectedFeed?.Id;
+            var selectedGroupId = SelectedGroup?.Id;
+            await ReloadFeedsAsync(selectedFeedId, selectedGroupId, cancellationToken);
+            await ReloadArticlesAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private async Task<long?> GetOrCreateImportedGroupIdAsync(
+        string? groupName,
+        IDictionary<string, long> groupIds,
+        CancellationToken cancellationToken)
+    {
+        var normalizedName = groupName?.Trim();
+        if (string.IsNullOrEmpty(normalizedName))
+        {
+            return null;
+        }
+
+        if (normalizedName.Length > 100)
+        {
+            normalizedName = normalizedName[..100].TrimEnd();
+        }
+
+        if (groupIds.TryGetValue(normalizedName, out var existingGroupId))
+        {
+            return existingGroupId;
+        }
+
+        var group = await _repository.AddFeedGroupAsync(normalizedName, cancellationToken);
+        groupIds.Add(group.Name, group.Id);
+        return group.Id;
+    }
+
+    private static Uri? TryCreateHttpUri(string value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+            ? uri
+            : null;
+
     private void ShowStatus(string message)
     {
         StatusMessage = message;
         IsStatusOpen = true;
     }
 }
+
+public sealed record SubscriptionImportResult(
+    int ImportedCount,
+    int SkippedCount,
+    int FailedCount,
+    IReadOnlyList<long> ImportedFeedIds);

@@ -95,4 +95,16 @@
   <data name="NotificationNewArticleOne" xml:space="preserve"><value>{0} nouvel article trouvé</value></data>
   <data name="NotificationNewArticleOther" xml:space="preserve"><value>{0} nouveaux articles trouvés</value></data>
   <data name="NotificationOpenFluxReader" xml:space="preserve"><value>Ouvrez FluxReader pour le consulter</value></data>
+  <data name="SubscriptionManagement" xml:space="preserve"><value>Gestion des abonnements</value></data>
+  <data name="SubscriptionManagementDescription" xml:space="preserve"><value>Importez les abonnements d’un autre lecteur avec un fichier OPML, ou exportez vos flux et groupes actuels.</value></data>
+  <data name="ImportSubscriptions" xml:space="preserve"><value>Importer OPML</value></data>
+  <data name="ExportSubscriptions" xml:space="preserve"><value>Exporter OPML</value></data>
+  <data name="SubscriptionOperationBusy" xml:space="preserve"><value>Les flux sont en cours de mise à jour. Réessayez dans un instant.</value></data>
+  <data name="NoValidSubscriptionsInFile" xml:space="preserve"><value>Le fichier ne contient aucun abonnement valide à importer.</value></data>
+  <data name="InvalidSubscriptionFile" xml:space="preserve"><value>Le fichier sélectionné n’est pas un fichier d’abonnements OPML valide.</value></data>
+  <data name="SubscriptionImportComplete" xml:space="preserve"><value>Importation terminée. Ajoutés : {0} ; ignorés : {1} ; échecs : {2}.</value></data>
+  <data name="SubscriptionImportFailed" xml:space="preserve"><value>Impossible d’importer les abonnements : {0}</value></data>
+  <data name="NoSubscriptionsToExport" xml:space="preserve"><value>Aucun abonnement à exporter.</value></data>
+  <data name="SubscriptionExportComplete" xml:space="preserve"><value>{0} abonnements exportés.</value></data>
+  <data name="SubscriptionExportFailed" xml:space="preserve"><value>Impossible d’exporter les abonnements : {0}</value></data>
 </root>

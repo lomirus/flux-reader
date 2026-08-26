@@ -95,4 +95,16 @@
   <data name="NotificationNewArticleOne" xml:space="preserve"><value>새 기사 {0}개를 찾았습니다</value></data>
   <data name="NotificationNewArticleOther" xml:space="preserve"><value>새 기사 {0}개를 찾았습니다</value></data>
   <data name="NotificationOpenFluxReader" xml:space="preserve"><value>FluxReader를 열어 확인하세요</value></data>
+  <data name="SubscriptionManagement" xml:space="preserve"><value>구독 관리</value></data>
+  <data name="SubscriptionManagementDescription" xml:space="preserve"><value>OPML 파일로 다른 리더의 구독을 가져오거나 현재 피드와 그룹을 내보냅니다.</value></data>
+  <data name="ImportSubscriptions" xml:space="preserve"><value>OPML 가져오기</value></data>
+  <data name="ExportSubscriptions" xml:space="preserve"><value>OPML 내보내기</value></data>
+  <data name="SubscriptionOperationBusy" xml:space="preserve"><value>피드를 업데이트하고 있습니다. 잠시 후 다시 시도하세요.</value></data>
+  <data name="NoValidSubscriptionsInFile" xml:space="preserve"><value>파일에 가져올 수 있는 유효한 구독이 없습니다.</value></data>
+  <data name="InvalidSubscriptionFile" xml:space="preserve"><value>선택한 파일은 유효한 OPML 구독 파일이 아닙니다.</value></data>
+  <data name="SubscriptionImportComplete" xml:space="preserve"><value>가져오기 완료. 추가: {0}, 건너뜀: {1}, 실패: {2}.</value></data>
+  <data name="SubscriptionImportFailed" xml:space="preserve"><value>구독을 가져올 수 없습니다: {0}</value></data>
+  <data name="NoSubscriptionsToExport" xml:space="preserve"><value>내보낼 구독이 없습니다.</value></data>
+  <data name="SubscriptionExportComplete" xml:space="preserve"><value>구독 {0}개를 내보냈습니다.</value></data>
+  <data name="SubscriptionExportFailed" xml:space="preserve"><value>구독을 내보낼 수 없습니다: {0}</value></data>
 </root>
