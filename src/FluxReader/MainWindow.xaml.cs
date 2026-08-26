@@ -67,23 +67,26 @@ public sealed partial class MainWindow : Window
 
     private void FeedIcon_ImageOpened(object sender, RoutedEventArgs e)
     {
-        SetFeedIconFallbackVisibility(sender, Visibility.Collapsed);
+        SetFeedIconFallbackVisibility(sender, isImageLoaded: true);
     }
 
     private void FeedIcon_ImageFailed(object sender, ExceptionRoutedEventArgs e)
     {
-        SetFeedIconFallbackVisibility(sender, Visibility.Visible);
+        SetFeedIconFallbackVisibility(sender, isImageLoaded: false);
     }
 
-    private static void SetFeedIconFallbackVisibility(object sender, Visibility visibility)
+    private static void SetFeedIconFallbackVisibility(object sender, bool isImageLoaded)
     {
-        if (sender is Image { Parent: Border { Parent: Grid container } })
+        if (sender is not Image image)
         {
-            var fallback = container.Children.OfType<FontIcon>().FirstOrDefault();
-            if (fallback is not null)
-            {
-                fallback.Visibility = visibility;
-            }
+            return;
+        }
+
+        if (image.Tag is FeedNavigationItem item)
+        {
+            item.IconFallbackVisibility = isImageLoaded && item.IconSource is not null
+                ? Visibility.Collapsed
+                : Visibility.Visible;
         }
     }
 

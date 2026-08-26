@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -56,6 +57,9 @@ public sealed partial class FeedNavigationItem : ObservableObject
     [ObservableProperty]
     public partial bool IsExpanded { get; set; } = true;
 
+    [ObservableProperty]
+    public partial Visibility IconFallbackVisibility { get; set; } = Visibility.Visible;
+
     public static FeedNavigationItem ForFeed(Feed feed, ActionLabels labels) => new(feed, labels);
 
     public static FeedNavigationItem ForGroup(
@@ -78,6 +82,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
 
         if (e.PropertyName == nameof(FluxReader.Models.Feed.IconUrl))
         {
+            IconFallbackVisibility = Visibility.Visible;
             OnPropertyChanged(nameof(IconSource));
         }
 

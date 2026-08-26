@@ -168,7 +168,8 @@
                                             <FontIcon
                                                 VerticalAlignment="Center"
                                                 FontSize="14"
-                                                Glyph="{x:Bind Glyph}" />
+                                                Glyph="{x:Bind Glyph}"
+                                                Visibility="{x:Bind IconFallbackVisibility, Mode=OneWay}" />
                                             <Border CornerRadius="3">
                                                 <Image
                                                     Width="16"
@@ -176,7 +177,8 @@
                                                     ImageFailed="FeedIcon_ImageFailed"
                                                     ImageOpened="FeedIcon_ImageOpened"
                                                     Source="{x:Bind IconSource, Mode=OneWay}"
-                                                    Stretch="UniformToFill" />
+                                                    Stretch="UniformToFill"
+                                                    Tag="{x:Bind}" />
                                             </Border>
                                         </Grid>
                                         <TextBlock
@@ -233,7 +235,8 @@
                             <FontIcon
                                 VerticalAlignment="Center"
                                 FontSize="20"
-                                Glyph="{Binding ArticleListGlyph}" />
+                                Glyph="{Binding ArticleListGlyph}"
+                                Visibility="{Binding SelectedNavigationItem.IconFallbackVisibility, Mode=OneWay, TargetNullValue=Visible}" />
                             <Border CornerRadius="4">
                                 <Image
                                     Width="24"
@@ -241,7 +244,8 @@
                                     ImageFailed="FeedIcon_ImageFailed"
                                     ImageOpened="FeedIcon_ImageOpened"
                                     Source="{Binding SelectedNavigationItem.IconSource}"
-                                    Stretch="UniformToFill" />
+                                    Stretch="UniformToFill"
+                                    Tag="{Binding SelectedNavigationItem}" />
                             </Border>
                         </Grid>
                         <TextBlock
