@@ -137,11 +137,11 @@
                     SelectionMode="Single">
                     <TreeView.ItemTemplate>
                         <DataTemplate x:DataType="models:FeedNavigationItem">
-                            <TreeViewItem
+                            <controls:FeedTreeViewItem
                                 HorizontalContentAlignment="Stretch"
                                 IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
                                 ItemsSource="{x:Bind Children}">
-                                <TreeViewItem.ContextFlyout>
+                                <controls:FeedTreeViewItem.ContextFlyout>
                                     <MenuFlyout Opened="NavigationItemMenu_Opened">
                                         <MenuFlyoutItem
                                             Click="PrimaryNavigationItemMenu_Click"
@@ -160,8 +160,8 @@
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                     </MenuFlyout>
-                                </TreeViewItem.ContextFlyout>
-                                <TreeViewItem.Content>
+                                </controls:FeedTreeViewItem.ContextFlyout>
+                                <controls:FeedTreeViewItem.Content>
                                     <Grid
                                         MinWidth="140"
                                         ColumnSpacing="8"
@@ -200,8 +200,8 @@
                                             Opacity="0.65"
                                             Text="{x:Bind UnreadDisplay, Mode=OneWay}" />
                                     </Grid>
-                                </TreeViewItem.Content>
-                            </TreeViewItem>
+                                </controls:FeedTreeViewItem.Content>
+                            </controls:FeedTreeViewItem>
                         </DataTemplate>
                     </TreeView.ItemTemplate>
                 </TreeView>
