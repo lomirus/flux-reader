@@ -29,10 +29,6 @@ public sealed partial class Article : ObservableObject
     [NotifyPropertyChangedFor(nameof(UnreadGlyph))]
     public partial bool IsRead { get; set; }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(StarGlyph))]
-    public partial bool IsStarred { get; set; }
-
     public string PublishedDisplay => PublishedAt?.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) ?? string.Empty;
 
     public string Byline
@@ -48,6 +44,4 @@ public sealed partial class Article : ObservableObject
     public string DisplayContent => string.IsNullOrWhiteSpace(Content) ? Summary : Content;
 
     public string UnreadGlyph => IsRead ? string.Empty : "●";
-
-    public string StarGlyph => IsStarred ? "★" : string.Empty;
 }

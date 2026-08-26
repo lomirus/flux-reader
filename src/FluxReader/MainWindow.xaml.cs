@@ -153,13 +153,6 @@ public sealed partial class MainWindow : Window
         HideArticleReader();
     }
 
-    private async void StarredArticles_Click(object sender, RoutedEventArgs e)
-    {
-        FeedList.SelectedItem = null;
-        await ViewModel.SelectSmartFilterAsync(ArticleFilter.Starred, _lifetime.Token);
-        HideArticleReader();
-    }
-
     private async void ThemeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!_settingsLoaded || ThemeSelector.SelectedIndex < 0)

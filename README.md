@@ -5,8 +5,8 @@ FluxReader 是一个只面向 Windows 11 的本地 RSS/Atom 阅读器。界面�
 ## 当前功能
 
 - 添加、移除和刷新 RSS 2.0、RSS 1.0/RDF、Atom 订阅
-- 所有文章、未读文章、收藏文章和按订阅源浏览
-- 阅读状态、收藏状态与文章正文的本地持久化
+- 所有文章、未读文章和按订阅源浏览
+- 阅读状态与文章正文的本地持久化
 - ETag / Last-Modified 条件请求，避免重复下载
 - 应用运行期间每 15 分钟自动刷新；发现新文章时发送 Windows 系统通知
 - 跟随系统、亮色、暗色三种主题
@@ -37,7 +37,7 @@ tests/
 
 应用数据保存在 `%LOCALAPPDATA%\FluxReader`：
 
-- `reader.db`：订阅、文章、已读与收藏状态
+- `reader.db`：订阅、文章与已读状态
 - `settings.json`：主题等轻量设置
 
 品牌图标的可编辑矢量源文件位于 `assets/brand/fluxreader-icon.svg`；由它生成的 Windows 多尺寸图标位于 `assets/brand/fluxreader-icon.ico`。

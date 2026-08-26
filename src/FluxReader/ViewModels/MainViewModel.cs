@@ -19,7 +19,6 @@ public sealed partial class MainViewModel : ObservableObject
     public partial Feed? SelectedFeed { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(StarActionLabel))]
     public partial Article? SelectedArticle { get; set; }
 
     [ObservableProperty]
@@ -58,11 +57,8 @@ public sealed partial class MainViewModel : ObservableObject
     public string ArticleListTitle => SelectedFeed?.Title ?? CurrentFilter switch
     {
         ArticleFilter.Unread => "未读文章",
-        ArticleFilter.Starred => "已收藏",
         _ => "所有文章"
     };
-
-    public string StarActionLabel => SelectedArticle?.IsStarred == true ? "取消收藏" : "收藏";
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -142,7 +138,6 @@ public sealed partial class MainViewModel : ObservableObject
     public async Task SelectArticleAsync(Article article, CancellationToken cancellationToken = default)
     {
         SelectedArticle = article;
-        OnPropertyChanged(nameof(StarActionLabel));
         if (article.IsRead)
         {
             return;
@@ -249,19 +244,6 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ToggleStarAsync()
-    {
-        if (SelectedArticle is null)
-        {
-            return;
-        }
-
-        SelectedArticle.IsStarred = !SelectedArticle.IsStarred;
-        await _repository.SetArticleStarredAsync(SelectedArticle.Id, SelectedArticle.IsStarred);
-        OnPropertyChanged(nameof(StarActionLabel));
-    }
-
-    [RelayCommand]
     private async Task OpenArticleAsync()
     {
         if (SelectedArticle is null ||
@@ -325,7 +307,6 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedArticle = null;
         ArticleCountText = $"{Articles.Count} 篇文章";
         OnPropertyChanged(nameof(ArticleListTitle));
-        OnPropertyChanged(nameof(StarActionLabel));
     }
 
     private void ShowStatus(string message)

@@ -57,7 +57,6 @@ public sealed class RssRepository
                     summary        TEXT NOT NULL DEFAULT '',
                     content        TEXT NOT NULL DEFAULT '',
                     is_read        INTEGER NOT NULL DEFAULT 0,
-                    is_starred     INTEGER NOT NULL DEFAULT 0,
                     inserted_utc   TEXT NOT NULL,
                     UNIQUE(feed_id, external_id)
                 );
@@ -66,8 +65,6 @@ public sealed class RssRepository
                     ON articles(feed_id, published_utc DESC);
                 CREATE INDEX IF NOT EXISTS ix_articles_unread
                     ON articles(is_read, published_utc DESC);
-                CREATE INDEX IF NOT EXISTS ix_articles_starred
-                    ON articles(is_starred, published_utc DESC);
                 """;
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
@@ -133,12 +130,11 @@ public sealed class RssRepository
             command.CommandText = """
                 SELECT a.id, a.feed_id, a.external_id, f.title, a.title, a.link,
                        a.author, a.published_utc, a.summary, a.content,
-                       a.is_read, a.is_starred
+                       a.is_read
                 FROM articles a
                 INNER JOIN feeds f ON f.id = a.feed_id
                 WHERE ($feed_id IS NULL OR a.feed_id = $feed_id)
                   AND ($filter <> 1 OR a.is_read = 0)
-                  AND ($filter <> 2 OR a.is_starred = 1)
                 ORDER BY COALESCE(a.published_utc, a.inserted_utc) DESC
                 LIMIT 2000;
                 """;
@@ -161,8 +157,7 @@ public sealed class RssRepository
                     PublishedAt = ReadDate(reader, 7),
                     Summary = reader.GetString(8),
                     Content = reader.GetString(9),
-                    IsRead = reader.GetBoolean(10),
-                    IsStarred = reader.GetBoolean(11)
+                    IsRead = reader.GetBoolean(10)
                 });
             }
 
@@ -305,16 +300,6 @@ public sealed class RssRepository
             {
                 command.Parameters.AddWithValue("$id", articleId);
                 command.Parameters.AddWithValue("$value", isRead);
-            },
-            cancellationToken);
-
-    public Task SetArticleStarredAsync(long articleId, bool isStarred, CancellationToken cancellationToken = default) =>
-        ExecuteAsync(
-            "UPDATE articles SET is_starred = $value WHERE id = $id;",
-            command =>
-            {
-                command.Parameters.AddWithValue("$id", articleId);
-                command.Parameters.AddWithValue("$value", isStarred);
             },
             cancellationToken);
 
