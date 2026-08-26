@@ -25,6 +25,7 @@
   <data name="Settings" xml:space="preserve"><value>Configuración</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Todos los artículos</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Artículos no leídos</value></data>
+  <data name="ShowUnreadOnly" xml:space="preserve"><value>Mostrar solo artículos no leídos</value></data>
   <data name="Feeds" xml:space="preserve"><value>Fuentes</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>Cambiar el tamaño del panel de fuentes</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>Cambiar el tamaño del panel de artículos</value></data>

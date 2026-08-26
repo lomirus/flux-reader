@@ -25,6 +25,7 @@
   <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Alle Artikel</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Ungelesene Artikel</value></data>
+  <data name="ShowUnreadOnly" xml:space="preserve"><value>Nur ungelesene Artikel anzeigen</value></data>
   <data name="Feeds" xml:space="preserve"><value>Feeds</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>Feedbereich skalieren</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>Artikellistenbereich skalieren</value></data>

@@ -25,6 +25,7 @@
   <data name="Settings" xml:space="preserve"><value>设置</value></data>
   <data name="AllArticles" xml:space="preserve"><value>所有文章</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>未读文章</value></data>
+  <data name="ShowUnreadOnly" xml:space="preserve"><value>仅显示未读文章</value></data>
   <data name="Feeds" xml:space="preserve"><value>订阅源</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>调整订阅栏宽度</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>调整文章列表宽度</value></data>

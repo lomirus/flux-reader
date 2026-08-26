@@ -25,6 +25,7 @@
   <data name="Settings" xml:space="preserve"><value>設定</value></data>
   <data name="AllArticles" xml:space="preserve"><value>すべての記事</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>未読の記事</value></data>
+  <data name="ShowUnreadOnly" xml:space="preserve"><value>未読の記事のみを表示</value></data>
   <data name="Feeds" xml:space="preserve"><value>フィード</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>フィードペインのサイズを変更</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>記事一覧ペインのサイズを変更</value></data>

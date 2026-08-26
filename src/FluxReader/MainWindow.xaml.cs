@@ -160,14 +160,16 @@ public sealed partial class MainWindow : Window
     private async void AllArticles_Click(object sender, RoutedEventArgs e)
     {
         FeedList.SelectedItem = null;
-        await ViewModel.SelectSmartFilterAsync(ArticleFilter.All, _lifetime.Token);
+        await ViewModel.SelectAllArticlesAsync(_lifetime.Token);
         HideArticleReader();
     }
 
-    private async void UnreadArticles_Click(object sender, RoutedEventArgs e)
+    private async void UnreadFilterToggle_Click(object sender, RoutedEventArgs e)
     {
-        FeedList.SelectedItem = null;
-        await ViewModel.SelectSmartFilterAsync(ArticleFilter.Unread, _lifetime.Token);
+        var filter = UnreadFilterToggleButton.IsChecked == true
+            ? ArticleFilter.Unread
+            : ArticleFilter.All;
+        await ViewModel.SetArticleFilterAsync(filter, _lifetime.Token);
         HideArticleReader();
     }
 
@@ -263,8 +265,11 @@ public sealed partial class MainWindow : Window
         AutomationProperties.SetName(SettingsButton, settings);
         ToolTipService.SetToolTip(SettingsButton, settings);
         AllArticlesText.Text = localization.GetString("AllArticles");
-        UnreadArticlesText.Text = localization.GetString("UnreadArticles");
         FeedsHeaderText.Text = localization.GetString("Feeds");
+
+        var showUnreadOnly = localization.GetString("ShowUnreadOnly");
+        AutomationProperties.SetName(UnreadFilterToggleButton, showUnreadOnly);
+        ToolTipService.SetToolTip(UnreadFilterToggleButton, showUnreadOnly);
 
         var resizeTooltip = localization.GetString("ResizePaneTooltip");
         AutomationProperties.SetName(FeedPaneSplitterThumb, localization.GetString("ResizeFeedPane"));

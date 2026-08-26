@@ -25,6 +25,7 @@
   <data name="Settings" xml:space="preserve"><value>Параметры</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Все статьи</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Непрочитанные статьи</value></data>
+  <data name="ShowUnreadOnly" xml:space="preserve"><value>Показывать только непрочитанные статьи</value></data>
   <data name="Feeds" xml:space="preserve"><value>Ленты</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>Изменить размер области лент</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>Изменить размер области списка статей</value></data>

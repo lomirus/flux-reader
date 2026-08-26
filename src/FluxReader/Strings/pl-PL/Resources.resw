@@ -25,6 +25,7 @@
   <data name="Settings" xml:space="preserve"><value>Ustawienia</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Wszystkie artykuły</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Nieprzeczytane artykuły</value></data>
+  <data name="ShowUnreadOnly" xml:space="preserve"><value>Pokaż tylko nieprzeczytane artykuły</value></data>
   <data name="Feeds" xml:space="preserve"><value>Kanały</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>Zmień rozmiar panelu kanałów</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>Zmień rozmiar panelu listy artykułów</value></data>

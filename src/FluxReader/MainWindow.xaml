@@ -106,7 +106,6 @@
             <Grid Grid.Column="0" Padding="10,8,10,12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="20" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -125,32 +124,16 @@
                         <TextBlock x:Name="AllArticlesText" Grid.Column="1" />
                     </Grid>
                 </Button>
-                <Button
-                    Grid.Row="1"
-                    Margin="0,4,0,0"
-                    HorizontalContentAlignment="Stretch"
-                    Click="UnreadArticles_Click">
-                    <Grid ColumnSpacing="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <FontIcon FontSize="16" Glyph="&#xE8C3;" />
-                        <TextBlock x:Name="UnreadArticlesText" Grid.Column="1" />
-                        <TextBlock Grid.Column="2" Opacity="0.7" Text="{Binding UnreadTotal}" />
-                    </Grid>
-                </Button>
                 <TextBlock
                     x:Name="FeedsHeaderText"
-                    Grid.Row="3"
+                    Grid.Row="2"
                     Margin="8,0,0,8"
                     FontSize="12"
                     FontWeight="SemiBold"
                     Opacity="0.65" />
                 <ListView
                     x:Name="FeedList"
-                    Grid.Row="4"
+                    Grid.Row="3"
                     IsItemClickEnabled="True"
                     ItemClick="FeedList_ItemClick"
                     ItemsSource="{Binding Feeds}"
@@ -208,13 +191,25 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         FontSize="20"
                         FontWeight="SemiBold"
                         Text="{Binding ArticleListTitle}" />
-                    <TextBlock
+                    <ToggleButton
+                        x:Name="UnreadFilterToggleButton"
                         Grid.Column="1"
+                        Width="32"
+                        Height="32"
+                        Margin="8,0"
+                        Padding="0"
+                        Click="UnreadFilterToggle_Click"
+                        IsChecked="{Binding IsUnreadFilterEnabled, Mode=OneWay}">
+                        <FontIcon FontSize="14" Glyph="&#xE8C3;" />
+                    </ToggleButton>
+                    <TextBlock
+                        Grid.Column="2"
                         VerticalAlignment="Center"
                         Opacity="0.6"
                         Text="{Binding ArticleCountText}" />

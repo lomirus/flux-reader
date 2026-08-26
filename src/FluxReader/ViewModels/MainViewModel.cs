@@ -24,6 +24,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ArticleListTitle))]
+    [NotifyPropertyChangedFor(nameof(IsUnreadFilterEnabled))]
     public partial ArticleFilter CurrentFilter { get; set; }
 
     [ObservableProperty]
@@ -57,6 +58,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<Feed> Feeds { get; } = [];
 
     public ObservableCollection<Article> Articles { get; } = [];
+
+    public bool IsUnreadFilterEnabled => CurrentFilter == ArticleFilter.Unread;
 
     public string ArticleListTitle => SelectedFeed?.Title ?? CurrentFilter switch
     {
@@ -121,7 +124,6 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var feed = await _refreshService.AddFeedAsync(uri, cancellationToken);
-            CurrentFilter = ArticleFilter.All;
             await ReloadFeedsAsync(feed.Id, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
             ShowStatus(_localization.Format("SubscribedToFeed", feed.Title));
@@ -139,13 +141,17 @@ public sealed partial class MainViewModel : ObservableObject
     public async Task SelectFeedAsync(Feed feed, CancellationToken cancellationToken = default)
     {
         SelectedFeed = feed;
-        CurrentFilter = ArticleFilter.All;
         await ReloadArticlesAsync(cancellationToken);
     }
 
-    public async Task SelectSmartFilterAsync(ArticleFilter filter, CancellationToken cancellationToken = default)
+    public async Task SelectAllArticlesAsync(CancellationToken cancellationToken = default)
     {
         SelectedFeed = null;
+        await ReloadArticlesAsync(cancellationToken);
+    }
+
+    public async Task SetArticleFilterAsync(ArticleFilter filter, CancellationToken cancellationToken = default)
+    {
         CurrentFilter = filter;
         await ReloadArticlesAsync(cancellationToken);
     }
@@ -309,7 +315,6 @@ public sealed partial class MainViewModel : ObservableObject
             var title = SelectedFeed.Title;
             await _repository.DeleteFeedAsync(SelectedFeed.Id, cancellationToken);
             SelectedFeed = null;
-            CurrentFilter = ArticleFilter.All;
             await ReloadFeedsAsync(null, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
             ShowStatus(_localization.Format("FeedRemoved", title));

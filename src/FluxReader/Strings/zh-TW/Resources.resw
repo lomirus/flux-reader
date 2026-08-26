@@ -25,6 +25,7 @@
   <data name="Settings" xml:space="preserve"><value>設定</value></data>
   <data name="AllArticles" xml:space="preserve"><value>所有文章</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>未讀文章</value></data>
+  <data name="ShowUnreadOnly" xml:space="preserve"><value>僅顯示未讀文章</value></data>
   <data name="Feeds" xml:space="preserve"><value>訂閱來源</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>調整訂閱欄寬度</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>調整文章清單寬度</value></data>
