@@ -66,7 +66,8 @@
             <Button
                 x:Name="DeleteFeedButton"
                 Grid.Column="2"
-                Click="DeleteFeed_Click">
+                Click="DeleteFeed_Click"
+                IsEnabled="{Binding CanDeleteSelectedFeed}">
                 <FontIcon FontSize="14" Glyph="&#xE74D;" />
             </Button>
 
