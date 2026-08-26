@@ -48,10 +48,33 @@ public sealed partial class SettingsPage : Page
         SystemThemeItem.Content = localization.GetString("ThemeSystem");
         LightThemeItem.Content = localization.GetString("ThemeLight");
         DarkThemeItem.Content = localization.GetString("ThemeDark");
+        RefreshThemeSelectionBox();
         LanguageHeaderText.Text = localization.GetString("Language");
         LanguageTitleText.Text = localization.GetString("ApplicationLanguage");
         LanguageDescriptionText.Text = localization.GetString("LanguageDescription");
         AutomationProperties.SetName(LanguageSelector, localization.GetString("ApplicationLanguage"));
+    }
+
+    private void RefreshThemeSelectionBox()
+    {
+        var selectedIndex = ThemeSelector.SelectedIndex;
+        if (selectedIndex < 0)
+        {
+            return;
+        }
+
+        var wasInitialized = _initialized;
+        _initialized = false;
+
+        try
+        {
+            ThemeSelector.SelectedIndex = -1;
+            ThemeSelector.SelectedIndex = selectedIndex;
+        }
+        finally
+        {
+            _initialized = wasInitialized;
+        }
     }
 
     private void BackButton_Click(object sender, RoutedEventArgs e) =>
