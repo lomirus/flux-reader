@@ -165,6 +165,7 @@
                                     <Grid
                                         MinWidth="140"
                                         ColumnSpacing="8"
+                                        Padding="0,0,8,0"
                                         Tag="{x:Bind}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
