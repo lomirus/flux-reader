@@ -106,6 +106,11 @@ public sealed partial class MainWindow : Window
         ApplySavedPaneWidths();
         _settingsLoaded = true;
         await ViewModel.InitializeAsync(_lifetime.Token);
+        if (ViewModel.Feeds.Count > 0 && ViewModel.RefreshCommand.CanExecute(null))
+        {
+            await ViewModel.RefreshCommand.ExecuteAsync(null);
+        }
+
         _refreshTimer.Start();
     }
 
