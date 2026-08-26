@@ -1,0 +1,32 @@
+<!-- WiX 6+ adds Open Source Maintenance Fee terms; review them before upgrading. -->
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <InstallerPlatform Condition="'$(InstallerPlatform)' == ''">x64</InstallerPlatform>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">$(VersionPrefix)</ProductVersion>
+    <ProductCode Condition="'$(ProductCode)' == ''">*</ProductCode>
+    <InstallerOutputName Condition="'$(InstallerOutputName)' == ''">FluxReader-$(ProductVersion)-$(InstallerPlatform)-application</InstallerOutputName>
+    <PublishDir Condition="'$(PublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\artifacts\publish\win-$(InstallerPlatform)</PublishDir>
+    <IntermediateOutputPath>obj\$(InstallerPlatform)\$(Configuration)\$(ProductVersion)\</IntermediateOutputPath>
+    <OutputName>$(InstallerOutputName)</OutputName>
+    <OutputType>Package</OutputType>
+    <!-- Windows App SDK multilingual binaries and SQLite carry PE metadata that
+         exceeds the legacy MSI ICE03/ICE60 validators, but installs correctly. -->
+    <SuppressIces>ICE03;ICE60</SuppressIces>
+    <DefineConstants>$(DefineConstants);ProductVersion=$(ProductVersion);ProductCode=$(ProductCode)</DefineConstants>
+    <_PublishedExecutable>$([System.IO.Path]::Combine('$(PublishDir)', 'FluxReader.exe'))</_PublishedExecutable>
+    <_PublishedResourceIndex>$([System.IO.Path]::Combine('$(PublishDir)', 'FluxReader.pri'))</_PublishedResourceIndex>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <BindPath Include="$(PublishDir)">
+      <BindName>PublishOutput</BindName>
+    </BindPath>
+  </ItemGroup>
+
+  <Target Name="ValidatePublishOutput" BeforeTargets="Build">
+    <Error Condition="!Exists('$(_PublishedExecutable)')"
+           Text="FluxReader publish output was not found at '$(_PublishedExecutable)'. Run scripts/Build-Installer.ps1 first." />
+    <Error Condition="!Exists('$(_PublishedResourceIndex)')"
+           Text="FluxReader resource index was not found at '$(_PublishedResourceIndex)'. Ensure EnableMsixTooling is enabled before building the installer." />
+  </Target>
+</Project>

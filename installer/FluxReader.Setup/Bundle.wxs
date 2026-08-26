@@ -1,0 +1,131 @@
+<Wix
+  xmlns="http://wixtoolset.org/schemas/v4/wxs"
+  xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal"
+  xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx"
+  xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <Bundle
+    Name="FluxReader"
+    Manufacturer="FluxReader"
+    Version="$(var.ProductVersion)"
+    UpgradeCode="$(var.BundleUpgradeCode)"
+    IconSourceFile="$(var.BundleIcon)"
+    DisableModify="button">
+
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication
+        Theme="hyperlinkLicense"
+        LicenseUrl=""
+        ShowVersion="yes"
+        SuppressOptionsUI="yes"
+        LaunchTarget="[ProgramFiles6432Folder]FluxReader\FluxReader.exe"
+        LaunchWorkingFolder="[ProgramFiles6432Folder]FluxReader" />
+    </BootstrapperApplication>
+
+    <netfx:DotNetCoreSearch
+      Id="DotNetRuntimeSearch"
+      RuntimeType="core"
+      Platform="$(var.InstallerPlatform)"
+      MajorVersion="10"
+      Variable="DOTNET_RUNTIME_VERSION" />
+
+    <util:RegistrySearch
+      Id="VCRedistSearch"
+      Variable="VC_RUNTIME_VERSION"
+      Root="HKLM"
+      Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\$(var.InstallerPlatform)"
+      Value="Version"
+      Bitness="always64" />
+
+    <!-- The runtime redistributable installs four packages required by this
+         unpackaged app. Only invoke its 116 MB online payload when one of the
+         architecture-specific packages is missing. -->
+    <util:DirectorySearch
+      Id="WindowsAppRuntimeFrameworkSearch"
+      Variable="WINDOWS_APP_RUNTIME_FRAMEWORK_PRESENT"
+      Path="[ProgramFiles64Folder]WindowsApps\Microsoft.WindowsAppRuntime.2_$(var.WindowsAppRuntimePackageVersion)_$(var.InstallerPlatform)__8wekyb3d8bbwe"
+      Result="exists" />
+    <util:DirectorySearch
+      Id="WindowsAppRuntimeMainSearch"
+      Variable="WINDOWS_APP_RUNTIME_MAIN_PRESENT"
+      Path="[ProgramFiles64Folder]WindowsApps\MicrosoftCorporationII.WinAppRuntime.Main.2_$(var.WindowsAppRuntimePackageVersion)_$(var.InstallerPlatform)__8wekyb3d8bbwe"
+      Result="exists" />
+    <util:DirectorySearch
+      Id="WindowsAppRuntimeSingletonSearch"
+      Variable="WINDOWS_APP_RUNTIME_SINGLETON_PRESENT"
+      Path="[ProgramFiles64Folder]WindowsApps\MicrosoftCorporationII.WinAppRuntime.Singleton_800$(var.WindowsAppRuntimePackageVersion)_$(var.InstallerPlatform)__8wekyb3d8bbwe"
+      Result="exists" />
+    <util:DirectorySearch
+      Id="WindowsAppRuntimeDdlmSearch"
+      Variable="WINDOWS_APP_RUNTIME_DDLM_PRESENT"
+      Path="[ProgramFiles64Folder]WindowsApps\Microsoft.WinAppRuntime.DDLM.$(var.WindowsAppRuntimePackageVersion)-$(var.WindowsAppRuntimeDdlmArchitectureCode)_$(var.WindowsAppRuntimePackageVersion)_$(var.InstallerPlatform)__8wekyb3d8bbwe"
+      Result="exists" />
+
+    <Chain>
+      <ExePackage
+        Id="DotNetRuntime"
+        DisplayName="Microsoft .NET 10 Runtime ($(var.InstallerPlatform))"
+        SourceFile="$(var.DotNetRuntimeInstaller)"
+        Name="dotnet-runtime-win-$(var.InstallerPlatform).exe"
+        DownloadUrl="$(var.DotNetRuntimeDownloadUrl)"
+        Compressed="no"
+        Cache="remove"
+        PerMachine="yes"
+        Permanent="yes"
+        Vital="yes"
+        DetectCondition="DOTNET_RUNTIME_VERSION &gt;= v$(var.DotNetRuntimeVersion)"
+        InstallArguments="/install /quiet /norestart"
+        RepairArguments="/repair /quiet /norestart"
+        UninstallArguments="/uninstall /quiet /norestart">
+        <ExitCode Value="0" Behavior="success" />
+        <ExitCode Value="3010" Behavior="scheduleReboot" />
+        <ExitCode Behavior="error" />
+      </ExePackage>
+
+      <ExePackage
+        Id="VisualCppRuntime"
+        DisplayName="Microsoft Visual C++ Redistributable ($(var.InstallerPlatform))"
+        SourceFile="$(var.VCRedistInstaller)"
+        Name="vc-redist-$(var.InstallerPlatform).exe"
+        DownloadUrl="$(var.VCRedistDownloadUrl)"
+        Compressed="no"
+        Cache="remove"
+        PerMachine="yes"
+        Permanent="yes"
+        Vital="yes"
+        DetectCondition="VC_RUNTIME_VERSION &gt;= &quot;v$(var.VCRedistVersion)&quot;"
+        InstallArguments="/install /quiet /norestart"
+        RepairArguments="/repair /quiet /norestart"
+        UninstallArguments="/uninstall /quiet /norestart">
+        <ExitCode Value="0" Behavior="success" />
+        <ExitCode Value="1638" Behavior="success" />
+        <ExitCode Value="3010" Behavior="scheduleReboot" />
+        <ExitCode Behavior="error" />
+      </ExePackage>
+
+      <ExePackage
+        Id="WindowsAppRuntime"
+        DisplayName="Microsoft Windows App Runtime $(var.WindowsAppRuntimePackageVersion) ($(var.InstallerPlatform))"
+        SourceFile="$(var.WindowsAppRuntimeInstaller)"
+        Name="windows-app-runtime-$(var.InstallerPlatform).exe"
+        DownloadUrl="$(var.WindowsAppRuntimeDownloadUrl)"
+        Compressed="no"
+        Cache="remove"
+        PerMachine="yes"
+        Permanent="yes"
+        Vital="yes"
+        DetectCondition="WINDOWS_APP_RUNTIME_FRAMEWORK_PRESENT AND WINDOWS_APP_RUNTIME_MAIN_PRESENT AND WINDOWS_APP_RUNTIME_SINGLETON_PRESENT AND WINDOWS_APP_RUNTIME_DDLM_PRESENT"
+        InstallArguments="--quiet">
+        <ExitCode Value="0" Behavior="success" />
+        <ExitCode Behavior="error" />
+      </ExePackage>
+
+      <MsiPackage
+        Id="FluxReaderApplication"
+        SourceFile="$(var.ApplicationMsi)"
+        Compressed="yes"
+        Visible="no"
+        Vital="yes" />
+    </Chain>
+  </Bundle>
+</Wix>

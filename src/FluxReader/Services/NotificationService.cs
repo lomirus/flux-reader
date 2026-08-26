@@ -8,6 +8,7 @@ public sealed class NotificationService : IDisposable
     private readonly LocalizationService _localization;
     private readonly string _logPath;
     private readonly object _logSync = new();
+    private AppNotificationManager? _manager;
     private bool _registered;
 
     public NotificationService(string logPath, LocalizationService localization)
@@ -25,15 +26,36 @@ public sealed class NotificationService : IDisposable
 
     public void Register()
     {
+        AppNotificationManager? manager = null;
+
         try
         {
-            AppNotificationManager.Default.NotificationInvoked += OnNotificationInvoked;
-            AppNotificationManager.Default.Register();
+            if (!AppNotificationManager.IsSupported())
+            {
+                return;
+            }
+
+            manager = AppNotificationManager.Default;
+            manager.NotificationInvoked += OnNotificationInvoked;
+            manager.Register();
+            _manager = manager;
             _registered = true;
         }
         catch (Exception exception)
         {
-            AppNotificationManager.Default.NotificationInvoked -= OnNotificationInvoked;
+            if (manager is not null)
+            {
+                try
+                {
+                    manager.NotificationInvoked -= OnNotificationInvoked;
+                }
+                catch
+                {
+                    // Notification cleanup must not prevent the app from starting.
+                }
+            }
+
+            _manager = null;
             _registered = false;
             LogFailure("Register", exception);
         }
@@ -41,7 +63,8 @@ public sealed class NotificationService : IDisposable
 
     public void ShowNewArticles(int count, string? latestTitle)
     {
-        if (!_registered || count <= 0)
+        var manager = _manager;
+        if (!_registered || manager is null || count <= 0)
         {
             return;
         }
@@ -56,7 +79,7 @@ public sealed class NotificationService : IDisposable
                     : latestTitle);
             var notification = builder.BuildNotification();
             notification.Expiration = DateTimeOffset.Now.AddHours(8);
-            AppNotificationManager.Default.Show(notification);
+            manager.Show(notification);
         }
         catch (Exception exception)
         {
@@ -66,15 +89,16 @@ public sealed class NotificationService : IDisposable
 
     public void Dispose()
     {
-        if (!_registered)
+        var manager = _manager;
+        if (!_registered || manager is null)
         {
             return;
         }
 
         try
         {
-            AppNotificationManager.Default.NotificationInvoked -= OnNotificationInvoked;
-            AppNotificationManager.Default.Unregister();
+            manager.NotificationInvoked -= OnNotificationInvoked;
+            manager.Unregister();
         }
         catch (Exception exception)
         {
@@ -82,6 +106,7 @@ public sealed class NotificationService : IDisposable
         }
         finally
         {
+            _manager = null;
             _registered = false;
         }
     }

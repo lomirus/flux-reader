@@ -1,0 +1,29 @@
+<!-- WiX 6+ adds Open Source Maintenance Fee terms; review them before upgrading. -->
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <InstallerPlatform Condition="'$(InstallerPlatform)' == ''">x64</InstallerPlatform>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">$(VersionPrefix)</ProductVersion>
+    <BundleUpgradeCode Condition="'$(InstallerPlatform)' == 'x64'">753DE73C-BFED-45F4-8B0E-FF09D441BFBD</BundleUpgradeCode>
+    <BundleUpgradeCode Condition="'$(InstallerPlatform)' == 'arm64'">E962C1CC-4EFF-4FAB-B704-E2521D14775F</BundleUpgradeCode>
+    <WindowsAppRuntimePackageVersion Condition="'$(WindowsAppRuntimePackageVersion)' == ''">2.4.0.0</WindowsAppRuntimePackageVersion>
+    <WindowsAppRuntimeDdlmArchitectureCode Condition="'$(WindowsAppRuntimeDdlmArchitectureCode)' == '' and '$(InstallerPlatform)' == 'x64'">x6</WindowsAppRuntimeDdlmArchitectureCode>
+    <WindowsAppRuntimeDdlmArchitectureCode Condition="'$(WindowsAppRuntimeDdlmArchitectureCode)' == '' and '$(InstallerPlatform)' == 'arm64'">a6</WindowsAppRuntimeDdlmArchitectureCode>
+    <IntermediateOutputPath>obj\$(InstallerPlatform)\$(Configuration)\$(ProductVersion)\</IntermediateOutputPath>
+    <OutputName>FluxReaderSetup-$(ProductVersion)-$(InstallerPlatform)</OutputName>
+    <OutputType>Bundle</OutputType>
+    <DefineConstants>$(DefineConstants);ProductVersion=$(ProductVersion);BundleUpgradeCode=$(BundleUpgradeCode);ApplicationMsi=$(ApplicationMsi);DotNetRuntimeInstaller=$(DotNetRuntimeInstaller);DotNetRuntimeDownloadUrl=$(DotNetRuntimeDownloadUrl);DotNetRuntimeVersion=$(DotNetRuntimeVersion);VCRedistInstaller=$(VCRedistInstaller);VCRedistDownloadUrl=$(VCRedistDownloadUrl);VCRedistVersion=$(VCRedistVersion);WindowsAppRuntimeInstaller=$(WindowsAppRuntimeInstaller);WindowsAppRuntimeDownloadUrl=$(WindowsAppRuntimeDownloadUrl);WindowsAppRuntimePackageVersion=$(WindowsAppRuntimePackageVersion);WindowsAppRuntimeDdlmArchitectureCode=$(WindowsAppRuntimeDdlmArchitectureCode);BundleIcon=$(BundleIcon)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Bal.wixext" />
+    <PackageReference Include="WixToolset.Netfx.wixext" />
+    <PackageReference Include="WixToolset.Util.wixext" />
+  </ItemGroup>
+
+  <Target Name="ValidateBundleInputs" BeforeTargets="Build">
+    <Error Condition="!Exists('$(ApplicationMsi)')" Text="The internal application MSI was not found at '$(ApplicationMsi)'." />
+    <Error Condition="!Exists('$(DotNetRuntimeInstaller)')" Text="The .NET runtime installer was not found at '$(DotNetRuntimeInstaller)'." />
+    <Error Condition="!Exists('$(VCRedistInstaller)')" Text="The Visual C++ Redistributable installer was not found at '$(VCRedistInstaller)'." />
+    <Error Condition="!Exists('$(WindowsAppRuntimeInstaller)')" Text="The Windows App Runtime installer was not found at '$(WindowsAppRuntimeInstaller)'." />
+  </Target>
+</Project>

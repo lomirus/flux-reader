@@ -1,0 +1,99 @@
+name: Release Windows installers
+
+"on":
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  validate_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - name: Read version from tag
+        id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ ^v((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))$ ]]; then
+            echo "value=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release tags must use the vMAJOR.MINOR.PATCH format." >&2
+            exit 1
+          fi
+
+  test:
+    needs: validate_version
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            **/*.wixproj
+            Directory.Packages.props
+
+      - name: Restore
+        run: dotnet restore FluxReader.slnx --configfile NuGet.Config
+
+      - name: Test
+        run: dotnet test --project tests/FluxReader.Core.Tests/FluxReader.Core.Tests.csproj --configuration Release --no-restore --minimum-expected-tests 1
+
+  build-installers:
+    needs: [validate_version, test]
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [x64, arm64]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            **/*.wixproj
+            Directory.Packages.props
+
+      - name: Build setup
+        shell: pwsh
+        run: ./scripts/Build-Installer.ps1 -Version ${{ needs.validate_version.outputs.version }} -Architecture ${{ matrix.architecture }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FluxReader-${{ matrix.architecture }}
+          path: artifacts/installers/FluxReaderSetup-*.exe
+          if-no-files-found: error
+
+  publish-release:
+    needs: build-installers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: FluxReader-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" artifacts/*.exe --verify-tag --generate-notes --title "FluxReader $GITHUB_REF_NAME"

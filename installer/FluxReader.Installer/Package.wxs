@@ -1,0 +1,56 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="FluxReader"
+    Manufacturer="FluxReader"
+    Version="$(var.ProductVersion)"
+    ProductCode="$(var.ProductCode)"
+    UpgradeCode="DAC80A0E-44B2-471F-86B8-810DA291185E"
+    Scope="perMachine"
+    InstallerVersion="500">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of FluxReader is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="FluxReader.ico" SourceFile="!(bindpath.PublishOutput)\Assets\fluxreader-icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="FluxReader.ico" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="FluxReader" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="FluxReader" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="ApplicationFiles" Directory="INSTALLFOLDER">
+      <Files Include="!(bindpath.PublishOutput)\**">
+        <Exclude Files="!(bindpath.PublishOutput)\**\*.pdb" />
+      </Files>
+    </ComponentGroup>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="2808B88D-F233-4D19-951C-C86318D72829">
+        <Shortcut
+          Id="StartMenuShortcut"
+          Name="FluxReader"
+          Description="FluxReader RSS reader"
+          Target="[INSTALLFOLDER]FluxReader.exe"
+          WorkingDirectory="INSTALLFOLDER"
+          Icon="FluxReader.ico" />
+        <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue
+          Root="HKCU"
+          Key="Software\FluxReader"
+          Name="Version"
+          Type="string"
+          Value="$(var.ProductVersion)"
+          KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="MainFeature" Title="FluxReader" Level="1">
+      <ComponentGroupRef Id="ApplicationFiles" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+  </Package>
+</Wix>
