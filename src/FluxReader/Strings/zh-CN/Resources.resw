@@ -66,6 +66,8 @@
   <data name="Language" xml:space="preserve"><value>语言</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>应用语言</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>选择 FluxReader 的显示语言。更改会立即生效。</value></data>
+  <data name="About" xml:space="preserve"><value>关于</value></data>
+  <data name="VersionDisplay" xml:space="preserve"><value>版本 {0}</value></data>
   <data name="ArticleCountOne" xml:space="preserve"><value>{0} 篇文章</value></data>
   <data name="ArticleCountOther" xml:space="preserve"><value>{0} 篇文章</value></data>
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows 系统通知当前不可用，错误已写入 notifications.log；阅读和刷新功能不受影响。</value></data>

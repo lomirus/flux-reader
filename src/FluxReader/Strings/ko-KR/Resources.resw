@@ -66,6 +66,8 @@
   <data name="Language" xml:space="preserve"><value>언어</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>앱 언어</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>FluxReader의 표시 언어를 선택하세요. 변경 사항은 즉시 적용됩니다.</value></data>
+  <data name="About" xml:space="preserve"><value>정보</value></data>
+  <data name="VersionDisplay" xml:space="preserve"><value>버전 {0}</value></data>
   <data name="ArticleCountOne" xml:space="preserve"><value>기사 {0}개</value></data>
   <data name="ArticleCountOther" xml:space="preserve"><value>기사 {0}개</value></data>
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows 알림을 사용할 수 없습니다. 자세한 내용은 notifications.log에 기록되었습니다. 읽기와 새로 고침에는 영향이 없습니다.</value></data>

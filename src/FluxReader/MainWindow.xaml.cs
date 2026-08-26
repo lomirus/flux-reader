@@ -290,6 +290,23 @@ public sealed partial class MainWindow : Window
         SettingsFrame.Visibility = Visibility.Visible;
     }
 
+    private void About_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_settingsLoaded || SettingsFrame.Visibility == Visibility.Visible)
+        {
+            return;
+        }
+
+        SettingsFrame.Navigate(typeof(AboutPage));
+        if (SettingsFrame.Content is not AboutPage aboutPage)
+        {
+            return;
+        }
+
+        aboutPage.BackRequested += AboutPage_BackRequested;
+        SettingsFrame.Visibility = Visibility.Visible;
+    }
+
     private async void SettingsPage_ThemeChanged(object? sender, EventArgs e)
     {
         if (sender is not SettingsPage settingsPage)
@@ -321,6 +338,8 @@ public sealed partial class MainWindow : Window
 
     private void SettingsPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
 
+    private void AboutPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
+
     private void CloseSettingsPage()
     {
         if (SettingsFrame.Content is SettingsPage settingsPage)
@@ -328,6 +347,10 @@ public sealed partial class MainWindow : Window
             settingsPage.BackRequested -= SettingsPage_BackRequested;
             settingsPage.ThemeChanged -= SettingsPage_ThemeChanged;
             settingsPage.LanguageChanged -= SettingsPage_LanguageChanged;
+        }
+        else if (SettingsFrame.Content is AboutPage aboutPage)
+        {
+            aboutPage.BackRequested -= AboutPage_BackRequested;
         }
 
         SettingsFrame.Visibility = Visibility.Collapsed;
@@ -363,6 +386,10 @@ public sealed partial class MainWindow : Window
         var settings = localization.GetString("Settings");
         AutomationProperties.SetName(SettingsButton, settings);
         ToolTipService.SetToolTip(SettingsButton, settings);
+
+        var about = localization.GetString("About");
+        AutomationProperties.SetName(AboutButton, about);
+        ToolTipService.SetToolTip(AboutButton, about);
         AllArticlesText.Text = localization.GetString("AllArticles");
         FeedsHeaderText.Text = localization.GetString("Feeds");
 

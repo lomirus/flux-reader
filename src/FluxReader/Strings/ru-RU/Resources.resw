@@ -66,6 +66,8 @@
   <data name="Language" xml:space="preserve"><value>Язык</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>Язык приложения</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>Выберите язык интерфейса FluxReader. Изменения применяются сразу.</value></data>
+  <data name="About" xml:space="preserve"><value>О приложении</value></data>
+  <data name="VersionDisplay" xml:space="preserve"><value>Версия {0}</value></data>
   <data name="ArticleCountOne" xml:space="preserve"><value>{0} статья</value></data>
   <data name="ArticleCountOther" xml:space="preserve"><value>Статей: {0}</value></data>
   <data name="NotificationUnavailable" xml:space="preserve"><value>Уведомления Windows недоступны. Подробности записаны в notifications.log; это не влияет на чтение и обновление.</value></data>

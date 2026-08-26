@@ -66,6 +66,8 @@
   <data name="Language" xml:space="preserve"><value>Idioma</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>Idioma do aplicativo</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>Escolha o idioma de exibição do FluxReader. As alterações são aplicadas imediatamente.</value></data>
+  <data name="About" xml:space="preserve"><value>Sobre</value></data>
+  <data name="VersionDisplay" xml:space="preserve"><value>Versão {0}</value></data>
   <data name="ArticleCountOne" xml:space="preserve"><value>{0} artigo</value></data>
   <data name="ArticleCountOther" xml:space="preserve"><value>{0} artigos</value></data>
   <data name="NotificationUnavailable" xml:space="preserve"><value>As notificações do Windows não estão disponíveis. Os detalhes foram gravados em notifications.log; a leitura e a atualização não foram afetadas.</value></data>

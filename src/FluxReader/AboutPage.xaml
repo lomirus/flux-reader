@@ -1,0 +1,89 @@
+<Page
+    x:Class="FluxReader.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="WideAboutLayout">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="824" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="AboutContent.Width" Value="760" />
+                        <Setter Target="AboutContent.HorizontalAlignment" Value="Center" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="NarrowAboutLayout">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Height="48" Padding="16,0" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button
+                x:Name="BackButton"
+                Width="32"
+                Height="32"
+                Padding="0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Background="Transparent"
+                BorderThickness="0"
+                Click="BackButton_Click">
+                <FontIcon FontSize="14" Glyph="&#xE72B;" />
+            </Button>
+            <TextBlock
+                x:Name="AboutTitleText"
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                FontSize="18"
+                FontWeight="SemiBold" />
+        </Grid>
+
+        <ScrollViewer
+            Grid.Row="1"
+            HorizontalContentAlignment="Stretch"
+            HorizontalScrollBarVisibility="Disabled"
+            HorizontalScrollMode="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel
+                x:Name="AboutContent"
+                Margin="32,48,32,40"
+                HorizontalAlignment="Stretch"
+                Spacing="12">
+                <Image
+                    x:Name="BrandIcon"
+                    Width="96"
+                    Height="96"
+                    HorizontalAlignment="Center">
+                    <Image.Source>
+                        <SvgImageSource UriSource="ms-appx:///Assets/fluxreader-icon.svg" />
+                    </Image.Source>
+                </Image>
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="28"
+                    FontWeight="SemiBold"
+                    Text="FluxReader" />
+                <TextBlock
+                    x:Name="VersionText"
+                    HorizontalAlignment="Center"
+                    FontSize="14"
+                    Opacity="0.65" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

@@ -66,6 +66,8 @@
   <data name="Language" xml:space="preserve"><value>言語</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>アプリの言語</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>FluxReader の表示言語を選択します。変更はすぐに反映されます。</value></data>
+  <data name="About" xml:space="preserve"><value>バージョン情報</value></data>
+  <data name="VersionDisplay" xml:space="preserve"><value>バージョン {0}</value></data>
   <data name="ArticleCountOne" xml:space="preserve"><value>記事 {0} 件</value></data>
   <data name="ArticleCountOther" xml:space="preserve"><value>記事 {0} 件</value></data>
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows 通知を利用できません。詳細は notifications.log に記録されました。閲覧と更新には影響しません。</value></data>

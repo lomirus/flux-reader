@@ -46,6 +46,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <Button
@@ -78,6 +79,12 @@
                 Grid.Column="5"
                 Click="Settings_Click">
                 <FontIcon FontSize="14" Glyph="&#xE713;" />
+            </Button>
+            <Button
+                x:Name="AboutButton"
+                Grid.Column="6"
+                Click="About_Click">
+                <FontIcon FontSize="14" Glyph="&#xE946;" />
             </Button>
         </Grid>
 
