@@ -87,12 +87,15 @@
             </ComboBox>
         </Grid>
 
-        <Grid Grid.Row="2">
+        <Grid
+            x:Name="MainContentGrid"
+            Grid.Row="2"
+            SizeChanged="MainContentGrid_SizeChanged">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="248" />
-                <ColumnDefinition Width="1" />
-                <ColumnDefinition Width="420" />
-                <ColumnDefinition Width="1" />
+                <ColumnDefinition x:Name="FeedPaneColumn" Width="248" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition x:Name="ArticleListPaneColumn" Width="420" />
+                <ColumnDefinition Width="8" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -194,7 +197,21 @@
                 </ListView>
             </Grid>
 
-            <Rectangle Grid.Column="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            <Grid Grid.Column="1">
+                <Rectangle
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                <Thumb
+                    AutomationProperties.Name="调整订阅栏宽度"
+                    Background="Transparent"
+                    DoubleTapped="FeedPaneSplitter_DoubleTapped"
+                    DragCompleted="PaneSplitter_DragCompleted"
+                    DragDelta="FeedPaneSplitter_DragDelta"
+                    IsTabStop="True"
+                    KeyDown="FeedPaneSplitter_KeyDown"
+                    ToolTipService.ToolTip="拖动调整宽度；双击恢复默认值" />
+            </Grid>
 
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
@@ -276,7 +293,21 @@
                 </ListView>
             </Grid>
 
-            <Rectangle Grid.Column="3" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            <Grid Grid.Column="3">
+                <Rectangle
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                <Thumb
+                    AutomationProperties.Name="调整文章列表宽度"
+                    Background="Transparent"
+                    DoubleTapped="ArticleListPaneSplitter_DoubleTapped"
+                    DragCompleted="PaneSplitter_DragCompleted"
+                    DragDelta="ArticleListPaneSplitter_DragDelta"
+                    IsTabStop="True"
+                    KeyDown="ArticleListPaneSplitter_KeyDown"
+                    ToolTipService.ToolTip="拖动调整宽度；双击恢复默认值" />
+            </Grid>
 
             <Grid Grid.Column="4" Padding="28,18,28,24">
                 <Grid x:Name="ArticleEmptyView">

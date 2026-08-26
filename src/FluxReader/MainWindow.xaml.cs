@@ -3,17 +3,29 @@ using FluxReader.Services;
 using FluxReader.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 
 namespace FluxReader;
 
 public sealed partial class MainWindow : Window
 {
+    private const double DefaultFeedPaneWidth = 248;
+    private const double DefaultArticleListPaneWidth = 420;
+    private const double MinimumFeedPaneWidth = 180;
+    private const double MaximumFeedPaneWidth = 480;
+    private const double MinimumArticleListPaneWidth = 300;
+    private const double MaximumArticleListPaneWidth = 720;
+    private const double MinimumReaderPaneWidth = 360;
+    private const double SplitterWidth = 8;
+
     private readonly CancellationTokenSource _lifetime = new();
     private readonly DispatcherTimer _refreshTimer = new()
     {
         Interval = TimeSpan.FromMinutes(15)
     };
-    private bool _themeLoaded;
+    private AppSettings _settings = new();
+    private bool _settingsLoaded;
 
     public MainWindow()
     {
@@ -35,10 +47,11 @@ public sealed partial class MainWindow : Window
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         RootGrid.Loaded -= RootGrid_Loaded;
-        var settings = await App.Current.Settings.LoadAsync(_lifetime.Token);
-        ApplyTheme(settings.Theme);
-        ThemeSelector.SelectedIndex = (int)settings.Theme;
-        _themeLoaded = true;
+        _settings = await App.Current.Settings.LoadAsync(_lifetime.Token);
+        ApplyTheme(_settings.Theme);
+        ApplySavedPaneWidths();
+        ThemeSelector.SelectedIndex = (int)_settings.Theme;
+        _settingsLoaded = true;
         await ViewModel.InitializeAsync(_lifetime.Token);
         _refreshTimer.Start();
     }
@@ -139,14 +152,15 @@ public sealed partial class MainWindow : Window
 
     private async void ThemeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_themeLoaded || ThemeSelector.SelectedIndex < 0)
+        if (!_settingsLoaded || ThemeSelector.SelectedIndex < 0)
         {
             return;
         }
 
         var theme = (AppTheme)ThemeSelector.SelectedIndex;
         ApplyTheme(theme);
-        await App.Current.Settings.SaveAsync(new AppSettings(theme), _lifetime.Token);
+        _settings = _settings with { Theme = theme };
+        await SaveSettingsAsync();
     }
 
     private void ApplyTheme(AppTheme theme)
@@ -164,6 +178,134 @@ public sealed partial class MainWindow : Window
         ArticleList.SelectedItem = null;
         ArticleEmptyView.Visibility = Visibility.Visible;
         ArticleReaderView.Visibility = Visibility.Collapsed;
+    }
+
+    private void FeedPaneSplitter_DragDelta(object sender, DragDeltaEventArgs e) =>
+        SetFeedPaneWidth(FeedPaneColumn.ActualWidth + e.HorizontalChange);
+
+    private void ArticleListPaneSplitter_DragDelta(object sender, DragDeltaEventArgs e) =>
+        SetArticleListPaneWidth(ArticleListPaneColumn.ActualWidth + e.HorizontalChange);
+
+    private async void PaneSplitter_DragCompleted(object sender, DragCompletedEventArgs e) =>
+        await PersistPaneWidthsAsync();
+
+    private async void FeedPaneSplitter_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        SetFeedPaneWidth(DefaultFeedPaneWidth);
+        await PersistPaneWidthsAsync();
+    }
+
+    private async void ArticleListPaneSplitter_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        SetArticleListPaneWidth(DefaultArticleListPaneWidth);
+        await PersistPaneWidthsAsync();
+    }
+
+    private async void FeedPaneSplitter_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (!TryGetKeyboardResizeDelta(e, out var delta))
+        {
+            return;
+        }
+
+        SetFeedPaneWidth(FeedPaneColumn.ActualWidth + delta);
+        e.Handled = true;
+        await PersistPaneWidthsAsync();
+    }
+
+    private async void ArticleListPaneSplitter_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (!TryGetKeyboardResizeDelta(e, out var delta))
+        {
+            return;
+        }
+
+        SetArticleListPaneWidth(ArticleListPaneColumn.ActualWidth + delta);
+        e.Handled = true;
+        await PersistPaneWidthsAsync();
+    }
+
+    private void MainContentGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!_settingsLoaded)
+        {
+            return;
+        }
+
+        SetFeedPaneWidth(FeedPaneColumn.ActualWidth);
+        SetArticleListPaneWidth(ArticleListPaneColumn.ActualWidth);
+    }
+
+    private void ApplySavedPaneWidths()
+    {
+        SetFeedPaneWidth(IsValidSavedWidth(_settings.FeedPaneWidth)
+            ? _settings.FeedPaneWidth
+            : DefaultFeedPaneWidth);
+        SetArticleListPaneWidth(IsValidSavedWidth(_settings.ArticleListPaneWidth)
+            ? _settings.ArticleListPaneWidth
+            : DefaultArticleListPaneWidth);
+    }
+
+    private void SetFeedPaneWidth(double requestedWidth)
+    {
+        var availableMaximum = MainContentGrid.ActualWidth -
+                               ArticleListPaneColumn.ActualWidth -
+                               MinimumReaderPaneWidth -
+                               (SplitterWidth * 2);
+        var maximum = Math.Max(MinimumFeedPaneWidth, Math.Min(MaximumFeedPaneWidth, availableMaximum));
+        FeedPaneColumn.Width = new GridLength(Math.Clamp(requestedWidth, MinimumFeedPaneWidth, maximum));
+    }
+
+    private void SetArticleListPaneWidth(double requestedWidth)
+    {
+        var availableMaximum = MainContentGrid.ActualWidth -
+                               FeedPaneColumn.ActualWidth -
+                               MinimumReaderPaneWidth -
+                               (SplitterWidth * 2);
+        var maximum = Math.Max(
+            MinimumArticleListPaneWidth,
+            Math.Min(MaximumArticleListPaneWidth, availableMaximum));
+        ArticleListPaneColumn.Width = new GridLength(
+            Math.Clamp(requestedWidth, MinimumArticleListPaneWidth, maximum));
+    }
+
+    private async Task PersistPaneWidthsAsync()
+    {
+        if (!_settingsLoaded)
+        {
+            return;
+        }
+
+        _settings = _settings with
+        {
+            FeedPaneWidth = FeedPaneColumn.ActualWidth,
+            ArticleListPaneWidth = ArticleListPaneColumn.ActualWidth
+        };
+        await SaveSettingsAsync();
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        try
+        {
+            await App.Current.Settings.SaveAsync(_settings, _lifetime.Token);
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+        }
+    }
+
+    private static bool IsValidSavedWidth(double width) => double.IsFinite(width) && width > 0;
+
+    private static bool TryGetKeyboardResizeDelta(KeyRoutedEventArgs e, out double delta)
+    {
+        delta = e.Key switch
+        {
+            Windows.System.VirtualKey.Left => -16,
+            Windows.System.VirtualKey.Right => 16,
+            _ => 0
+        };
+        return delta != 0;
     }
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)

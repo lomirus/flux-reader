@@ -11,6 +11,7 @@ public sealed class SettingsService
     };
 
     private readonly string _path;
+    private readonly SemaphoreSlim _saveGate = new(1, 1);
 
     public SettingsService(string path)
     {
@@ -38,15 +39,26 @@ public sealed class SettingsService
 
     public async Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default)
     {
-        var directory = Path.GetDirectoryName(_path);
-        if (!string.IsNullOrEmpty(directory))
+        await _saveGate.WaitAsync(cancellationToken);
+        try
         {
-            Directory.CreateDirectory(directory);
-        }
+            var directory = Path.GetDirectoryName(_path);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
 
-        await using var stream = new FileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None);
-        await JsonSerializer.SerializeAsync(stream, settings, SerializerOptions, cancellationToken);
+            await using var stream = new FileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None);
+            await JsonSerializer.SerializeAsync(stream, settings, SerializerOptions, cancellationToken);
+        }
+        finally
+        {
+            _saveGate.Release();
+        }
     }
 }
 
-public sealed record AppSettings(AppTheme Theme = AppTheme.System);
+public sealed record AppSettings(
+    AppTheme Theme = AppTheme.System,
+    double FeedPaneWidth = 248,
+    double ArticleListPaneWidth = 420);
