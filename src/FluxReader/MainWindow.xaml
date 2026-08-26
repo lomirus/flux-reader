@@ -43,7 +43,6 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -67,23 +66,16 @@
                 Command="{Binding RefreshCommand}">
                 <FontIcon FontSize="14" Glyph="&#xE72C;" />
             </Button>
-            <Button
-                x:Name="DeleteFeedButton"
-                Grid.Column="3"
-                Click="DeleteFeed_Click"
-                IsEnabled="{Binding CanDeleteSelectedFeed}">
-                <FontIcon FontSize="14" Glyph="&#xE74D;" />
-            </Button>
 
             <ProgressRing
-                Grid.Column="5"
+                Grid.Column="4"
                 Width="20"
                 Height="20"
                 Margin="8,0"
                 IsActive="{Binding IsBusy}" />
             <Button
                 x:Name="SettingsButton"
-                Grid.Column="6"
+                Grid.Column="5"
                 Click="Settings_Click">
                 <FontIcon FontSize="14" Glyph="&#xE713;" />
             </Button>

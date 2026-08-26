@@ -21,7 +21,6 @@
   <data name="AddFeed" xml:space="preserve"><value>Añadir fuente</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Actualizar todas las fuentes</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Marcar todo como leído</value></data>
-  <data name="RemoveCurrentFeed" xml:space="preserve"><value>Quitar la fuente actual</value></data>
   <data name="Settings" xml:space="preserve"><value>Configuración</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Todos los artículos</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Artículos no leídos</value></data>

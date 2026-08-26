@@ -21,7 +21,6 @@
   <data name="AddFeed" xml:space="preserve"><value>新增訂閱</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>重新整理所有訂閱</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>全部標示為已讀</value></data>
-  <data name="RemoveCurrentFeed" xml:space="preserve"><value>移除目前訂閱</value></data>
   <data name="Settings" xml:space="preserve"><value>設定</value></data>
   <data name="AllArticles" xml:space="preserve"><value>所有文章</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>未讀文章</value></data>

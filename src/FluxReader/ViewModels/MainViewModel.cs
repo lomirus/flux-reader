@@ -18,7 +18,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ArticleListTitle))]
-    [NotifyPropertyChangedFor(nameof(CanDeleteSelectedFeed))]
     public partial Feed? SelectedFeed { get; set; }
 
     [ObservableProperty]
@@ -37,7 +36,6 @@ public sealed partial class MainViewModel : ObservableObject
     public partial ArticleFilter CurrentFilter { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanDeleteSelectedFeed))]
     public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
@@ -74,8 +72,6 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<Article> Articles { get; } = [];
 
     public bool IsUnreadFilterEnabled => CurrentFilter == ArticleFilter.Unread;
-
-    public bool CanDeleteSelectedFeed => SelectedFeed is not null && !IsBusy;
 
     public string ArticleListTitle => SelectedFeed?.Title ?? SelectedGroup?.Name ??
         (CurrentFilter switch
@@ -338,11 +334,6 @@ public sealed partial class MainViewModel : ObservableObject
 
         await Launcher.LaunchUriAsync(uri);
     }
-
-    public Task DeleteSelectedFeedAsync(CancellationToken cancellationToken = default) =>
-        SelectedFeed is null
-            ? Task.CompletedTask
-            : DeleteFeedAsync(SelectedFeed, cancellationToken);
 
     public async Task DeleteFeedAsync(Feed feed, CancellationToken cancellationToken = default)
     {

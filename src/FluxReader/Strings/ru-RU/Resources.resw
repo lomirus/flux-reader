@@ -21,7 +21,6 @@
   <data name="AddFeed" xml:space="preserve"><value>Добавить ленту</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Обновить все ленты</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Отметить всё как прочитанное</value></data>
-  <data name="RemoveCurrentFeed" xml:space="preserve"><value>Удалить текущую ленту</value></data>
   <data name="Settings" xml:space="preserve"><value>Параметры</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Все статьи</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Непрочитанные статьи</value></data>

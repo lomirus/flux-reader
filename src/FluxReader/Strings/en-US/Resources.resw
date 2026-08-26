@@ -21,7 +21,6 @@
   <data name="AddFeed" xml:space="preserve"><value>Add feed</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Refresh all feeds</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Mark all as read</value></data>
-  <data name="RemoveCurrentFeed" xml:space="preserve"><value>Remove current feed</value></data>
   <data name="Settings" xml:space="preserve"><value>Settings</value></data>
   <data name="AllArticles" xml:space="preserve"><value>All articles</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Unread articles</value></data>

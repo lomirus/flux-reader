@@ -21,7 +21,6 @@
   <data name="AddFeed" xml:space="preserve"><value>Ajouter un flux</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Actualiser tous les flux</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Tout marquer comme lu</value></data>
-  <data name="RemoveCurrentFeed" xml:space="preserve"><value>Supprimer le flux actuel</value></data>
   <data name="Settings" xml:space="preserve"><value>Paramètres</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Tous les articles</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Articles non lus</value></data>

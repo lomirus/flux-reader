@@ -140,16 +140,6 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async void DeleteFeed_Click(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel.SelectedFeed is null)
-        {
-            return;
-        }
-
-        await ConfirmDeleteFeedAsync(ViewModel.SelectedFeed);
-    }
-
     private async void FeedTree_SelectionChanged(TreeView sender, TreeViewSelectionChangedEventArgs args)
     {
         var selectedItem = args.AddedItems.LastOrDefault();
@@ -340,7 +330,6 @@ public sealed partial class MainWindow : Window
         AutomationProperties.SetName(AddFeedButton, addFeed);
         ToolTipService.SetToolTip(AddFeedButton, addFeed);
         ToolTipService.SetToolTip(RefreshButton, localization.GetString("RefreshAllFeeds"));
-        ToolTipService.SetToolTip(DeleteFeedButton, localization.GetString("RemoveCurrentFeed"));
 
         var addGroup = localization.GetString("AddGroup");
         AutomationProperties.SetName(AddGroupButton, addGroup);
