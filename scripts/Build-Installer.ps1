@@ -8,7 +8,9 @@ param(
     [string]$Architecture = 'x64',
 
     [ValidateSet('Debug', 'Release')]
-    [string]$Configuration = 'Release'
+    [string]$Configuration = 'Release',
+
+    [switch]$Offline
 )
 
 $ErrorActionPreference = 'Stop'
@@ -28,23 +30,48 @@ $runtimePublishRoot = Join-Path $repositoryRoot "artifacts\publish\$runtimeIdent
 $publishDirectory = Join-Path $runtimePublishRoot 'setup'
 $setupRoot = Join-Path $repositoryRoot "artifacts\setup\$runtimeIdentifier\$Version"
 $internalMsiDirectory = Join-Path $setupRoot 'application'
-$prerequisiteDirectory = Join-Path $setupRoot 'prerequisites'
+$prerequisiteCacheDirectory = Join-Path $repositoryRoot "artifacts\cache\prerequisites\$Architecture"
 $setupOutputDirectory = Join-Path $setupRoot 'output'
 $installerDirectory = Join-Path $repositoryRoot 'artifacts\installers'
 $bundleIcon = Join-Path $repositoryRoot 'assets\brand\fluxreader-icon.ico'
 
 # Pin immutable Microsoft payloads so an existing Setup.exe keeps matching the
-# hashes WiX records even after the public "latest" aliases move forward.
-$prerequisiteDownloadUrls = @{
+# hashes WiX records even after the public "latest" aliases move forward. The
+# explicit SHA-256 values also make the persistent build cache safe to reuse.
+$prerequisitePayloads = @{
     x64 = @{
-        DotNet = 'https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.11/dotnet-runtime-10.0.11-win-x64.exe'
-        VCRedist = 'https://download.visualstudio.microsoft.com/download/pr/ebdab8e5-1d7b-4d9f-a11b-cbb1720c3b12/843068991DAAA1F73AD9F6239BCE4D0F6A07A51F18C37EA2A867E9BECA71295C/VC_redist.x64.exe'
-        WindowsAppRuntime = 'https://download.microsoft.com/download/097dbd99-ea76-49de-994b-eb935c72dcf1/WindowsAppRuntimeInstall-x64.exe'
+        DotNet = @{
+            FileName = 'dotnet-runtime-win-x64.exe'
+            Url = 'https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.11/dotnet-runtime-10.0.11-win-x64.exe'
+            Sha256 = '33DE99EEDA0F06F4B4AD43A1FD23977343E1358F5DBB4B0D5E1B84850DC18AFC'
+        }
+        VCRedist = @{
+            FileName = 'vc-redist-x64.exe'
+            Url = 'https://download.visualstudio.microsoft.com/download/pr/ebdab8e5-1d7b-4d9f-a11b-cbb1720c3b12/843068991DAAA1F73AD9F6239BCE4D0F6A07A51F18C37EA2A867E9BECA71295C/VC_redist.x64.exe'
+            Sha256 = '843068991DAAA1F73AD9F6239BCE4D0F6A07A51F18C37EA2A867E9BECA71295C'
+        }
+        WindowsAppRuntime = @{
+            FileName = 'windows-app-runtime-x64.exe'
+            Url = 'https://download.microsoft.com/download/097dbd99-ea76-49de-994b-eb935c72dcf1/WindowsAppRuntimeInstall-x64.exe'
+            Sha256 = '851C35B0B0A59CE4C55F9171F601193322FC3413143B0DC3390EA11E14CFA7FC'
+        }
     }
     arm64 = @{
-        DotNet = 'https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.11/dotnet-runtime-10.0.11-win-arm64.exe'
-        VCRedist = 'https://download.visualstudio.microsoft.com/download/pr/355d2512-13c2-400a-bf9f-8a296abb5932/B70EF586669A620A0A30A1156969C05C6A3831DC8F8BC992DA75779D2A92F944/VC_redist.arm64.exe'
-        WindowsAppRuntime = 'https://download.microsoft.com/download/2f7e2917-37ac-43a3-990e-73838adaf281/WindowsAppRuntimeInstall-arm64.exe'
+        DotNet = @{
+            FileName = 'dotnet-runtime-win-arm64.exe'
+            Url = 'https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.11/dotnet-runtime-10.0.11-win-arm64.exe'
+            Sha256 = 'F9C492A4D5E286641E6D9B697D730F3066194138CC83CD290B058D0961E067C9'
+        }
+        VCRedist = @{
+            FileName = 'vc-redist-arm64.exe'
+            Url = 'https://download.visualstudio.microsoft.com/download/pr/355d2512-13c2-400a-bf9f-8a296abb5932/B70EF586669A620A0A30A1156969C05C6A3831DC8F8BC992DA75779D2A92F944/VC_redist.arm64.exe'
+            Sha256 = 'B70EF586669A620A0A30A1156969C05C6A3831DC8F8BC992DA75779D2A92F944'
+        }
+        WindowsAppRuntime = @{
+            FileName = 'windows-app-runtime-arm64.exe'
+            Url = 'https://download.microsoft.com/download/2f7e2917-37ac-43a3-990e-73838adaf281/WindowsAppRuntimeInstall-arm64.exe'
+            Sha256 = '788665585DCBC2844E99483FDA27809A91C2F36235B799B104D6649B68EB61B0'
+        }
     }
 }
 $windowsAppRuntimePackageVersion = '2.4.0.0'
@@ -80,7 +107,7 @@ foreach ($directory in @($runtimePublishRoot, $setupRoot)) {
 New-Item -ItemType Directory -Force -Path @(
     $publishDirectory,
     $internalMsiDirectory,
-    $prerequisiteDirectory,
+    $prerequisiteCacheDirectory,
     $setupOutputDirectory,
     $installerDirectory
 ) | Out-Null
@@ -107,11 +134,51 @@ function Invoke-DotNet {
     }
 }
 
-function Save-RemoteInstaller {
+function Test-FileSha256 {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)]
+        [ValidatePattern('^[0-9A-Fa-f]{64}$')]
+        [string]$ExpectedSha256
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return $false
+    }
+
+    $actualSha256 = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+    return [string]::Equals(
+        $actualSha256,
+        $ExpectedSha256,
+        [System.StringComparison]::OrdinalIgnoreCase
+    )
+}
+
+function Get-CachedRemoteInstaller {
     param(
         [Parameter(Mandatory = $true)][uri]$Uri,
-        [Parameter(Mandatory = $true)][string]$Destination
+        [Parameter(Mandatory = $true)][string]$Destination,
+        [Parameter(Mandatory = $true)]
+        [ValidatePattern('^[0-9A-Fa-f]{64}$')]
+        [string]$ExpectedSha256,
+        [switch]$Offline
     )
+
+    if (Test-FileSha256 -Path $Destination -ExpectedSha256 $ExpectedSha256) {
+        Write-Output "Using cached prerequisite '$Destination'."
+        return
+    }
+
+    $cachedFileExists = Test-Path -LiteralPath $Destination -PathType Leaf
+    if ($Offline) {
+        $reason = if ($cachedFileExists) { 'has an unexpected SHA-256 hash' } else { 'is missing' }
+        throw "Offline build cannot continue because prerequisite '$Destination' $reason. Run the build once without -Offline to populate the cache."
+    }
+
+    if ($cachedFileExists) {
+        Write-Warning "Discarding prerequisite with an unexpected SHA-256 hash: '$Destination'."
+        Remove-Item -LiteralPath $Destination -Force
+    }
 
     $handler = [System.Net.Http.HttpClientHandler]::new()
     $handler.AllowAutoRedirect = $true
@@ -121,6 +188,9 @@ function Save-RemoteInstaller {
     try {
         for ($attempt = 1; $attempt -le 3; $attempt++) {
             $response = $null
+            $temporaryPath = Join-Path `
+                (Split-Path -Parent $Destination) `
+                ([System.IO.Path]::GetRandomFileName())
 
             try {
                 $response = $client.GetAsync(
@@ -130,7 +200,7 @@ function Save-RemoteInstaller {
                 $response.EnsureSuccessStatusCode() | Out-Null
 
                 $sourceStream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
-                $destinationStream = [System.IO.File]::Create($Destination)
+                $destinationStream = [System.IO.File]::Create($temporaryPath)
                 try {
                     $sourceStream.CopyTo($destinationStream)
                 }
@@ -139,7 +209,13 @@ function Save-RemoteInstaller {
                     $sourceStream.Dispose()
                 }
 
-                return $response.RequestMessage.RequestUri.AbsoluteUri
+                if (-not (Test-FileSha256 -Path $temporaryPath -ExpectedSha256 $ExpectedSha256)) {
+                    throw "Downloaded prerequisite from '$Uri' did not match the expected SHA-256 hash."
+                }
+
+                Move-Item -LiteralPath $temporaryPath -Destination $Destination -Force
+                Write-Output "Downloaded and cached prerequisite '$Destination'."
+                return
             }
             catch {
                 if ($attempt -eq 3) {
@@ -150,6 +226,10 @@ function Save-RemoteInstaller {
                 Start-Sleep -Seconds (2 * $attempt)
             }
             finally {
+                if (Test-Path -LiteralPath $temporaryPath) {
+                    Remove-Item -LiteralPath $temporaryPath -Force
+                }
+
                 if ($null -ne $response) {
                     $response.Dispose()
                 }
@@ -164,13 +244,18 @@ function Save-RemoteInstaller {
 
 Push-Location $repositoryRoot
 try {
-    Invoke-DotNet @(
-        'restore', $appProject,
-        '--runtime', $runtimeIdentifier,
-        '--configfile', $nugetConfig,
-        '-p:EnableMsixTooling=true',
-        '-p:WindowsAppSDKSelfContained=false'
-    )
+    if ($Offline) {
+        Write-Output 'Offline build: skipping NuGet restore and requiring existing restore assets.'
+    }
+    else {
+        Invoke-DotNet @(
+            'restore', $appProject,
+            '--runtime', $runtimeIdentifier,
+            '--configfile', $nugetConfig,
+            '-p:EnableMsixTooling=true',
+            '-p:WindowsAppSDKSelfContained=false'
+        )
+    }
 
     Invoke-DotNet @(
         'publish', $appProject,
@@ -203,10 +288,12 @@ try {
         throw "Unable to determine the required .NET runtime version from '$runtimeConfigPath'."
     }
 
-    Invoke-DotNet @(
-        'restore', $installerProject,
-        '--configfile', $nugetConfig
-    )
+    if (-not $Offline) {
+        Invoke-DotNet @(
+            'restore', $installerProject,
+            '--configfile', $nugetConfig
+        )
+    }
 
     $internalMsiOutputName = "FluxReader-$Version-$Architecture-application"
     Invoke-DotNet @(
@@ -221,30 +308,43 @@ try {
         "-p:OutputPath=$internalMsiDirectory"
     )
 
-    $dotNetInstaller = Join-Path $prerequisiteDirectory "dotnet-runtime-win-$Architecture.exe"
-    $vcRedistInstaller = Join-Path $prerequisiteDirectory "vc-redist-$Architecture.exe"
-    $windowsAppRuntimeInstaller = Join-Path $prerequisiteDirectory "windows-app-runtime-$Architecture.exe"
+    $architecturePrerequisites = $prerequisitePayloads[$Architecture]
+    $dotNetInstaller = Join-Path $prerequisiteCacheDirectory $architecturePrerequisites.DotNet.FileName
+    $vcRedistInstaller = Join-Path $prerequisiteCacheDirectory $architecturePrerequisites.VCRedist.FileName
+    $windowsAppRuntimeInstaller = Join-Path $prerequisiteCacheDirectory $architecturePrerequisites.WindowsAppRuntime.FileName
 
-    Write-Output "Downloading installer metadata for the online setup ($Architecture)..."
-    $dotNetDownloadUrl = Save-RemoteInstaller `
-        -Uri $prerequisiteDownloadUrls[$Architecture].DotNet `
-        -Destination $dotNetInstaller
-    $vcRedistDownloadUrl = Save-RemoteInstaller `
-        -Uri $prerequisiteDownloadUrls[$Architecture].VCRedist `
-        -Destination $vcRedistInstaller
-    $windowsAppRuntimeDownloadUrl = Save-RemoteInstaller `
-        -Uri $prerequisiteDownloadUrls[$Architecture].WindowsAppRuntime `
-        -Destination $windowsAppRuntimeInstaller
+    Write-Output "Preparing prerequisite payloads for the online setup ($Architecture)..."
+    Get-CachedRemoteInstaller `
+        -Uri $architecturePrerequisites.DotNet.Url `
+        -Destination $dotNetInstaller `
+        -ExpectedSha256 $architecturePrerequisites.DotNet.Sha256 `
+        -Offline:$Offline
+    Get-CachedRemoteInstaller `
+        -Uri $architecturePrerequisites.VCRedist.Url `
+        -Destination $vcRedistInstaller `
+        -ExpectedSha256 $architecturePrerequisites.VCRedist.Sha256 `
+        -Offline:$Offline
+    Get-CachedRemoteInstaller `
+        -Uri $architecturePrerequisites.WindowsAppRuntime.Url `
+        -Destination $windowsAppRuntimeInstaller `
+        -ExpectedSha256 $architecturePrerequisites.WindowsAppRuntime.Sha256 `
+        -Offline:$Offline
+
+    $dotNetDownloadUrl = $architecturePrerequisites.DotNet.Url
+    $vcRedistDownloadUrl = $architecturePrerequisites.VCRedist.Url
+    $windowsAppRuntimeDownloadUrl = $architecturePrerequisites.WindowsAppRuntime.Url
 
     $vcRedistVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($vcRedistInstaller).FileVersion
     if ($vcRedistVersion -notmatch '^\d+\.\d+\.\d+\.\d+$') {
         throw "Unable to determine the Visual C++ Redistributable version from '$vcRedistInstaller'."
     }
 
-    Invoke-DotNet @(
-        'restore', $setupProject,
-        '--configfile', $nugetConfig
-    )
+    if (-not $Offline) {
+        Invoke-DotNet @(
+            'restore', $setupProject,
+            '--configfile', $nugetConfig
+        )
+    }
 
     $internalMsiPath = Join-Path $internalMsiDirectory "$internalMsiOutputName.msi"
     Invoke-DotNet @(

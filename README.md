@@ -63,24 +63,28 @@ dotnet run --project src\FluxReader\FluxReader.csproj
 
 ## 构建安装包
 
-应用版本默认在 `Directory.Build.props` 的 `VersionPrefix` 中定义。正式发布时，Git tag 是版本号的唯一来源；tag 必须使用 `vMAJOR.MINOR.PATCH` 格式，例如 `v1.2.0`。
+应用版本默认在 `Directory.Build.props` 的 `VersionPrefix` 中定义。正式发布时，Git tag 是版本号的唯一来源；tag 必须使用 `vMAJOR.MINOR.PATCH` 格式，例如 `v0.1.0`。
 
 在 Windows 上可用以下命令生成安装器：
 
 ```powershell
-.\scripts\Build-Installer.ps1 -Version 1.2.0 -Architecture x64
-.\scripts\Build-Installer.ps1 -Version 1.2.0 -Architecture arm64
+.\scripts\Build-Installer.ps1 -Version 0.1.0 -Architecture x64
+.\scripts\Build-Installer.ps1 -Version 0.1.0 -Architecture arm64
+# 完成一次联网构建并保留 NuGet/前置依赖缓存后，可强制离线构建
+.\scripts\Build-Installer.ps1 -Version 0.1.1 -Architecture x64 -Offline
 ```
 
-安装包输出到 `artifacts\installers`，例如 `FluxReaderSetup-1.2.0-x64.exe`。应用本体内嵌在 EXE 中；安装时检测并按需从微软官方下载 .NET 10 Runtime、Visual C++ Runtime 和 Windows App Runtime 2.4。用户不需要安装 .NET SDK 或 Windows App SDK。发布内容发生变化时必须递增版本号，不能用相同版本覆盖已经发布或安装的 MSI。
+安装包输出到 `artifacts\installers`，例如 `FluxReaderSetup-0.1.0-x64.exe`。应用本体内嵌在 EXE 中；安装时检测并按需从微软官方下载 .NET 10 Runtime、Visual C++ Runtime 和 Windows App Runtime 2.4。用户不需要安装 .NET SDK 或 Windows App SDK。发布内容发生变化时必须递增版本号，不能用相同版本覆盖已经发布或安装的 MSI。
+
+首次构建某个架构时，脚本会下载这三个固定版本的官方依赖，以便 WiX 记录在线载荷元数据。依赖会按架构缓存在 `artifacts\cache\prerequisites`，后续构建先校验 SHA-256，只有缓存缺失或损坏时才重新下载。普通构建的 `dotnet restore` 仍可能按需访问 NuGet；`-Offline` 会跳过 restore，并在 NuGet 还原资产或前置依赖缓存不完整时直接失败。安装 Bundle 不创建 Windows 系统还原点；MSI 自身的事务回滚保持启用。
 
 ARM64 构建使用相同命名规则。安装器会把应用安装到 `Program Files\FluxReader`、创建开始菜单快捷方式，并支持从 Windows“已安装的应用”中卸载和使用更高版本直接升级。电脑缺少运行时且无法联网时，安装会失败。
 
 推送 `vMAJOR.MINOR.PATCH` tag 时，GitHub Actions 会运行测试，为 x64 与 ARM64 分别构建 Setup EXE，并创建附带两个安装器的 GitHub Release：
 
 ```powershell
-git tag v1.2.0
-git push origin v1.2.0
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 当前工作流生成的 EXE 与内部 MSI 未进行代码签名，因此从互联网下载后 Windows 可能显示未知发布者警告。公开分发前建议签名应用二进制、内部 MSI，最后签名 Setup EXE。

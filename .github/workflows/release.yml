@@ -70,6 +70,14 @@ jobs:
             **/*.wixproj
             Directory.Packages.props
 
+      - name: Cache installer prerequisites
+        uses: actions/cache@v4
+        with:
+          path: artifacts/cache/prerequisites
+          key: installer-prerequisites-${{ runner.os }}-${{ matrix.architecture }}-${{ hashFiles('scripts/Build-Installer.ps1') }}
+          restore-keys: |
+            installer-prerequisites-${{ runner.os }}-${{ matrix.architecture }}-
+
       - name: Build setup
         shell: pwsh
         run: ./scripts/Build-Installer.ps1 -Version ${{ needs.validate_version.outputs.version }} -Architecture ${{ matrix.architecture }}

@@ -61,7 +61,7 @@
       Path="[ProgramFiles64Folder]WindowsApps\Microsoft.WinAppRuntime.DDLM.$(var.WindowsAppRuntimePackageVersion)-$(var.WindowsAppRuntimeDdlmArchitectureCode)_$(var.WindowsAppRuntimePackageVersion)_$(var.InstallerPlatform)__8wekyb3d8bbwe"
       Result="exists" />
 
-    <Chain>
+    <Chain DisableSystemRestore="yes">
       <ExePackage
         Id="DotNetRuntime"
         DisplayName="Microsoft .NET 10 Runtime ($(var.InstallerPlatform))"
