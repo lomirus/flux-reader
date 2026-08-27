@@ -846,6 +846,9 @@ public sealed partial class MainWindow : Window
             Content = groupSelector,
             PrimaryButtonText = localization.GetString("Save"),
             CloseButtonText = localization.GetString("Cancel"),
+            // TODO: Recheck when WinUI preserves the default button's accent style after
+            // releasing a Close-button press outside it.
+            // Related: https://github.com/microsoft/microsoft-ui-xaml/issues/5035
             DefaultButton = ContentDialogButton.Primary,
             IsPrimaryButtonEnabled = hasSharedGroup
         };
