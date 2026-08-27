@@ -479,6 +479,7 @@
         <InfoBar
             Grid.Row="2"
             Margin="16"
+            Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
             IsClosable="True"
