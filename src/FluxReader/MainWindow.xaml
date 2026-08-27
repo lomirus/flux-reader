@@ -132,15 +132,17 @@
                     x:Name="FeedTree"
                     Grid.Row="3"
                     ItemsSource="{Binding FeedNavigationItems}"
-                    SelectedItem="{Binding SelectedNavigationItem, Mode=TwoWay}"
-                    SelectionChanged="FeedTree_SelectionChanged"
-                    SelectionMode="Single">
+                    PreviewKeyDown="FeedTree_KeyDown"
+                    SelectionMode="None">
                     <TreeView.ItemTemplate>
                         <DataTemplate x:DataType="models:FeedNavigationItem">
                             <controls:FeedTreeViewItem
                                 HorizontalContentAlignment="Stretch"
                                 IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
-                                ItemsSource="{x:Bind Children}">
+                                ItemsSource="{x:Bind Children}"
+                                Tag="{x:Bind}"
+                                Tapped="FeedNavigationItem_Tapped"
+                                VerticalContentAlignment="Stretch">
                                 <controls:FeedTreeViewItem.ContextFlyout>
                                     <MenuFlyout Opened="NavigationItemMenu_Opened">
                                         <MenuFlyoutItem
@@ -163,10 +165,10 @@
                                 </controls:FeedTreeViewItem.ContextFlyout>
                                 <controls:FeedTreeViewItem.Content>
                                     <Grid
+                                        Background="Transparent"
                                         MinWidth="140"
                                         ColumnSpacing="8"
-                                        Padding="0,0,8,0"
-                                        Tag="{x:Bind}">
+                                        Padding="0,0,8,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />

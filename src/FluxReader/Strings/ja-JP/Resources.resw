@@ -23,6 +23,7 @@
   <data name="MarkAllRead" xml:space="preserve"><value>すべて既読にする</value></data>
   <data name="Settings" xml:space="preserve"><value>設定</value></data>
   <data name="AllArticles" xml:space="preserve"><value>すべての記事</value></data>
+  <data name="SelectedFeeds" xml:space="preserve"><value>{0} 件のフィードを選択</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>未読の記事</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>未読の記事のみを表示</value></data>
   <data name="Feeds" xml:space="preserve"><value>フィード</value></data>
@@ -38,6 +39,8 @@
   <data name="Cancel" xml:space="preserve"><value>キャンセル</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>フィードを削除しますか？</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>「{0}」とローカルに保存されている記事が削除されます。</value></data>
+  <data name="RemoveFeedsTitle" xml:space="preserve"><value>選択したフィードを削除しますか？</value></data>
+  <data name="RemoveFeedsMessage" xml:space="preserve"><value>選択した {0} 件のフィードとローカルに保存されている記事が削除されます。</value></data>
   <data name="Remove" xml:space="preserve"><value>削除</value></data>
   <data name="AddGroup" xml:space="preserve"><value>グループを追加</value></data>
   <data name="GroupName" xml:space="preserve"><value>グループ名</value></data>
@@ -55,6 +58,7 @@
   <data name="GroupRenamed" xml:space="preserve"><value>グループ名を「{0}」に変更しました。</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>グループ「{0}」を削除しました。</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>「{0}」のグループを変更しました。</value></data>
+  <data name="FeedsGroupChanged" xml:space="preserve"><value>{0} 件のフィードのグループを変更しました。</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>フィードグループを更新できませんでした: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>戻る</value></data>
   <data name="Appearance" xml:space="preserve"><value>外観</value></data>
@@ -85,6 +89,7 @@
   <data name="MarkedAllRead" xml:space="preserve"><value>現在のリストにある記事を既読にしました。</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>この記事には開くことのできる元のリンクがありません。</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>「{0}」を削除しました。</value></data>
+  <data name="FeedsRemoved" xml:space="preserve"><value>{0} 件のフィードを削除しました。</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>フィードサーバーから空の応答が返されました。</value></data>
   <data name="SubscriptionSaveFailed" xml:space="preserve"><value>フィードを保存できませんでした。</value></data>
   <data name="FeedContentEmpty" xml:space="preserve"><value>フィードの内容が空です。</value></data>

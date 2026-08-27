@@ -15,7 +15,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly NotificationService _notifications;
     private readonly RssRefreshService _refreshService;
     private readonly RssRepository _repository;
+    private readonly HashSet<long> _selectedFeedIds = [];
     private long _articleLoadVersion;
+    private long _navigationSelectionVersion;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ArticleListTitle))]
@@ -73,14 +75,21 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<Article> Articles { get; } = [];
 
+    public IReadOnlySet<long> SelectedFeedIds => _selectedFeedIds;
+
+    public int SelectedFeedCount => _selectedFeedIds.Count;
+
     public bool IsUnreadFilterEnabled => CurrentFilter == ArticleFilter.Unread;
 
-    public string ArticleListTitle => SelectedFeed?.Title ?? SelectedGroup?.Name ??
-        (CurrentFilter switch
-        {
-            ArticleFilter.Unread => _localization.GetString("UnreadArticles"),
-            _ => _localization.GetString("AllArticles")
-         });
+    public string ArticleListTitle => SelectedFeedCount > 1
+        ? _localization.Format("SelectedFeeds", SelectedFeedCount)
+        : SelectedFeed?.Title ??
+          SelectedGroup?.Name ??
+          (CurrentFilter switch
+          {
+              ArticleFilter.Unread => _localization.GetString("UnreadArticles"),
+              _ => _localization.GetString("AllArticles")
+          });
 
     public string ArticleListGlyph => SelectedNavigationItem?.Glyph ?? "\uE8F1";
 
@@ -94,7 +103,7 @@ public sealed partial class MainViewModel : ObservableObject
             article.RefreshLocalization();
         }
 
-        RebuildFeedNavigation();
+        RebuildFeedNavigation(_selectedFeedIds.ToArray(), SelectedGroup?.Id);
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -108,7 +117,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             await _repository.InitializeAsync(cancellationToken);
-            await ReloadFeedsAsync(null, null, cancellationToken);
+            await ReloadFeedsAsync([], null, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
             if (!_notifications.IsAvailable)
             {
@@ -146,7 +155,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var feed = await _refreshService.AddFeedAsync(uri, groupId, cancellationToken);
-            await ReloadFeedsAsync(feed.Id, null, cancellationToken);
+            await ReloadFeedsAsync([feed.Id], null, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
             ShowStatus(_localization.Format("SubscribedToFeed", feed.Title));
         }
@@ -239,9 +248,9 @@ public sealed partial class MainViewModel : ObservableObject
                 }
             }
 
-            var selectedFeedId = SelectedFeed?.Id;
+            var selectedFeedIds = _selectedFeedIds.ToArray();
             var selectedGroupId = SelectedGroup?.Id;
-            await ReloadFeedsAsync(selectedFeedId, selectedGroupId, cancellationToken);
+            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
             return new SubscriptionImportResult(
                 importedCount,
@@ -255,27 +264,26 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    public async Task SelectFeedAsync(Feed feed, CancellationToken cancellationToken = default)
+    public Task SelectFeedAsync(Feed feed, CancellationToken cancellationToken = default) =>
+        SelectFeedsAsync([feed.Id], cancellationToken);
+
+    public async Task SelectFeedsAsync(
+        IReadOnlyCollection<long> feedIds,
+        CancellationToken cancellationToken = default)
     {
-        SelectedFeed = feed;
-        SelectedGroup = null;
-        SelectedNavigationItem = FindFeedNavigationItem(feed.Id);
+        ApplyNavigationSelection(feedIds, selectedGroupId: null);
         await ReloadArticlesAsync(cancellationToken);
     }
 
     public async Task SelectGroupAsync(FeedGroup group, CancellationToken cancellationToken = default)
     {
-        SelectedFeed = null;
-        SelectedGroup = group;
-        SelectedNavigationItem = FeedNavigationItems.FirstOrDefault(item => item.Group?.Id == group.Id);
+        ApplyNavigationSelection([], group.Id);
         await ReloadArticlesAsync(cancellationToken);
     }
 
     public async Task SelectAllArticlesAsync(CancellationToken cancellationToken = default)
     {
-        SelectedFeed = null;
-        SelectedGroup = null;
-        SelectedNavigationItem = null;
+        ApplyNavigationSelection([], selectedGroupId: null);
         await ReloadArticlesAsync(cancellationToken);
     }
 
@@ -341,9 +349,9 @@ public sealed partial class MainViewModel : ObservableObject
                 .SelectMany(outcome => outcome.Result!.NewArticleTitles)
                 .ToArray();
             var errorCount = outcomes.Count(outcome => outcome.Error is not null);
-            var selectedFeedId = SelectedFeed?.Id;
+            var selectedFeedIds = _selectedFeedIds.ToArray();
             var selectedGroupId = SelectedGroup?.Id;
-            await ReloadFeedsAsync(selectedFeedId, selectedGroupId);
+            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId);
             await ReloadArticlesAsync();
 
             if (newTitles.Length > 0)
@@ -434,9 +442,11 @@ public sealed partial class MainViewModel : ObservableObject
         await Launcher.LaunchUriAsync(uri);
     }
 
-    public async Task DeleteFeedAsync(Feed feed, CancellationToken cancellationToken = default)
+    public async Task DeleteFeedsAsync(
+        IReadOnlyCollection<Feed> feeds,
+        CancellationToken cancellationToken = default)
     {
-        if (IsBusy)
+        if (IsBusy || feeds.Count == 0)
         {
             return;
         }
@@ -444,14 +454,18 @@ public sealed partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var title = feed.Title;
-            await _repository.DeleteFeedAsync(feed.Id, cancellationToken);
-            SelectedFeed = null;
-            SelectedGroup = null;
-            SelectedNavigationItem = null;
-            await ReloadFeedsAsync(null, null, cancellationToken);
+            var normalizedFeeds = feeds.DistinctBy(feed => feed.Id).ToArray();
+            var deletedFeedIds = normalizedFeeds.Select(feed => feed.Id).ToHashSet();
+            var selectedFeedIds = _selectedFeedIds
+                .Where(feedId => !deletedFeedIds.Contains(feedId))
+                .ToArray();
+            var selectedGroupId = SelectedGroup?.Id;
+            await _repository.DeleteFeedsAsync(deletedFeedIds, cancellationToken);
+            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(_localization.Format("FeedRemoved", title));
+            ShowStatus(normalizedFeeds.Length == 1
+                ? _localization.Format("FeedRemoved", normalizedFeeds[0].Title)
+                : _localization.Format("FeedsRemoved", normalizedFeeds.Length));
         }
         finally
         {
@@ -477,7 +491,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var group = await _repository.AddFeedGroupAsync(normalizedName, cancellationToken);
-            await ReloadFeedsAsync(null, group.Id, cancellationToken);
+            await ReloadFeedsAsync([], group.Id, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
             ShowStatus(_localization.Format("GroupCreated", group.Name));
         }
@@ -512,7 +526,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             await _repository.RenameFeedGroupAsync(group.Id, normalizedName, cancellationToken);
-            await ReloadFeedsAsync(null, group.Id, cancellationToken);
+            await ReloadFeedsAsync([], group.Id, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
             ShowStatus(_localization.Format("GroupRenamed", normalizedName));
         }
@@ -538,11 +552,10 @@ public sealed partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
+            var selectedFeedIds = _selectedFeedIds.ToArray();
+            var selectedGroupId = SelectedGroup?.Id == group.Id ? null : SelectedGroup?.Id;
             await _repository.DeleteFeedGroupAsync(group.Id, cancellationToken);
-            SelectedFeed = null;
-            SelectedGroup = null;
-            SelectedNavigationItem = null;
-            await ReloadFeedsAsync(null, null, cancellationToken);
+            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
             ShowStatus(_localization.Format("GroupRemoved", group.Name));
         }
@@ -556,12 +569,12 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    public async Task SetFeedGroupAsync(
-        Feed feed,
+    public async Task SetFeedsGroupAsync(
+        IReadOnlyCollection<Feed> feeds,
         long? groupId,
         CancellationToken cancellationToken = default)
     {
-        if (IsBusy)
+        if (IsBusy || feeds.Count == 0)
         {
             return;
         }
@@ -569,10 +582,18 @@ public sealed partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            await _repository.SetFeedGroupAsync(feed.Id, groupId, cancellationToken);
-            await ReloadFeedsAsync(feed.Id, null, cancellationToken);
+            var normalizedFeeds = feeds.DistinctBy(feed => feed.Id).ToArray();
+            var selectedFeedIds = _selectedFeedIds.ToArray();
+            var selectedGroupId = SelectedGroup?.Id;
+            await _repository.SetFeedsGroupAsync(
+                normalizedFeeds.Select(feed => feed.Id).ToArray(),
+                groupId,
+                cancellationToken);
+            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(_localization.Format("FeedGroupChanged", feed.Title));
+            ShowStatus(normalizedFeeds.Length == 1
+                ? _localization.Format("FeedGroupChanged", normalizedFeeds[0].Title)
+                : _localization.Format("FeedsGroupChanged", normalizedFeeds.Length));
         }
         catch (Exception exception)
         {
@@ -585,7 +606,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     private async Task ReloadFeedsAsync(
-        long? selectedFeedId,
+        IReadOnlyCollection<long> selectedFeedIds,
         long? selectedGroupId,
         CancellationToken cancellationToken = default)
     {
@@ -605,31 +626,23 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         UnreadTotal = Feeds.Sum(feed => feed.UnreadCount);
-        RebuildFeedNavigation();
-        SelectedFeed = selectedFeedId is null
-            ? null
-            : Feeds.FirstOrDefault(feed => feed.Id == selectedFeedId.Value);
-        SelectedGroup = selectedGroupId is null
-            ? null
-            : FeedGroups.FirstOrDefault(group => group.Id == selectedGroupId.Value);
-        SelectedNavigationItem = SelectedFeed is not null
-            ? FindFeedNavigationItem(SelectedFeed.Id)
-            : FeedNavigationItems.FirstOrDefault(item => item.Group?.Id == SelectedGroup?.Id);
+        RebuildFeedNavigation(selectedFeedIds, selectedGroupId);
     }
 
     private async Task ReloadArticlesAsync(CancellationToken cancellationToken = default)
     {
         var loadVersion = Interlocked.Increment(ref _articleLoadVersion);
-        var feedId = SelectedFeed?.Id;
+        var selectionVersion = Volatile.Read(ref _navigationSelectionVersion);
+        var feedIds = _selectedFeedIds.ToArray();
         var groupId = SelectedGroup?.Id;
         var filter = CurrentFilter;
         var articles = await _repository.GetArticlesAsync(
-            feedId,
+            feedIds.Length == 0 ? null : feedIds,
             groupId,
             filter,
             cancellationToken);
         if (loadVersion != Volatile.Read(ref _articleLoadVersion) ||
-            feedId != SelectedFeed?.Id ||
+            selectionVersion != Volatile.Read(ref _navigationSelectionVersion) ||
             groupId != SelectedGroup?.Id ||
             filter != CurrentFilter)
         {
@@ -650,10 +663,10 @@ public sealed partial class MainViewModel : ObservableObject
     private void UpdateArticleCount(int? count = null) =>
         ArticleCountText = _localization.FormatArticleCount(count ?? Articles.Count);
 
-    private void RebuildFeedNavigation()
+    private void RebuildFeedNavigation(
+        IReadOnlyCollection<long> selectedFeedIds,
+        long? selectedGroupId)
     {
-        var selectedFeedId = SelectedFeed?.Id;
-        var selectedGroupId = SelectedGroup?.Id;
         var expansionStates = FeedNavigationItems
             .Where(item => item.Group is not null)
             .ToDictionary(item => item.Group!.Id, item => item.IsExpanded);
@@ -678,9 +691,53 @@ public sealed partial class MainViewModel : ObservableObject
             FeedNavigationItems.Add(item);
         }
 
-        SelectedNavigationItem = selectedFeedId is not null
-            ? FindFeedNavigationItem(selectedFeedId.Value)
-            : FeedNavigationItems.FirstOrDefault(item => item.Group?.Id == selectedGroupId);
+        ApplyNavigationSelection(selectedFeedIds, selectedGroupId);
+    }
+
+    private void ApplyNavigationSelection(
+        IReadOnlyCollection<long> selectedFeedIds,
+        long? selectedGroupId)
+    {
+        var availableFeedIds = Feeds.Select(feed => feed.Id).ToHashSet();
+        var normalizedFeedIds = selectedFeedIds
+            .Where(availableFeedIds.Contains)
+            .ToHashSet();
+        var selectedGroup = normalizedFeedIds.Count == 0 && selectedGroupId is not null
+            ? FeedGroups.FirstOrDefault(group => group.Id == selectedGroupId.Value)
+            : null;
+        var selectionChanged = !_selectedFeedIds.SetEquals(normalizedFeedIds) ||
+                               SelectedGroup?.Id != selectedGroup?.Id;
+
+        _selectedFeedIds.Clear();
+        _selectedFeedIds.UnionWith(normalizedFeedIds);
+        SelectedFeed = _selectedFeedIds.Count == 1
+            ? Feeds.FirstOrDefault(feed => _selectedFeedIds.Contains(feed.Id))
+            : null;
+        SelectedGroup = selectedGroup;
+        SelectedNavigationItem = SelectedFeed is not null
+            ? FindFeedNavigationItem(SelectedFeed.Id)
+            : FeedNavigationItems.FirstOrDefault(item => item.Group?.Id == SelectedGroup?.Id);
+
+        foreach (var item in FeedNavigationItems)
+        {
+            item.IsSelected = item.Feed is not null
+                ? _selectedFeedIds.Contains(item.Feed.Id)
+                : item.Group?.Id == SelectedGroup?.Id;
+            foreach (var child in item.Children)
+            {
+                child.IsSelected = child.Feed is not null && _selectedFeedIds.Contains(child.Feed.Id);
+            }
+        }
+
+        if (selectionChanged)
+        {
+            Interlocked.Increment(ref _navigationSelectionVersion);
+        }
+
+        OnPropertyChanged(nameof(SelectedFeedIds));
+        OnPropertyChanged(nameof(SelectedFeedCount));
+        OnPropertyChanged(nameof(ArticleListTitle));
+        OnPropertyChanged(nameof(ArticleListGlyph));
     }
 
     private FeedNavigationItem? FindFeedNavigationItem(long feedId) =>
@@ -727,9 +784,9 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
 
-            var selectedFeedId = SelectedFeed?.Id;
+            var selectedFeedIds = _selectedFeedIds.ToArray();
             var selectedGroupId = SelectedGroup?.Id;
-            await ReloadFeedsAsync(selectedFeedId, selectedGroupId, cancellationToken);
+            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

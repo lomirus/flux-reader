@@ -58,6 +58,9 @@ public sealed partial class FeedNavigationItem : ObservableObject
     public partial bool IsExpanded { get; set; } = true;
 
     [ObservableProperty]
+    public partial bool IsSelected { get; set; }
+
+    [ObservableProperty]
     public partial Visibility IconFallbackVisibility { get; set; } = Visibility.Visible;
 
     public static FeedNavigationItem ForFeed(Feed feed, ActionLabels labels) => new(feed, labels);

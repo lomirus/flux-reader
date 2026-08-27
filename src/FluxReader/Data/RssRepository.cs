@@ -166,7 +166,7 @@ public sealed class RssRepository
     }
 
     public async Task<IReadOnlyList<Article>> GetArticlesAsync(
-        long? feedId,
+        IReadOnlyCollection<long>? feedIds,
         long? groupId,
         ArticleFilter filter,
         CancellationToken cancellationToken = default)
@@ -176,19 +176,34 @@ public sealed class RssRepository
         {
             await using var connection = await OpenConnectionAsync(cancellationToken);
             await using var command = connection.CreateCommand();
-            command.CommandText = """
+            var normalizedFeedIds = feedIds?.Distinct().ToArray() ?? [];
+            var feedFilter = string.Empty;
+            if (normalizedFeedIds.Length > 0)
+            {
+                var parameterNames = new string[normalizedFeedIds.Length];
+                for (var index = 0; index < normalizedFeedIds.Length; index++)
+                {
+                    var parameterName = $"$feed_id_{index}";
+                    parameterNames[index] = parameterName;
+                    command.Parameters.AddWithValue(parameterName, normalizedFeedIds[index]);
+                }
+
+                feedFilter = $"AND a.feed_id IN ({string.Join(", ", parameterNames)})";
+            }
+
+            command.CommandText = $"""
                 SELECT a.id, a.feed_id, a.external_id, f.title, a.title, a.link,
                        a.author, a.published_utc, a.summary, a.content,
                        a.is_read
                 FROM articles a
                 INNER JOIN feeds f ON f.id = a.feed_id
-                WHERE ($feed_id IS NULL OR a.feed_id = $feed_id)
+                WHERE 1 = 1
+                  {feedFilter}
                   AND ($group_id IS NULL OR f.group_id = $group_id)
                   AND ($filter <> 1 OR a.is_read = 0)
                 ORDER BY COALESCE(a.published_utc, a.inserted_utc) DESC
                 LIMIT 2000;
                 """;
-            command.Parameters.AddWithValue("$feed_id", feedId is null ? DBNull.Value : feedId.Value);
             command.Parameters.AddWithValue("$group_id", groupId is null ? DBNull.Value : groupId.Value);
             command.Parameters.AddWithValue("$filter", (int)filter);
 
@@ -442,9 +457,15 @@ public sealed class RssRepository
     }
 
     public Task DeleteFeedAsync(long feedId, CancellationToken cancellationToken = default) =>
-        ExecuteAsync(
-            "DELETE FROM feeds WHERE id = $id;",
-            command => command.Parameters.AddWithValue("$id", feedId),
+        DeleteFeedsAsync([feedId], cancellationToken);
+
+    public Task DeleteFeedsAsync(
+        IReadOnlyCollection<long> feedIds,
+        CancellationToken cancellationToken = default) =>
+        ExecuteForFeedIdsAsync(
+            feedIds,
+            parameterNames => $"DELETE FROM feeds WHERE id IN ({parameterNames});",
+            bind: null,
             cancellationToken);
 
     public async Task<FeedGroup> AddFeedGroupAsync(
@@ -497,14 +518,55 @@ public sealed class RssRepository
         long feedId,
         long? groupId,
         CancellationToken cancellationToken = default) =>
-        ExecuteAsync(
-            "UPDATE feeds SET group_id = $group_id WHERE id = $id;",
+        SetFeedsGroupAsync([feedId], groupId, cancellationToken);
+
+    public Task SetFeedsGroupAsync(
+        IReadOnlyCollection<long> feedIds,
+        long? groupId,
+        CancellationToken cancellationToken = default) =>
+        ExecuteForFeedIdsAsync(
+            feedIds,
+            parameterNames => $"UPDATE feeds SET group_id = $group_id WHERE id IN ({parameterNames});",
             command =>
             {
-                command.Parameters.AddWithValue("$id", feedId);
                 command.Parameters.AddWithValue("$group_id", groupId is null ? DBNull.Value : groupId.Value);
             },
             cancellationToken);
+
+    private async Task ExecuteForFeedIdsAsync(
+        IReadOnlyCollection<long> feedIds,
+        Func<string, string> createSql,
+        Action<SqliteCommand>? bind,
+        CancellationToken cancellationToken)
+    {
+        var normalizedFeedIds = feedIds.Distinct().ToArray();
+        if (normalizedFeedIds.Length == 0)
+        {
+            return;
+        }
+
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var command = connection.CreateCommand();
+            var parameterNames = new string[normalizedFeedIds.Length];
+            for (var index = 0; index < normalizedFeedIds.Length; index++)
+            {
+                var parameterName = $"$id_{index}";
+                parameterNames[index] = parameterName;
+                command.Parameters.AddWithValue(parameterName, normalizedFeedIds[index]);
+            }
+
+            bind?.Invoke(command);
+            command.CommandText = createSql(string.Join(", ", parameterNames));
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
 
     private async Task ExecuteAsync(
         string sql,

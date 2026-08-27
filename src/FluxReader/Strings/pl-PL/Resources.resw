@@ -23,6 +23,7 @@
   <data name="MarkAllRead" xml:space="preserve"><value>Oznacz wszystko jako przeczytane</value></data>
   <data name="Settings" xml:space="preserve"><value>Ustawienia</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Wszystkie artykuły</value></data>
+  <data name="SelectedFeeds" xml:space="preserve"><value>Wybrano kanały: {0}</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Nieprzeczytane artykuły</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>Pokaż tylko nieprzeczytane artykuły</value></data>
   <data name="Feeds" xml:space="preserve"><value>Kanały</value></data>
@@ -38,6 +39,8 @@
   <data name="Cancel" xml:space="preserve"><value>Anuluj</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Usunąć kanał?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>„{0}” oraz artykuły zapisane lokalnie zostaną usunięte.</value></data>
+  <data name="RemoveFeedsTitle" xml:space="preserve"><value>Usunąć wybrane kanały?</value></data>
+  <data name="RemoveFeedsMessage" xml:space="preserve"><value>Wybrane kanały ({0}) oraz artykuły zapisane lokalnie zostaną usunięte.</value></data>
   <data name="Remove" xml:space="preserve"><value>Usuń</value></data>
   <data name="AddGroup" xml:space="preserve"><value>Dodaj grupę</value></data>
   <data name="GroupName" xml:space="preserve"><value>Nazwa grupy</value></data>
@@ -55,6 +58,7 @@
   <data name="GroupRenamed" xml:space="preserve"><value>Zmieniono nazwę grupy na „{0}”.</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>Usunięto grupę „{0}”.</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>Zmieniono grupę kanału „{0}”.</value></data>
+  <data name="FeedsGroupChanged" xml:space="preserve"><value>Zmieniono grupę wybranych kanałów: {0}.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Nie udało się zaktualizować grup kanałów: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Wstecz</value></data>
   <data name="Appearance" xml:space="preserve"><value>Wygląd</value></data>
@@ -85,6 +89,7 @@
   <data name="MarkedAllRead" xml:space="preserve"><value>Artykuły na bieżącej liście oznaczono jako przeczytane.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>Ten artykuł nie ma oryginalnego linku, który można otworzyć.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>Usunięto „{0}”.</value></data>
+  <data name="FeedsRemoved" xml:space="preserve"><value>Usunięto kanały: {0}.</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>Serwer kanału zwrócił pustą odpowiedź.</value></data>
   <data name="SubscriptionSaveFailed" xml:space="preserve"><value>Nie udało się zapisać kanału.</value></data>
   <data name="FeedContentEmpty" xml:space="preserve"><value>Zawartość kanału jest pusta.</value></data>

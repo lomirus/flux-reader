@@ -23,6 +23,7 @@
   <data name="MarkAllRead" xml:space="preserve"><value>Отметить всё как прочитанное</value></data>
   <data name="Settings" xml:space="preserve"><value>Параметры</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Все статьи</value></data>
+  <data name="SelectedFeeds" xml:space="preserve"><value>Выбрано лент: {0}</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Непрочитанные статьи</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>Показывать только непрочитанные статьи</value></data>
   <data name="Feeds" xml:space="preserve"><value>Ленты</value></data>
@@ -38,6 +39,8 @@
   <data name="Cancel" xml:space="preserve"><value>Отмена</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Удалить ленту?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>«{0}» и сохранённые локально статьи будут удалены.</value></data>
+  <data name="RemoveFeedsTitle" xml:space="preserve"><value>Удалить выбранные ленты?</value></data>
+  <data name="RemoveFeedsMessage" xml:space="preserve"><value>Выбранные ленты ({0}) и сохранённые локально статьи будут удалены.</value></data>
   <data name="Remove" xml:space="preserve"><value>Удалить</value></data>
   <data name="AddGroup" xml:space="preserve"><value>Добавить группу</value></data>
   <data name="GroupName" xml:space="preserve"><value>Название группы</value></data>
@@ -55,6 +58,7 @@
   <data name="GroupRenamed" xml:space="preserve"><value>Группа переименована в «{0}».</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>Группа «{0}» удалена.</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>Группа для «{0}» изменена.</value></data>
+  <data name="FeedsGroupChanged" xml:space="preserve"><value>Группа для {0} лент изменена.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Не удалось обновить группы лент: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Назад</value></data>
   <data name="Appearance" xml:space="preserve"><value>Внешний вид</value></data>
@@ -85,6 +89,7 @@
   <data name="MarkedAllRead" xml:space="preserve"><value>Статьи в текущем списке отмечены как прочитанные.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>У этой статьи нет исходной ссылки, которую можно открыть.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>«{0}» удалена.</value></data>
+  <data name="FeedsRemoved" xml:space="preserve"><value>Удалено лент: {0}.</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>Сервер ленты вернул пустой ответ.</value></data>
   <data name="SubscriptionSaveFailed" xml:space="preserve"><value>Не удалось сохранить ленту.</value></data>
   <data name="FeedContentEmpty" xml:space="preserve"><value>Содержимое ленты пусто.</value></data>

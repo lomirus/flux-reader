@@ -23,6 +23,7 @@
   <data name="MarkAllRead" xml:space="preserve"><value>Marcar tudo como lido</value></data>
   <data name="Settings" xml:space="preserve"><value>Configurações</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Todos os artigos</value></data>
+  <data name="SelectedFeeds" xml:space="preserve"><value>{0} feeds selecionados</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Artigos não lidos</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>Mostrar apenas artigos não lidos</value></data>
   <data name="Feeds" xml:space="preserve"><value>Feeds</value></data>
@@ -38,6 +39,8 @@
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Remover o feed?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>“{0}” e os artigos armazenados localmente serão excluídos.</value></data>
+  <data name="RemoveFeedsTitle" xml:space="preserve"><value>Remover os feeds selecionados?</value></data>
+  <data name="RemoveFeedsMessage" xml:space="preserve"><value>Os {0} feeds selecionados e os artigos armazenados localmente serão excluídos.</value></data>
   <data name="Remove" xml:space="preserve"><value>Remover</value></data>
   <data name="AddGroup" xml:space="preserve"><value>Adicionar grupo</value></data>
   <data name="GroupName" xml:space="preserve"><value>Nome do grupo</value></data>
@@ -55,6 +58,7 @@
   <data name="GroupRenamed" xml:space="preserve"><value>O grupo foi renomeado para “{0}”.</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>O grupo “{0}” foi removido.</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>O grupo de “{0}” foi alterado.</value></data>
+  <data name="FeedsGroupChanged" xml:space="preserve"><value>O grupo de {0} feeds foi alterado.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Não foi possível atualizar os grupos de feeds: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Voltar</value></data>
   <data name="Appearance" xml:space="preserve"><value>Aparência</value></data>
@@ -85,6 +89,7 @@
   <data name="MarkedAllRead" xml:space="preserve"><value>Os artigos da lista atual foram marcados como lidos.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>Este artigo não tem um link original para abrir.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>“{0}” foi removido.</value></data>
+  <data name="FeedsRemoved" xml:space="preserve"><value>{0} feeds foram removidos.</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>O servidor do feed retornou uma resposta vazia.</value></data>
   <data name="SubscriptionSaveFailed" xml:space="preserve"><value>Não foi possível salvar o feed.</value></data>
   <data name="FeedContentEmpty" xml:space="preserve"><value>O conteúdo do feed está vazio.</value></data>

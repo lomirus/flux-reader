@@ -1,4 +1,5 @@
 using System.Xml;
+using FluxReader.Controls;
 using FluxReader.Core.Services;
 using FluxReader.Models;
 using FluxReader.Services;
@@ -6,14 +7,19 @@ using FluxReader.ViewModels;
 using FluxReader.Interop;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.UI.Core;
 using WinRT.Interop;
+using Rectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
+using VirtualKey = Windows.System.VirtualKey;
 
 namespace FluxReader;
 
@@ -34,6 +40,11 @@ public sealed partial class MainWindow : Window
     {
         Interval = TimeSpan.FromMinutes(DefaultRefreshIntervalMinutes)
     };
+    private readonly Dictionary<TreeViewItem, SelectionIndicatorMonitor> _selectionIndicatorMonitors = [];
+    private long? _feedSelectionAnchorId;
+    private TreeViewItem? _feedPointerContainer;
+    private bool _isFeedPointerPressed;
+    private bool _isFeedSelectionVisualUpdateQueued;
     private AppSettings _settings = new();
     private bool _settingsLoaded;
 
@@ -56,6 +67,13 @@ public sealed partial class MainWindow : Window
         RootGrid.DataContext = ViewModel;
         ApplyLocalization();
         RootGrid.Loaded += RootGrid_Loaded;
+        FeedTree.LayoutUpdated += FeedTree_LayoutUpdated;
+        FeedTree.AddHandler(UIElement.PointerMovedEvent, new PointerEventHandler(FeedTree_PointerMoved), true);
+        FeedTree.AddHandler(UIElement.PointerExitedEvent, new PointerEventHandler(FeedTree_PointerExited), true);
+        FeedTree.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(FeedTree_PointerPressed), true);
+        FeedTree.AddHandler(UIElement.PointerReleasedEvent, new PointerEventHandler(FeedTree_PointerReleased), true);
+        FeedTree.AddHandler(UIElement.PointerCanceledEvent, new PointerEventHandler(FeedTree_PointerCanceled), true);
+        FeedTree.AddHandler(UIElement.PointerCaptureLostEvent, new PointerEventHandler(FeedTree_PointerCaptureLost), true);
         _refreshTimer.Tick += RefreshTimer_Tick;
         Closed += MainWindow_Closed;
     }
@@ -150,7 +168,7 @@ public sealed partial class MainWindow : Window
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             await ViewModel.AddFeedAsync(input.Text, GetSelectedGroupId(groupSelector), _lifetime.Token);
-            FeedTree.SelectedItem = ViewModel.SelectedNavigationItem;
+            _feedSelectionAnchorId = ViewModel.SelectedFeed?.Id;
             HideArticleReader();
         }
     }
@@ -176,43 +194,359 @@ public sealed partial class MainWindow : Window
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             await ViewModel.AddFeedGroupAsync(input.Text, _lifetime.Token);
-            FeedTree.SelectedItem = ViewModel.SelectedNavigationItem;
+            _feedSelectionAnchorId = null;
             HideArticleReader();
         }
     }
 
-    private async void FeedTree_SelectionChanged(TreeView sender, TreeViewSelectionChangedEventArgs args)
+    private async void FeedNavigationItem_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        var selectedItem = args.AddedItems.LastOrDefault();
-        var item = selectedItem as FeedNavigationItem ??
-                   (selectedItem as TreeViewNode)?.Content as FeedNavigationItem ??
-                   sender.SelectedItem as FeedNavigationItem;
+        if (sender is not FrameworkElement { Tag: FeedNavigationItem item } element)
+        {
+            return;
+        }
+
+        if (item.IsGroup &&
+            IsWithinNamedElement(e.OriginalSource as DependencyObject, element, "ExpandCollapseChevron"))
+        {
+            return;
+        }
+
+        e.Handled = true;
+        await SelectFeedNavigationItemAsync(
+            item,
+            IsKeyPressed(VirtualKey.Control),
+            IsKeyPressed(VirtualKey.Shift));
+    }
+
+    private async void FeedTree_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key is not (VirtualKey.Enter or VirtualKey.Space))
+        {
+            return;
+        }
+
+        var source = e.OriginalSource as DependencyObject;
+        var item = FindAncestorOrSelf<FeedTreeViewItem>(source)?.Tag as FeedNavigationItem;
+        if (item is null && FindOuterTreeViewItem(source) is { } container)
+        {
+            item = FeedTree.ItemFromContainer(container) as FeedNavigationItem;
+        }
+
         if (item is null)
         {
             return;
         }
 
-        if (item.Feed is not null)
+        e.Handled = true;
+        await SelectFeedNavigationItemAsync(
+            item,
+            IsKeyPressed(VirtualKey.Control),
+            IsKeyPressed(VirtualKey.Shift));
+    }
+
+    private async Task SelectFeedNavigationItemAsync(
+        FeedNavigationItem item,
+        bool isControlPressed,
+        bool isShiftPressed)
+    {
+        if (item.Feed is null)
         {
-            if (ViewModel.SelectedFeed?.Id == item.Feed.Id && ViewModel.SelectedGroup is null)
+            _feedSelectionAnchorId = null;
+            if (item.Group is not null && ViewModel.SelectedGroup?.Id != item.Group.Id)
             {
-                return;
+                await ViewModel.SelectGroupAsync(item.Group, _lifetime.Token);
+                HideArticleReader();
             }
 
-            await ViewModel.SelectFeedAsync(item.Feed, _lifetime.Token);
+            UpdateFeedSelectionVisuals();
+            return;
         }
-        else if (item.Group is not null)
+
+        var feedId = item.Feed.Id;
+        var selection = FeedSelectionResolver.Resolve(
+            ViewModel.SelectedFeedIds,
+            GetFeedIdsInNavigationOrder(),
+            feedId,
+            _feedSelectionAnchorId,
+            isControlPressed,
+            isShiftPressed);
+        _feedSelectionAnchorId = selection.AnchorFeedId;
+        if (ViewModel.SelectedFeedIds.SetEquals(selection.SelectedFeedIds))
         {
-            if (ViewModel.SelectedGroup?.Id == item.Group.Id && ViewModel.SelectedFeed is null)
-            {
-                return;
-            }
-
-            await ViewModel.SelectGroupAsync(item.Group, _lifetime.Token);
+            UpdateFeedSelectionVisuals();
+            return;
         }
 
+        await ViewModel.SelectFeedsAsync(selection.SelectedFeedIds, _lifetime.Token);
+        UpdateFeedSelectionVisuals();
         HideArticleReader();
     }
+
+    private void FeedTree_LayoutUpdated(object? sender, object e) =>
+        ApplyFeedSelectionVisuals(useTransitions: false);
+
+    private void FeedTree_PointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        var container = FindOuterTreeViewItem(e.OriginalSource as DependencyObject);
+        if (ReferenceEquals(container, _feedPointerContainer))
+        {
+            return;
+        }
+
+        _feedPointerContainer = container;
+        _isFeedPointerPressed = false;
+        UpdateFeedSelectionVisuals();
+    }
+
+    private void FeedTree_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _feedPointerContainer = null;
+        _isFeedPointerPressed = false;
+        UpdateFeedSelectionVisuals();
+    }
+
+    private void FeedTree_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        _feedPointerContainer = FindOuterTreeViewItem(e.OriginalSource as DependencyObject);
+        _isFeedPointerPressed = e.GetCurrentPoint(FeedTree).Properties.IsLeftButtonPressed;
+        UpdateFeedSelectionVisuals();
+    }
+
+    private void FeedTree_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        _feedPointerContainer = FindOuterTreeViewItem(e.OriginalSource as DependencyObject);
+        _isFeedPointerPressed = false;
+        UpdateFeedSelectionVisuals();
+    }
+
+    private void FeedTree_PointerCanceled(object sender, PointerRoutedEventArgs e) =>
+        ResetFeedPointerPressed();
+
+    private void FeedTree_PointerCaptureLost(object sender, PointerRoutedEventArgs e) =>
+        ResetFeedPointerPressed();
+
+    private void ResetFeedPointerPressed()
+    {
+        _isFeedPointerPressed = false;
+        UpdateFeedSelectionVisuals();
+    }
+
+    private TreeViewItem? FindOuterTreeViewItem(DependencyObject? source)
+    {
+        TreeViewItem? outermostItem = null;
+        for (var current = source; current is not null && current != FeedTree;
+             current = VisualTreeHelper.GetParent(current))
+        {
+            if (current is TreeViewItem item)
+            {
+                outermostItem = item;
+            }
+        }
+
+        return outermostItem;
+    }
+
+    private void UpdateFeedSelectionVisuals(bool useTransitions = true)
+    {
+        ApplyFeedSelectionVisuals(useTransitions);
+        QueueFeedSelectionVisualUpdate();
+    }
+
+    private void QueueFeedSelectionVisualUpdate()
+    {
+        if (_isFeedSelectionVisualUpdateQueued)
+        {
+            return;
+        }
+
+        _isFeedSelectionVisualUpdateQueued = DispatcherQueue.TryEnqueue(
+            DispatcherQueuePriority.Low,
+            () =>
+            {
+                _isFeedSelectionVisualUpdateQueued = false;
+                ApplyFeedSelectionVisuals(useTransitions: false);
+            });
+    }
+
+    private void ApplyFeedSelectionVisuals(bool useTransitions)
+    {
+        foreach (var container in EnumerateFeedTreeContainers(FeedTree))
+        {
+            if (FeedTree.ItemFromContainer(container) is FeedNavigationItem item)
+            {
+                ApplyFeedSelectionVisual(container, item, useTransitions);
+            }
+        }
+    }
+
+    private static IEnumerable<TreeViewItem> EnumerateFeedTreeContainers(DependencyObject root)
+    {
+        var childCount = VisualTreeHelper.GetChildrenCount(root);
+        for (var index = 0; index < childCount; index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            if (child is TreeViewItem container)
+            {
+                yield return container;
+            }
+
+            foreach (var descendant in EnumerateFeedTreeContainers(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private void ApplyFeedSelectionVisual(
+        TreeViewItem container,
+        FeedNavigationItem item,
+        bool useTransitions)
+    {
+        var isPointerOver = ReferenceEquals(container, _feedPointerContainer);
+        var state = !container.IsEnabled
+            ? item.IsSelected ? "SelectedDisabled" : "Disabled"
+            : item.IsSelected
+                ? _isFeedPointerPressed && isPointerOver ? "PressedSelected" : "Selected"
+                : _isFeedPointerPressed && isPointerOver
+                    ? "Pressed"
+                    : isPointerOver ? "PointerOver" : "Normal";
+
+        VisualStateManager.GoToState(container, state, useTransitions);
+
+        if (EnsureSelectionIndicatorMonitor(container) is { } indicator)
+        {
+            indicator.Opacity = item.IsSelected ? 1 : 0;
+        }
+    }
+
+    private Rectangle? EnsureSelectionIndicatorMonitor(TreeViewItem container)
+    {
+        if (_selectionIndicatorMonitors.TryGetValue(container, out var existingMonitor))
+        {
+            if (VisualTreeHelper.GetParent(existingMonitor.Indicator) is not null)
+            {
+                return existingMonitor.Indicator;
+            }
+
+            existingMonitor.Indicator.UnregisterPropertyChangedCallback(
+                UIElement.OpacityProperty,
+                existingMonitor.OpacityChangedToken);
+            _selectionIndicatorMonitors.Remove(container);
+        }
+
+        var indicator = FindNamedDescendant<Rectangle>(container, "SelectionIndicator");
+        if (indicator is null)
+        {
+            return null;
+        }
+
+        var opacityChangedToken = indicator.RegisterPropertyChangedCallback(
+            UIElement.OpacityProperty,
+            (_, _) => SelectionIndicator_OpacityChanged(container, indicator));
+        _selectionIndicatorMonitors[container] = new SelectionIndicatorMonitor(
+            indicator,
+            opacityChangedToken);
+        return indicator;
+    }
+
+    private void SelectionIndicator_OpacityChanged(
+        TreeViewItem container,
+        Rectangle indicator)
+    {
+        if (indicator.Opacity >= 1 ||
+            FeedTree.ItemFromContainer(container) is not FeedNavigationItem { IsSelected: true })
+        {
+            return;
+        }
+
+        indicator.Opacity = 1;
+    }
+
+    private static T? FindNamedDescendant<T>(DependencyObject root, string name)
+        where T : FrameworkElement
+    {
+        var childCount = VisualTreeHelper.GetChildrenCount(root);
+        for (var index = 0; index < childCount; index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            if (child is T { Name: var childName } match && childName == name)
+            {
+                return match;
+            }
+
+            if (child is TreeViewItem)
+            {
+                continue;
+            }
+
+            if (FindNamedDescendant<T>(child, name) is { } descendant)
+            {
+                return descendant;
+            }
+        }
+
+        return null;
+    }
+
+    private static T? FindAncestorOrSelf<T>(DependencyObject? source)
+        where T : DependencyObject
+    {
+        for (var current = source; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (current is T match)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsWithinNamedElement(
+        DependencyObject? source,
+        DependencyObject boundary,
+        string elementName)
+    {
+        for (var current = source; current is not null && current != boundary;)
+        {
+            if (current is FrameworkElement { Name: var name } && name == elementName)
+            {
+                return true;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
+    private List<long> GetFeedIdsInNavigationOrder()
+    {
+        var feedIds = new List<long>();
+        foreach (var item in ViewModel.FeedNavigationItems)
+        {
+            if (item.Feed is not null)
+            {
+                feedIds.Add(item.Feed.Id);
+            }
+            else
+            {
+                feedIds.AddRange(item.Children
+                    .Where(child => child.Feed is not null)
+                    .Select(child => child.Feed!.Id));
+            }
+        }
+
+        return feedIds;
+    }
+
+    private static bool IsKeyPressed(VirtualKey key) =>
+        InputKeyboardSource.GetKeyStateForCurrentThread(key).HasFlag(CoreVirtualKeyStates.Down);
+
+    private sealed record SelectionIndicatorMonitor(
+        Rectangle Indicator,
+        long OpacityChangedToken);
 
     private void NavigationItemMenu_Opened(object sender, object e)
     {
@@ -233,7 +567,7 @@ public sealed partial class MainWindow : Window
 
         if (item.Feed is not null)
         {
-            await ChangeFeedGroupAsync(item.Feed);
+            await ChangeFeedGroupAsync(GetActionFeeds(item));
         }
         else if (item.Group is not null)
         {
@@ -250,7 +584,7 @@ public sealed partial class MainWindow : Window
 
         if (item.Feed is not null)
         {
-            await ConfirmDeleteFeedAsync(item.Feed);
+            await ConfirmDeleteFeedsAsync(GetActionFeeds(item));
         }
         else if (item.Group is not null)
         {
@@ -272,7 +606,7 @@ public sealed partial class MainWindow : Window
 
     private async void AllArticles_Click(object sender, RoutedEventArgs e)
     {
-        FeedTree.SelectedItem = null;
+        _feedSelectionAnchorId = null;
         await ViewModel.SelectAllArticlesAsync(_lifetime.Token);
         HideArticleReader();
     }
@@ -655,10 +989,39 @@ public sealed partial class MainWindow : Window
     private static long? GetSelectedGroupId(ComboBox selector) =>
         selector.SelectedItem is ComboBoxItem { Tag: long groupId } ? groupId : null;
 
-    private async Task ChangeFeedGroupAsync(Feed feed)
+    private IReadOnlyList<Feed> GetActionFeeds(FeedNavigationItem item)
     {
+        if (item.Feed is null)
+        {
+            return [];
+        }
+
+        if (!item.IsSelected || ViewModel.SelectedFeedCount <= 1)
+        {
+            return [item.Feed];
+        }
+
+        return ViewModel.Feeds
+            .Where(feed => ViewModel.SelectedFeedIds.Contains(feed.Id))
+            .ToArray();
+    }
+
+    private async Task ChangeFeedGroupAsync(IReadOnlyList<Feed> feeds)
+    {
+        if (feeds.Count == 0)
+        {
+            return;
+        }
+
         var localization = App.Current.Localization;
-        var groupSelector = CreateGroupSelector(feed.GroupId);
+        var groupIds = feeds.Select(feed => feed.GroupId).Distinct().ToArray();
+        var hasSharedGroup = groupIds.Length == 1;
+        var groupSelector = CreateGroupSelector(hasSharedGroup ? groupIds[0] : null);
+        if (!hasSharedGroup)
+        {
+            groupSelector.SelectedIndex = -1;
+        }
+
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
@@ -666,13 +1029,14 @@ public sealed partial class MainWindow : Window
             Content = groupSelector,
             PrimaryButtonText = localization.GetString("Save"),
             CloseButtonText = localization.GetString("Cancel"),
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = ContentDialogButton.Primary,
+            IsPrimaryButtonEnabled = hasSharedGroup
         };
+        groupSelector.SelectionChanged += (_, _) => dialog.IsPrimaryButtonEnabled = true;
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
-            await ViewModel.SetFeedGroupAsync(feed, GetSelectedGroupId(groupSelector), _lifetime.Token);
-            FeedTree.SelectedItem = ViewModel.SelectedNavigationItem;
+            await ViewModel.SetFeedsGroupAsync(feeds, GetSelectedGroupId(groupSelector), _lifetime.Token);
             HideArticleReader();
         }
     }
@@ -699,18 +1063,25 @@ public sealed partial class MainWindow : Window
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             await ViewModel.RenameFeedGroupAsync(group, input.Text, _lifetime.Token);
-            FeedTree.SelectedItem = ViewModel.SelectedNavigationItem;
         }
     }
 
-    private async Task ConfirmDeleteFeedAsync(Feed feed)
+    private async Task ConfirmDeleteFeedsAsync(IReadOnlyList<Feed> feeds)
     {
+        if (feeds.Count == 0)
+        {
+            return;
+        }
+
         var localization = App.Current.Localization;
+        var isBatch = feeds.Count > 1;
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
-            Title = localization.GetString("RemoveFeedTitle"),
-            Content = localization.Format("RemoveFeedMessage", feed.Title),
+            Title = localization.GetString(isBatch ? "RemoveFeedsTitle" : "RemoveFeedTitle"),
+            Content = isBatch
+                ? localization.Format("RemoveFeedsMessage", feeds.Count)
+                : localization.Format("RemoveFeedMessage", feeds[0].Title),
             PrimaryButtonText = localization.GetString("Remove"),
             CloseButtonText = localization.GetString("Cancel"),
             DefaultButton = ContentDialogButton.Close
@@ -718,8 +1089,12 @@ public sealed partial class MainWindow : Window
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
-            await ViewModel.DeleteFeedAsync(feed, _lifetime.Token);
-            FeedTree.SelectedItem = null;
+            await ViewModel.DeleteFeedsAsync(feeds, _lifetime.Token);
+            if (_feedSelectionAnchorId is { } anchorId && feeds.Any(feed => feed.Id == anchorId))
+            {
+                _feedSelectionAnchorId = null;
+            }
+
             HideArticleReader();
         }
     }
@@ -740,7 +1115,7 @@ public sealed partial class MainWindow : Window
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             await ViewModel.DeleteFeedGroupAsync(group, _lifetime.Token);
-            FeedTree.SelectedItem = null;
+            _feedSelectionAnchorId = null;
             HideArticleReader();
         }
     }

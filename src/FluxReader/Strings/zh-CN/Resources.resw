@@ -23,6 +23,7 @@
   <data name="MarkAllRead" xml:space="preserve"><value>全部标为已读</value></data>
   <data name="Settings" xml:space="preserve"><value>设置</value></data>
   <data name="AllArticles" xml:space="preserve"><value>所有文章</value></data>
+  <data name="SelectedFeeds" xml:space="preserve"><value>已选择 {0} 个订阅源</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>未读文章</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>仅显示未读文章</value></data>
   <data name="Feeds" xml:space="preserve"><value>订阅源</value></data>
@@ -38,6 +39,8 @@
   <data name="Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>移除订阅？</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>“{0}”及其本地文章将被删除。</value></data>
+  <data name="RemoveFeedsTitle" xml:space="preserve"><value>移除所选订阅？</value></data>
+  <data name="RemoveFeedsMessage" xml:space="preserve"><value>所选的 {0} 个订阅及其本地文章将被删除。</value></data>
   <data name="Remove" xml:space="preserve"><value>移除</value></data>
   <data name="AddGroup" xml:space="preserve"><value>新建分组</value></data>
   <data name="GroupName" xml:space="preserve"><value>分组名称</value></data>
@@ -55,6 +58,7 @@
   <data name="GroupRenamed" xml:space="preserve"><value>已将分组重命名为“{0}”。</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>已移除分组“{0}”。</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>已更改“{0}”的分组。</value></data>
+  <data name="FeedsGroupChanged" xml:space="preserve"><value>已更改 {0} 个订阅的分组。</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>更新订阅分组失败：{0}</value></data>
   <data name="Back" xml:space="preserve"><value>返回</value></data>
   <data name="Appearance" xml:space="preserve"><value>外观</value></data>
@@ -85,6 +89,7 @@
   <data name="MarkedAllRead" xml:space="preserve"><value>已将当前列表中的文章标为已读。</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>这篇文章没有可打开的原始链接。</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>已移除“{0}”。</value></data>
+  <data name="FeedsRemoved" xml:space="preserve"><value>已移除 {0} 个订阅。</value></data>
   <data name="EmptyFeedResponse" xml:space="preserve"><value>订阅服务器返回了空内容。</value></data>
   <data name="SubscriptionSaveFailed" xml:space="preserve"><value>订阅保存失败。</value></data>
   <data name="FeedContentEmpty" xml:space="preserve"><value>订阅内容为空。</value></data>
