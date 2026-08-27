@@ -147,6 +147,7 @@ public sealed partial class MainWindow : Window
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
+            RequestedTheme = RootGrid.ActualTheme,
             Title = localization.GetString("AddFeed"),
             Content = content,
             PrimaryButtonText = localization.GetString("Add"),
@@ -172,6 +173,7 @@ public sealed partial class MainWindow : Window
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
+            RequestedTheme = RootGrid.ActualTheme,
             Title = localization.GetString("AddGroup"),
             Content = input,
             PrimaryButtonText = localization.GetString("Create"),
@@ -839,6 +841,7 @@ public sealed partial class MainWindow : Window
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
+            RequestedTheme = RootGrid.ActualTheme,
             Title = localization.GetString("ChangeGroup"),
             Content = groupSelector,
             PrimaryButtonText = localization.GetString("Save"),
@@ -867,6 +870,7 @@ public sealed partial class MainWindow : Window
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
+            RequestedTheme = RootGrid.ActualTheme,
             Title = localization.GetString("RenameGroup"),
             Content = input,
             PrimaryButtonText = localization.GetString("Save"),
@@ -892,13 +896,15 @@ public sealed partial class MainWindow : Window
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
+            RequestedTheme = RootGrid.ActualTheme,
             Title = localization.GetString(isBatch ? "RemoveFeedsTitle" : "RemoveFeedTitle"),
             Content = isBatch
                 ? localization.Format("RemoveFeedsMessage", feeds.Count)
                 : localization.Format("RemoveFeedMessage", feeds[0].Title),
             PrimaryButtonText = localization.GetString("Remove"),
+            PrimaryButtonStyle = (Style)App.Current.Resources["DestructiveButtonStyle"],
             CloseButtonText = localization.GetString("Cancel"),
-            DefaultButton = ContentDialogButton.Close
+            DefaultButton = ContentDialogButton.None
         };
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
@@ -914,11 +920,13 @@ public sealed partial class MainWindow : Window
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
+            RequestedTheme = RootGrid.ActualTheme,
             Title = localization.GetString("RemoveGroupTitle"),
             Content = localization.Format("RemoveGroupMessage", group.Name),
             PrimaryButtonText = localization.GetString("Remove"),
+            PrimaryButtonStyle = (Style)App.Current.Resources["DestructiveButtonStyle"],
             CloseButtonText = localization.GetString("Cancel"),
-            DefaultButton = ContentDialogButton.Close
+            DefaultButton = ContentDialogButton.None
         };
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)

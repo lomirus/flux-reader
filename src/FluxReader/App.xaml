@@ -4,9 +4,160 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush
+                        x:Key="DestructiveButtonBackground"
+                        Color="{StaticResource SystemFillColorCritical}" />
+                    <SolidColorBrush
+                        x:Key="DestructiveButtonBackgroundPointerOver"
+                        Color="{StaticResource SystemFillColorCritical}"
+                        Opacity="0.9" />
+                    <SolidColorBrush
+                        x:Key="DestructiveButtonBackgroundPressed"
+                        Color="{StaticResource SystemFillColorCritical}"
+                        Opacity="0.8" />
+                    <StaticResource
+                        x:Key="DestructiveButtonBackgroundDisabled"
+                        ResourceKey="AccentButtonBackgroundDisabled" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForeground"
+                        ResourceKey="TextOnAccentFillColorPrimaryBrush" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundPointerOver"
+                        ResourceKey="TextOnAccentFillColorPrimaryBrush" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundPressed"
+                        ResourceKey="TextOnAccentFillColorSecondaryBrush" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundDisabled"
+                        ResourceKey="AccentButtonForegroundDisabled" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush
+                        x:Key="DestructiveButtonBackground"
+                        Color="{StaticResource SystemFillColorCritical}" />
+                    <SolidColorBrush
+                        x:Key="DestructiveButtonBackgroundPointerOver"
+                        Color="{StaticResource SystemFillColorCritical}"
+                        Opacity="0.9" />
+                    <SolidColorBrush
+                        x:Key="DestructiveButtonBackgroundPressed"
+                        Color="{StaticResource SystemFillColorCritical}"
+                        Opacity="0.8" />
+                    <StaticResource
+                        x:Key="DestructiveButtonBackgroundDisabled"
+                        ResourceKey="AccentButtonBackgroundDisabled" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForeground"
+                        ResourceKey="TextOnAccentFillColorPrimaryBrush" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundPointerOver"
+                        ResourceKey="TextOnAccentFillColorPrimaryBrush" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundPressed"
+                        ResourceKey="TextOnAccentFillColorSecondaryBrush" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundDisabled"
+                        ResourceKey="AccentButtonForegroundDisabled" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <StaticResource
+                        x:Key="DestructiveButtonBackground"
+                        ResourceKey="AccentButtonBackground" />
+                    <StaticResource
+                        x:Key="DestructiveButtonBackgroundPointerOver"
+                        ResourceKey="AccentButtonBackgroundPointerOver" />
+                    <StaticResource
+                        x:Key="DestructiveButtonBackgroundPressed"
+                        ResourceKey="AccentButtonBackgroundPressed" />
+                    <StaticResource
+                        x:Key="DestructiveButtonBackgroundDisabled"
+                        ResourceKey="AccentButtonBackgroundDisabled" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForeground"
+                        ResourceKey="AccentButtonForeground" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundPointerOver"
+                        ResourceKey="AccentButtonForegroundPointerOver" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundPressed"
+                        ResourceKey="AccentButtonForegroundPressed" />
+                    <StaticResource
+                        x:Key="DestructiveButtonForegroundDisabled"
+                        ResourceKey="AccentButtonForegroundDisabled" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
+            <Style
+                x:Key="DestructiveButtonStyle"
+                BasedOn="{StaticResource AccentButtonStyle}"
+                TargetType="Button">
+                <Setter Property="Background" Value="{ThemeResource DestructiveButtonBackground}" />
+                <Setter Property="Foreground" Value="{ThemeResource DestructiveButtonForeground}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter
+                                x:Name="ContentPresenter"
+                                AutomationProperties.AccessibilityView="Raw"
+                                Background="{TemplateBinding Background}"
+                                BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                ContentTransitions="{TemplateBinding ContentTransitions}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                Foreground="{TemplateBinding Foreground}"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                Padding="{TemplateBinding Padding}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <ContentPresenter.BackgroundTransition>
+                                    <BrushTransition Duration="0:0:0.083" />
+                                </ContentPresenter.BackgroundTransition>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter
+                                                    Target="ContentPresenter.Background"
+                                                    Value="{ThemeResource DestructiveButtonBackgroundPointerOver}" />
+                                                <Setter
+                                                    Target="ContentPresenter.Foreground"
+                                                    Value="{ThemeResource DestructiveButtonForegroundPointerOver}" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter
+                                                    Target="ContentPresenter.Background"
+                                                    Value="{ThemeResource DestructiveButtonBackgroundPressed}" />
+                                                <Setter
+                                                    Target="ContentPresenter.Foreground"
+                                                    Value="{ThemeResource DestructiveButtonForegroundPressed}" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter
+                                                    Target="ContentPresenter.Background"
+                                                    Value="{ThemeResource DestructiveButtonBackgroundDisabled}" />
+                                                <Setter
+                                                    Target="ContentPresenter.Foreground"
+                                                    Value="{ThemeResource DestructiveButtonForegroundDisabled}" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </ContentPresenter>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
