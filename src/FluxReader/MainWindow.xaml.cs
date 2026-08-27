@@ -122,6 +122,7 @@ public sealed partial class MainWindow : Window
         ApplyTheme(_settings.Theme);
         ApplySavedPaneWidths();
         ApplyRefreshInterval(_settings.RefreshIntervalMinutes);
+        ResetSettingsFrame();
         _settingsLoaded = true;
         await ViewModel.InitializeAsync(_lifetime.Token);
         if (ViewModel.Feeds.Count > 0 && ViewModel.RefreshCommand.CanExecute(null))
@@ -398,9 +399,14 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        SettingsFrame.Navigate(typeof(SettingsPage));
+        SettingsFrame.Visibility = Visibility.Visible;
+        SettingsFrame.Navigate(
+            typeof(SettingsPage),
+            null,
+            new EntranceNavigationTransitionInfo());
         if (SettingsFrame.Content is not SettingsPage settingsPage)
         {
+            ResetSettingsFrame();
             return;
         }
 
@@ -414,7 +420,6 @@ public sealed partial class MainWindow : Window
         settingsPage.RefreshIntervalChanged += SettingsPage_RefreshIntervalChanged;
         settingsPage.ImportSubscriptionsRequested += SettingsPage_ImportSubscriptionsRequested;
         settingsPage.ExportSubscriptionsRequested += SettingsPage_ExportSubscriptionsRequested;
-        SettingsFrame.Visibility = Visibility.Visible;
     }
 
     private void About_Click(object sender, RoutedEventArgs e)
@@ -424,14 +429,18 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        SettingsFrame.Navigate(typeof(AboutPage));
+        SettingsFrame.Visibility = Visibility.Visible;
+        SettingsFrame.Navigate(
+            typeof(AboutPage),
+            null,
+            new EntranceNavigationTransitionInfo());
         if (SettingsFrame.Content is not AboutPage aboutPage)
         {
+            ResetSettingsFrame();
             return;
         }
 
         aboutPage.BackRequested += AboutPage_BackRequested;
-        SettingsFrame.Visibility = Visibility.Visible;
     }
 
     private async void SettingsPage_ThemeChanged(object? sender, EventArgs e)
@@ -634,8 +643,16 @@ public sealed partial class MainWindow : Window
             aboutPage.BackRequested -= AboutPage_BackRequested;
         }
 
+        ResetSettingsFrame();
+    }
+
+    private void ResetSettingsFrame()
+    {
         SettingsFrame.Visibility = Visibility.Collapsed;
-        SettingsFrame.Content = null;
+        SettingsFrame.Navigate(
+            typeof(OverlayPlaceholderPage),
+            null,
+            new SuppressNavigationTransitionInfo());
         SettingsFrame.BackStack.Clear();
     }
 
