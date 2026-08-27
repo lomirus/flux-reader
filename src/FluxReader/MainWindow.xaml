@@ -102,7 +102,6 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <Button
@@ -121,24 +120,26 @@
                 x:Name="RefreshButton"
                 Grid.Column="2"
                 Command="{Binding RefreshCommand}">
-                <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                <FontIcon
+                    x:Name="RefreshIcon"
+                    FontSize="14"
+                    Glyph="&#xE72C;"
+                    RenderTransformOrigin="0.5,0.5">
+                    <FontIcon.RenderTransform>
+                        <RotateTransform x:Name="RefreshIconRotation" />
+                    </FontIcon.RenderTransform>
+                </FontIcon>
             </Button>
 
-            <ProgressRing
-                Grid.Column="4"
-                Width="20"
-                Height="20"
-                Margin="8,0"
-                IsActive="{Binding IsBusy}" />
             <Button
                 x:Name="SettingsButton"
-                Grid.Column="5"
+                Grid.Column="4"
                 Click="Settings_Click">
                 <FontIcon FontSize="14" Glyph="&#xE713;" />
             </Button>
             <Button
                 x:Name="AboutButton"
-                Grid.Column="6"
+                Grid.Column="5"
                 Click="About_Click">
                 <FontIcon FontSize="14" Glyph="&#xE946;" />
             </Button>

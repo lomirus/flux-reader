@@ -20,6 +20,7 @@
   <data name="AppIconAutomation" xml:space="preserve"><value>Значок FluxReader</value></data>
   <data name="AddFeed" xml:space="preserve"><value>Добавить ленту</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Обновить все ленты</value></data>
+  <data name="LastRefreshedAt" xml:space="preserve"><value>Последнее обновление: {0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Отметить всё как прочитанное</value></data>
   <data name="Settings" xml:space="preserve"><value>Параметры</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Все статьи</value></data>

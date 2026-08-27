@@ -20,6 +20,7 @@
   <data name="AppIconAutomation" xml:space="preserve"><value>Ikona FluxReadera</value></data>
   <data name="AddFeed" xml:space="preserve"><value>Dodaj kanał</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Odśwież wszystkie kanały</value></data>
+  <data name="LastRefreshedAt" xml:space="preserve"><value>Ostatnie odświeżenie: {0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Oznacz wszystko jako przeczytane</value></data>
   <data name="Settings" xml:space="preserve"><value>Ustawienia</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Wszystkie artykuły</value></data>

@@ -20,6 +20,7 @@
   <data name="AppIconAutomation" xml:space="preserve"><value>FluxReader-Symbol</value></data>
   <data name="AddFeed" xml:space="preserve"><value>Feed hinzufügen</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Alle Feeds aktualisieren</value></data>
+  <data name="LastRefreshedAt" xml:space="preserve"><value>Zuletzt aktualisiert: {0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Alle als gelesen markieren</value></data>
   <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>
   <data name="AllArticles" xml:space="preserve"><value>Alle Artikel</value></data>

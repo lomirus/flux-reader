@@ -13,6 +13,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
@@ -36,6 +37,7 @@ public sealed partial class MainWindow : Window
     {
         Interval = TimeSpan.FromMinutes(DefaultRefreshIntervalMinutes)
     };
+    private readonly Storyboard _refreshIconSpinStoryboard = new();
     private bool _isSynchronizingFeedListSelection;
     private AppSettings _settings = new();
     private bool _settingsLoaded;
@@ -43,6 +45,7 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ConfigureRefreshIconAnimation();
         Title = "FluxReader";
         SetWindowIcon();
         ExtendsContentIntoTitleBar = true;
@@ -246,6 +249,16 @@ public sealed partial class MainWindow : Window
         if (e.PropertyName == nameof(MainViewModel.SelectedFeedIds))
         {
             SynchronizeFeedListSelection();
+        }
+
+        if (e.PropertyName == nameof(MainViewModel.LastRefreshedAt))
+        {
+            UpdateRefreshButtonToolTip();
+        }
+
+        if (e.PropertyName == nameof(MainViewModel.IsBusy))
+        {
+            UpdateRefreshButtonVisualState();
         }
     }
 
@@ -658,7 +671,10 @@ public sealed partial class MainWindow : Window
         var addFeed = localization.GetString("AddFeed");
         AutomationProperties.SetName(AddFeedButton, addFeed);
         ToolTipService.SetToolTip(AddFeedButton, addFeed);
-        ToolTipService.SetToolTip(RefreshButton, localization.GetString("RefreshAllFeeds"));
+
+        var refreshAllFeeds = localization.GetString("RefreshAllFeeds");
+        AutomationProperties.SetName(RefreshButton, refreshAllFeeds);
+        UpdateRefreshButtonToolTip();
 
         var addGroup = localization.GetString("AddGroup");
         AutomationProperties.SetName(AddGroupButton, addGroup);
@@ -694,6 +710,46 @@ public sealed partial class MainWindow : Window
         EmptyArticleDescriptionText.Text = localization.GetString("ArticleContentHint");
         OpenInBrowserText.Text = localization.GetString("OpenInBrowser");
         MarkUnreadText.Text = localization.GetString("MarkUnread");
+    }
+
+    private void UpdateRefreshButtonToolTip()
+    {
+        var localization = App.Current.Localization;
+        var refreshAllFeeds = localization.GetString("RefreshAllFeeds");
+        var lastRefreshedAt = ViewModel.LastRefreshedAt;
+        var toolTip = lastRefreshedAt is { } value
+            ? $"{refreshAllFeeds}\n{localization.Format(
+                "LastRefreshedAt",
+                value.ToLocalTime().ToString("G", localization.CurrentCulture))}"
+            : refreshAllFeeds;
+        ToolTipService.SetToolTip(RefreshButton, toolTip);
+    }
+
+    private void UpdateRefreshButtonVisualState()
+    {
+        if (ViewModel.IsBusy)
+        {
+            _refreshIconSpinStoryboard.Begin();
+            return;
+        }
+
+        _refreshIconSpinStoryboard.Stop();
+        RefreshIconRotation.Angle = 0;
+    }
+
+    private void ConfigureRefreshIconAnimation()
+    {
+        var animation = new DoubleAnimation
+        {
+            From = 0,
+            To = 360,
+            Duration = TimeSpan.FromMilliseconds(800),
+            RepeatBehavior = RepeatBehavior.Forever,
+            EnableDependentAnimation = true
+        };
+        Storyboard.SetTarget(animation, RefreshIconRotation);
+        Storyboard.SetTargetProperty(animation, nameof(RotateTransform.Angle));
+        _refreshIconSpinStoryboard.Children.Add(animation);
     }
 
     private void RootGrid_ActualThemeChanged(FrameworkElement sender, object args) =>

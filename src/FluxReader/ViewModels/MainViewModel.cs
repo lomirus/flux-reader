@@ -79,6 +79,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     public int SelectedFeedCount => _selectedFeedIds.Count;
 
+    public DateTimeOffset? LastRefreshedAt => Feeds
+        .Select(feed => feed.LastRefreshedAt)
+        .OrderByDescending(value => value)
+        .FirstOrDefault();
+
     public bool IsUnreadFilterEnabled => CurrentFilter == ArticleFilter.Unread;
 
     public string ArticleListTitle => SelectedFeedCount > 1
@@ -656,6 +661,7 @@ public sealed partial class MainViewModel : ObservableObject
             Feeds.Add(feed);
         }
 
+        OnPropertyChanged(nameof(LastRefreshedAt));
         UnreadTotal = Feeds.Sum(feed => feed.UnreadCount);
         RebuildFeedNavigation(selectedFeedIds, selectedGroupId);
     }
