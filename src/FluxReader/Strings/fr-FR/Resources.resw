@@ -116,4 +116,6 @@
   <data name="NoSubscriptionsToExport" xml:space="preserve"><value>Aucun abonnement à exporter.</value></data>
   <data name="SubscriptionExportComplete" xml:space="preserve"><value>{0} abonnements exportés.</value></data>
   <data name="SubscriptionExportFailed" xml:space="preserve"><value>Impossible d’exporter les abonnements : {0}</value></data>
+  <data name="TrayOpen" xml:space="preserve"><value>Ouvrir FluxReader</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Quitter</value></data>
 </root>

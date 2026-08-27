@@ -116,4 +116,6 @@
   <data name="NoSubscriptionsToExport" xml:space="preserve"><value>没有可导出的订阅。</value></data>
   <data name="SubscriptionExportComplete" xml:space="preserve"><value>已导出 {0} 个订阅。</value></data>
   <data name="SubscriptionExportFailed" xml:space="preserve"><value>导出订阅失败：{0}</value></data>
+  <data name="TrayOpen" xml:space="preserve"><value>打开 FluxReader</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>退出</value></data>
 </root>

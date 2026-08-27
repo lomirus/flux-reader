@@ -116,4 +116,6 @@
   <data name="NoSubscriptionsToExport" xml:space="preserve"><value>Brak subskrypcji do wyeksportowania.</value></data>
   <data name="SubscriptionExportComplete" xml:space="preserve"><value>Wyeksportowano subskrypcje: {0}.</value></data>
   <data name="SubscriptionExportFailed" xml:space="preserve"><value>Nie można wyeksportować subskrypcji: {0}</value></data>
+  <data name="TrayOpen" xml:space="preserve"><value>Otwórz FluxReader</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Zakończ</value></data>
 </root>

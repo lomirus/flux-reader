@@ -116,4 +116,6 @@
   <data name="NoSubscriptionsToExport" xml:space="preserve"><value>내보낼 구독이 없습니다.</value></data>
   <data name="SubscriptionExportComplete" xml:space="preserve"><value>구독 {0}개를 내보냈습니다.</value></data>
   <data name="SubscriptionExportFailed" xml:space="preserve"><value>구독을 내보낼 수 없습니다: {0}</value></data>
+  <data name="TrayOpen" xml:space="preserve"><value>FluxReader 열기</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>종료</value></data>
 </root>

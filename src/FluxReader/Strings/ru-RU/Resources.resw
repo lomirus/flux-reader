@@ -116,4 +116,6 @@
   <data name="NoSubscriptionsToExport" xml:space="preserve"><value>Нет подписок для экспорта.</value></data>
   <data name="SubscriptionExportComplete" xml:space="preserve"><value>Экспортировано подписок: {0}.</value></data>
   <data name="SubscriptionExportFailed" xml:space="preserve"><value>Не удалось экспортировать подписки: {0}</value></data>
+  <data name="TrayOpen" xml:space="preserve"><value>Открыть FluxReader</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Выход</value></data>
 </root>

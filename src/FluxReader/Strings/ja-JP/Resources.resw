@@ -116,4 +116,6 @@
   <data name="NoSubscriptionsToExport" xml:space="preserve"><value>エクスポートする購読がありません。</value></data>
   <data name="SubscriptionExportComplete" xml:space="preserve"><value>{0} 件の購読をエクスポートしました。</value></data>
   <data name="SubscriptionExportFailed" xml:space="preserve"><value>購読をエクスポートできませんでした: {0}</value></data>
+  <data name="TrayOpen" xml:space="preserve"><value>FluxReader を開く</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>終了</value></data>
 </root>
