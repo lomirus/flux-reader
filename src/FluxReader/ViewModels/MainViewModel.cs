@@ -92,7 +92,9 @@ public sealed partial class MainViewModel : ObservableObject
               _ => _localization.GetString("AllArticles")
           });
 
-    public string ArticleListGlyph => SelectedNavigationItem?.Glyph ?? "\uE8F1";
+    public string ArticleListGlyph => SelectedFeedCount > 1
+        ? "\uE762"
+        : SelectedNavigationItem?.Glyph ?? "\uE8F1";
 
     public void ApplyLocalization()
     {
@@ -813,7 +815,9 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedGroup = selectedGroup;
         SelectedNavigationItem = SelectedFeed is not null
             ? FindFeedNavigationItem(SelectedFeed.Id)
-            : FeedNavigationRows.FirstOrDefault(item => item.Group?.Id == SelectedGroup?.Id);
+            : SelectedGroup is not null
+                ? FeedNavigationRows.FirstOrDefault(item => item.Group?.Id == SelectedGroup.Id)
+                : null;
 
         if (selectionChanged)
         {

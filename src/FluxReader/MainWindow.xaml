@@ -302,7 +302,7 @@
                                     Height="24"
                                     ImageFailed="FeedIcon_ImageFailed"
                                     ImageOpened="FeedIcon_ImageOpened"
-                                    Source="{Binding SelectedNavigationItem.IconSource}"
+                                    Source="{Binding SelectedNavigationItem.IconSource, FallbackValue={x:Null}, TargetNullValue={x:Null}}"
                                     Stretch="UniformToFill"
                                     Tag="{Binding SelectedNavigationItem}" />
                             </Border>
