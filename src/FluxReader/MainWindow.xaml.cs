@@ -274,9 +274,11 @@ public sealed partial class MainWindow : Window
 
     private void ViewModel_StatusNotificationRequested(
         object? sender,
-        StatusNotificationRequestedEventArgs args) =>
-        StatusNotificationQueue.Show(new Notification
+        StatusNotificationRequestedEventArgs args)
+    {
+        var notification = new Notification
         {
+            Title = args.Title,
             Message = args.Message,
             Severity = args.Severity switch
             {
@@ -285,13 +287,70 @@ public sealed partial class MainWindow : Window
                 StatusNotificationSeverity.Error => InfoBarSeverity.Error,
                 _ => InfoBarSeverity.Informational
             },
-            Duration = args.Severity switch
+            Duration = args.Details.Count > 0
+                ? null
+                : args.Severity switch
+                {
+                    StatusNotificationSeverity.Error => null,
+                    StatusNotificationSeverity.Warning => WarningStatusNotificationDuration,
+                    _ => DefaultStatusNotificationDuration
+                }
+        };
+
+        if (args.Details.Count > 0 && !string.IsNullOrWhiteSpace(args.ActionText))
+        {
+            var detailsButton = new Button
             {
-                StatusNotificationSeverity.Error => null,
-                StatusNotificationSeverity.Warning => WarningStatusNotificationDuration,
-                _ => DefaultStatusNotificationDuration
-            }
+                Content = args.ActionText,
+                Tag = args
+            };
+            detailsButton.Click += StatusNotificationDetails_Click;
+            notification.ActionButton = detailsButton;
+        }
+
+        StatusNotificationQueue.Show(notification);
+    }
+
+    private async void StatusNotificationDetails_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: StatusNotificationRequestedEventArgs args })
+        {
+            return;
+        }
+
+        var localization = App.Current.Localization;
+        var detailsList = new ListView
+        {
+            Width = 480,
+            MaxHeight = 360,
+            IsItemClickEnabled = false,
+            ItemContainerTransitions = new TransitionCollection(),
+            ItemTemplate = (DataTemplate)RootGrid.Resources["StatusNotificationDetailTemplate"],
+            ItemsSource = args.Details,
+            SelectionMode = ListViewSelectionMode.None
+        };
+        var dialogContent = new StackPanel
+        {
+            Spacing = 8
+        };
+        dialogContent.Children.Add(new TextBlock
+        {
+            Text = localization.GetString("RefreshFailureDetailsDescription"),
+            TextWrapping = TextWrapping.Wrap
         });
+        dialogContent.Children.Add(detailsList);
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = RootGrid.XamlRoot,
+            RequestedTheme = RootGrid.ActualTheme,
+            Title = localization.GetString("RefreshFailureDetailsTitle"),
+            Content = dialogContent,
+            CloseButtonText = localization.GetString("Close"),
+            DefaultButton = ContentDialogButton.Close
+        };
+        await dialog.ShowAsync();
+    }
 
     private void NormalizeFeedListSelection(
         IReadOnlyCollection<FeedNavigationItem> selectedItems,

@@ -27,6 +27,9 @@ public sealed partial class Feed : ObservableObject
     public partial DateTimeOffset? LastRefreshedAt { get; set; }
 
     [ObservableProperty]
+    public partial string? LastRefreshError { get; set; }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(UnreadDisplay))]
     public partial int UnreadCount { get; set; }
 

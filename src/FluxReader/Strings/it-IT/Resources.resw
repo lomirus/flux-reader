@@ -38,6 +38,7 @@
   <data name="FeedAddress" xml:space="preserve"><value>Indirizzo RSS o Atom</value></data>
   <data name="Add" xml:space="preserve"><value>Aggiungi</value></data>
   <data name="Cancel" xml:space="preserve"><value>Annulla</value></data>
+  <data name="Close" xml:space="preserve"><value>Chiudi</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Rimuovere il feed?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>“{0}” e gli articoli archiviati localmente verranno eliminati.</value></data>
   <data name="RemoveFeedsTitle" xml:space="preserve"><value>Rimuovere i feed selezionati?</value></data>
@@ -89,7 +90,13 @@
   <data name="AddFeedFirst" xml:space="preserve"><value>Aggiungi prima un feed RSS o Atom.</value></data>
   <data name="RefreshCompleteOne" xml:space="preserve"><value>Aggiornamento completato. Trovato {0} nuovo articolo.</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>Aggiornamento completato. Trovati {0} nuovi articoli.</value></data>
-  <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>Aggiornamento completato. Nuovi articoli: {0}; feed non riusciti: {1}.</value></data>
+  <data name="RefreshPartialFailureSummary" xml:space="preserve"><value>Nuovi articoli: {0}; feed interessati: {1}.</value></data>
+  <data name="RefreshPartialFailureTitle" xml:space="preserve"><value>Non è stato possibile aggiornare alcuni feed</value></data>
+  <data name="ViewDetails" xml:space="preserve"><value>Visualizza dettagli</value></data>
+  <data name="RefreshFailureDetailsTitle" xml:space="preserve"><value>Dettagli degli aggiornamenti non riusciti</value></data>
+  <data name="RefreshFailureDetailsDescription" xml:space="preserve"><value>Non è stato possibile aggiornare i seguenti feed:</value></data>
+  <data name="UnknownRefreshError" xml:space="preserve"><value>Si è verificato un errore sconosciuto.</value></data>
+  <data name="FeedRefreshFailed" xml:space="preserve"><value>Aggiornamento del feed non riuscito</value></data>
   <data name="MarkedAllRead" xml:space="preserve"><value>Gli articoli nell’elenco corrente sono stati segnati come letti.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>Questo articolo non ha un link originale da aprire.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>“{0}” è stato rimosso.</value></data>

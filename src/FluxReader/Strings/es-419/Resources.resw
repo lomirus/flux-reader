@@ -38,6 +38,7 @@
   <data name="FeedAddress" xml:space="preserve"><value>Dirección RSS o Atom</value></data>
   <data name="Add" xml:space="preserve"><value>Agregar</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Close" xml:space="preserve"><value>Cerrar</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>¿Eliminar la fuente?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>Se eliminarán “{0}” y sus artículos almacenados localmente.</value></data>
   <data name="RemoveFeedsTitle" xml:space="preserve"><value>¿Eliminar las fuentes seleccionadas?</value></data>
@@ -89,7 +90,13 @@
   <data name="AddFeedFirst" xml:space="preserve"><value>Primero agrega una fuente RSS o Atom.</value></data>
   <data name="RefreshCompleteOne" xml:space="preserve"><value>Actualización completada. Se encontró {0} artículo nuevo.</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>Actualización completada. Se encontraron {0} artículos nuevos.</value></data>
-  <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>Actualización completada. Artículos nuevos: {0}; fuentes con errores: {1}.</value></data>
+  <data name="RefreshPartialFailureSummary" xml:space="preserve"><value>Artículos nuevos: {0}; fuentes afectadas: {1}.</value></data>
+  <data name="RefreshPartialFailureTitle" xml:space="preserve"><value>No se pudieron actualizar algunas fuentes</value></data>
+  <data name="ViewDetails" xml:space="preserve"><value>Ver detalles</value></data>
+  <data name="RefreshFailureDetailsTitle" xml:space="preserve"><value>Detalles de errores de actualización</value></data>
+  <data name="RefreshFailureDetailsDescription" xml:space="preserve"><value>No se pudieron actualizar las siguientes fuentes:</value></data>
+  <data name="UnknownRefreshError" xml:space="preserve"><value>Se produjo un error desconocido.</value></data>
+  <data name="FeedRefreshFailed" xml:space="preserve"><value>Error al actualizar la fuente</value></data>
   <data name="MarkedAllRead" xml:space="preserve"><value>Los artículos de la lista actual se marcaron como leídos.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>Este artículo no tiene un enlace original para abrir.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>Se eliminó “{0}”.</value></data>

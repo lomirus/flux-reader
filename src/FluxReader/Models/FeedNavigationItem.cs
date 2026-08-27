@@ -10,6 +10,7 @@ namespace FluxReader.Models;
 public sealed partial class FeedNavigationItem : ObservableObject
 {
     private const double ChildIndentWidth = 18;
+    private readonly string _refreshFailedText;
 
     private FeedNavigationItem(Feed feed, ActionLabels labels, bool isChild)
     {
@@ -17,6 +18,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
         IsChild = isChild;
         PrimaryActionText = labels.ChangeGroup;
         RemoveActionText = labels.RemoveFeed;
+        _refreshFailedText = labels.RefreshFailed;
         feed.PropertyChanged += Feed_PropertyChanged;
     }
 
@@ -25,6 +27,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
         Group = group;
         PrimaryActionText = labels.RenameGroup;
         RemoveActionText = labels.RemoveGroup;
+        _refreshFailedText = labels.RefreshFailed;
         foreach (var feed in feeds)
         {
             var child = new FeedNavigationItem(feed, labels, isChild: true);
@@ -65,6 +68,14 @@ public sealed partial class FeedNavigationItem : ObservableObject
 
     public string UnreadDisplay => UnreadCount == 0 ? string.Empty : UnreadCount.ToString();
 
+    public Visibility RefreshWarningVisibility => string.IsNullOrWhiteSpace(Feed?.LastRefreshError)
+        ? Visibility.Collapsed
+        : Visibility.Visible;
+
+    public string RefreshWarningToolTip => string.IsNullOrWhiteSpace(Feed?.LastRefreshError)
+        ? string.Empty
+        : $"{_refreshFailedText}{Environment.NewLine}{Feed.LastRefreshError}";
+
     [ObservableProperty]
     public partial bool IsExpanded { get; set; } = true;
 
@@ -83,7 +94,8 @@ public sealed partial class FeedNavigationItem : ObservableObject
         string ChangeGroup,
         string RemoveFeed,
         string RenameGroup,
-        string RemoveGroup);
+        string RemoveGroup,
+        string RefreshFailed);
 
     partial void OnIsExpandedChanged(bool value) => OnPropertyChanged(nameof(ChevronGlyph));
 
@@ -105,6 +117,12 @@ public sealed partial class FeedNavigationItem : ObservableObject
         {
             OnPropertyChanged(nameof(UnreadCount));
             OnPropertyChanged(nameof(UnreadDisplay));
+        }
+
+        if (e.PropertyName == nameof(FluxReader.Models.Feed.LastRefreshError))
+        {
+            OnPropertyChanged(nameof(RefreshWarningVisibility));
+            OnPropertyChanged(nameof(RefreshWarningToolTip));
         }
     }
 

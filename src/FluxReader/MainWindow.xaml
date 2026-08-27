@@ -8,6 +8,7 @@
     xmlns:local="using:FluxReader"
     xmlns:controls="using:FluxReader.Controls"
     xmlns:models="using:FluxReader.Models"
+    xmlns:viewModels="using:FluxReader.ViewModels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -20,6 +21,22 @@
             <x:Double x:Key="FeedNavigationRowHeight">32</x:Double>
 
             <DataTemplate
+                x:Key="StatusNotificationDetailTemplate"
+                x:DataType="viewModels:StatusNotificationDetail">
+                <StackPanel Padding="0,8" Spacing="2">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{x:Bind Title}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        IsTextSelectionEnabled="True"
+                        Opacity="0.75"
+                        Text="{x:Bind Description}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </DataTemplate>
+
+            <DataTemplate
                 x:Key="FeedNavigationItemContentTemplate"
                 x:DataType="models:FeedNavigationItem">
                 <Grid
@@ -30,6 +47,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Grid Width="16" Height="16">
@@ -56,6 +74,16 @@
                         TextTrimming="CharacterEllipsis" />
                     <TextBlock
                         Grid.Column="2"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Bind RefreshWarningToolTip, Mode=OneWay}"
+                        FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                        FontSize="14"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        Text="&#xE7BA;"
+                        ToolTipService.ToolTip="{x:Bind RefreshWarningToolTip, Mode=OneWay}"
+                        Visibility="{x:Bind RefreshWarningVisibility, Mode=OneWay}" />
+                    <TextBlock
+                        Grid.Column="3"
                         VerticalAlignment="Center"
                         Opacity="0.65"
                         Text="{x:Bind UnreadDisplay, Mode=OneWay}" />

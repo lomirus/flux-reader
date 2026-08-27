@@ -15,6 +15,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly NotificationService _notifications;
     private readonly RssRefreshService _refreshService;
     private readonly RssRepository _repository;
+    private readonly Dictionary<long, string> _feedRefreshErrors = [];
     private readonly HashSet<long> _selectedFeedIds = [];
     private long _articleLoadVersion;
     private long _navigationSelectionVersion;
@@ -377,23 +378,20 @@ public sealed partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var tasks = Feeds.Select(async feed =>
-            {
-                try
-                {
-                    return (Result: await _refreshService.RefreshAsync(feed), Error: (Exception?)null);
-                }
-                catch (Exception exception)
-                {
-                    return (Result: (FeedRefreshResult?)null, Error: exception);
-                }
-            });
+            var tasks = Feeds.Select(feed => RefreshFeedAsync(feed));
             var outcomes = await Task.WhenAll(tasks);
             var newTitles = outcomes
                 .Where(outcome => outcome.Result is not null)
                 .SelectMany(outcome => outcome.Result!.NewArticleTitles)
                 .ToArray();
-            var errorCount = outcomes.Count(outcome => outcome.Error is not null);
+            var failures = outcomes
+                .Where(outcome => outcome.Error is not null)
+                .Select(outcome => new StatusNotificationDetail(
+                    outcome.Feed.Title,
+                    GetRefreshErrorMessage(outcome.Error!)))
+                .OrderBy(failure => failure.Title, StringComparer.CurrentCultureIgnoreCase)
+                .ToArray();
+            UpdateFeedRefreshErrors(outcomes);
             var selectedFeedIds = _selectedFeedIds.ToArray();
             var selectedGroupId = SelectedGroup?.Id;
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId);
@@ -405,12 +403,19 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             ShowStatus(
-                errorCount == 0
+                failures.Length == 0
                     ? _localization.FormatRefreshComplete(newTitles.Length)
-                    : _localization.Format("RefreshCompleteWithErrors", newTitles.Length, errorCount),
-                errorCount == 0
+                    : _localization.Format("RefreshPartialFailureSummary", newTitles.Length, failures.Length),
+                failures.Length == 0
                     ? StatusNotificationSeverity.Success
-                    : StatusNotificationSeverity.Warning);
+                    : StatusNotificationSeverity.Warning,
+                failures.Length == 0
+                    ? null
+                    : _localization.GetString("RefreshPartialFailureTitle"),
+                failures.Length == 0
+                    ? null
+                    : _localization.GetString("ViewDetails"),
+                failures);
         }
         finally
         {
@@ -698,6 +703,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var groups = await _repository.GetFeedGroupsAsync(cancellationToken);
         var feeds = await _repository.GetFeedsAsync(cancellationToken);
+        ApplyFeedRefreshErrors(feeds);
 
         FeedGroups.Clear();
         foreach (var group in groups)
@@ -761,7 +767,8 @@ public sealed partial class MainViewModel : ObservableObject
             _localization.GetString("ChangeGroup"),
             _localization.GetString("Remove"),
             _localization.GetString("RenameGroup"),
-            _localization.GetString("RemoveGroup"));
+            _localization.GetString("RemoveGroup"),
+            _localization.GetString("FeedRefreshFailed"));
         FeedNavigationRows.Clear();
 
         var ungroupedItems = Feeds
@@ -856,25 +863,14 @@ public sealed partial class MainViewModel : ObservableObject
             var importedFeeds = Feeds
                 .Where(feed => importedFeedIds.Contains(feed.Id))
                 .ToArray();
-            var refreshTasks = importedFeeds.Select(async feed =>
-            {
-                try
-                {
-                    await _refreshService.RefreshAsync(feed, cancellationToken);
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                }
-                catch (Exception)
-                {
-                }
-            });
-            await Task.WhenAll(refreshTasks);
+            var outcomes = await Task.WhenAll(
+                importedFeeds.Select(feed => RefreshFeedAsync(feed, cancellationToken)));
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
             }
 
+            UpdateFeedRefreshErrors(outcomes);
             var selectedFeedIds = _selectedFeedIds.ToArray();
             var selectedGroupId = SelectedGroup?.Id;
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
@@ -920,12 +916,80 @@ public sealed partial class MainViewModel : ObservableObject
             ? uri
             : null;
 
+    private async Task<FeedRefreshOutcome> RefreshFeedAsync(
+        Feed feed,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return new FeedRefreshOutcome(
+                feed,
+                await _refreshService.RefreshAsync(feed, cancellationToken),
+                null);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            return new FeedRefreshOutcome(feed, null, exception);
+        }
+    }
+
+    private void UpdateFeedRefreshErrors(IEnumerable<FeedRefreshOutcome> outcomes)
+    {
+        foreach (var outcome in outcomes)
+        {
+            if (outcome.Error is null)
+            {
+                _feedRefreshErrors.Remove(outcome.Feed.Id);
+            }
+            else
+            {
+                _feedRefreshErrors[outcome.Feed.Id] = GetRefreshErrorMessage(outcome.Error);
+            }
+        }
+    }
+
+    private void ApplyFeedRefreshErrors(IReadOnlyList<Feed> feeds)
+    {
+        var availableFeedIds = feeds.Select(feed => feed.Id).ToHashSet();
+        foreach (var removedFeedId in _feedRefreshErrors.Keys
+                     .Where(feedId => !availableFeedIds.Contains(feedId))
+                     .ToArray())
+        {
+            _feedRefreshErrors.Remove(removedFeedId);
+        }
+
+        foreach (var feed in feeds)
+        {
+            if (_feedRefreshErrors.TryGetValue(feed.Id, out var error))
+            {
+                feed.LastRefreshError = error;
+            }
+        }
+    }
+
+    private string GetRefreshErrorMessage(Exception exception) =>
+        string.IsNullOrWhiteSpace(exception.Message)
+            ? _localization.GetString("UnknownRefreshError")
+            : exception.Message.Trim();
+
     private void ShowStatus(
         string message,
-        StatusNotificationSeverity severity = StatusNotificationSeverity.Informational) =>
+        StatusNotificationSeverity severity = StatusNotificationSeverity.Informational,
+        string? title = null,
+        string? actionText = null,
+        IReadOnlyList<StatusNotificationDetail>? details = null) =>
         StatusNotificationRequested?.Invoke(
             this,
-            new StatusNotificationRequestedEventArgs(message, severity));
+            new StatusNotificationRequestedEventArgs(message, severity, title, actionText, details));
+
+    private sealed record FeedRefreshOutcome(
+        Feed Feed,
+        FeedRefreshResult? Result,
+        Exception? Error);
 }
 
 public sealed record SubscriptionImportResult(

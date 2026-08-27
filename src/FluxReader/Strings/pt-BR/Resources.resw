@@ -38,6 +38,7 @@
   <data name="FeedAddress" xml:space="preserve"><value>Endereço RSS ou Atom</value></data>
   <data name="Add" xml:space="preserve"><value>Adicionar</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Close" xml:space="preserve"><value>Fechar</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Remover o feed?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>“{0}” e os artigos armazenados localmente serão excluídos.</value></data>
   <data name="RemoveFeedsTitle" xml:space="preserve"><value>Remover os feeds selecionados?</value></data>
@@ -89,7 +90,13 @@
   <data name="AddFeedFirst" xml:space="preserve"><value>Primeiro, adicione um feed RSS ou Atom.</value></data>
   <data name="RefreshCompleteOne" xml:space="preserve"><value>Atualização concluída. {0} novo artigo encontrado.</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>Atualização concluída. {0} novos artigos encontrados.</value></data>
-  <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>Atualização concluída. Novos artigos: {0}; feeds com falha: {1}.</value></data>
+  <data name="RefreshPartialFailureSummary" xml:space="preserve"><value>Novos artigos: {0}; feeds afetados: {1}.</value></data>
+  <data name="RefreshPartialFailureTitle" xml:space="preserve"><value>Não foi possível atualizar alguns feeds</value></data>
+  <data name="ViewDetails" xml:space="preserve"><value>Ver detalhes</value></data>
+  <data name="RefreshFailureDetailsTitle" xml:space="preserve"><value>Detalhes das falhas de atualização</value></data>
+  <data name="RefreshFailureDetailsDescription" xml:space="preserve"><value>Não foi possível atualizar os seguintes feeds:</value></data>
+  <data name="UnknownRefreshError" xml:space="preserve"><value>Ocorreu um erro desconhecido.</value></data>
+  <data name="FeedRefreshFailed" xml:space="preserve"><value>Falha ao atualizar o feed</value></data>
   <data name="MarkedAllRead" xml:space="preserve"><value>Os artigos da lista atual foram marcados como lidos.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>Este artigo não tem um link original para abrir.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>“{0}” foi removido.</value></data>

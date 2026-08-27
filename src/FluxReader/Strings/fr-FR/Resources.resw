@@ -38,6 +38,7 @@
   <data name="FeedAddress" xml:space="preserve"><value>Adresse RSS ou Atom</value></data>
   <data name="Add" xml:space="preserve"><value>Ajouter</value></data>
   <data name="Cancel" xml:space="preserve"><value>Annuler</value></data>
+  <data name="Close" xml:space="preserve"><value>Fermer</value></data>
   <data name="RemoveFeedTitle" xml:space="preserve"><value>Supprimer le flux ?</value></data>
   <data name="RemoveFeedMessage" xml:space="preserve"><value>« {0} » et ses articles stockés localement seront supprimés.</value></data>
   <data name="RemoveFeedsTitle" xml:space="preserve"><value>Supprimer les flux sélectionnés ?</value></data>
@@ -89,7 +90,13 @@
   <data name="AddFeedFirst" xml:space="preserve"><value>Ajoutez d’abord un flux RSS ou Atom.</value></data>
   <data name="RefreshCompleteOne" xml:space="preserve"><value>Actualisation terminée. {0} nouvel article trouvé.</value></data>
   <data name="RefreshCompleteOther" xml:space="preserve"><value>Actualisation terminée. {0} nouveaux articles trouvés.</value></data>
-  <data name="RefreshCompleteWithErrors" xml:space="preserve"><value>Actualisation terminée. Nouveaux articles : {0} ; flux en échec : {1}.</value></data>
+  <data name="RefreshPartialFailureSummary" xml:space="preserve"><value>Nouveaux articles : {0} ; flux concernés : {1}.</value></data>
+  <data name="RefreshPartialFailureTitle" xml:space="preserve"><value>Certains flux n’ont pas pu être actualisés</value></data>
+  <data name="ViewDetails" xml:space="preserve"><value>Afficher les détails</value></data>
+  <data name="RefreshFailureDetailsTitle" xml:space="preserve"><value>Détails des échecs d’actualisation</value></data>
+  <data name="RefreshFailureDetailsDescription" xml:space="preserve"><value>Les flux suivants n’ont pas pu être actualisés :</value></data>
+  <data name="UnknownRefreshError" xml:space="preserve"><value>Une erreur inconnue s’est produite.</value></data>
+  <data name="FeedRefreshFailed" xml:space="preserve"><value>Échec de l’actualisation du flux</value></data>
   <data name="MarkedAllRead" xml:space="preserve"><value>Les articles de la liste actuelle ont été marqués comme lus.</value></data>
   <data name="ArticleLinkUnavailable" xml:space="preserve"><value>Cet article ne possède aucun lien d’origine à ouvrir.</value></data>
   <data name="FeedRemoved" xml:space="preserve"><value>« {0} » a été supprimé.</value></data>
