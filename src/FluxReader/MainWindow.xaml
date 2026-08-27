@@ -67,7 +67,7 @@
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="Margin" Value="4,0" />
                 <Setter Property="MinHeight" Value="{StaticResource FeedNavigationRowHeight}" />
-                <Setter Property="Padding" Value="0,3,0,5" />
+                <Setter Property="Padding" Value="0" />
             </Style>
         </Grid.Resources>
         <Grid.RowDefinitions>
@@ -197,7 +197,7 @@
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="models:FeedNavigationItem">
                             <Grid
-                                Padding="4,0,0,0"
+                                Padding="4,3,0,5"
                                 Background="Transparent"
                                 Tag="{x:Bind}">
                                 <Grid.ColumnDefinitions>
