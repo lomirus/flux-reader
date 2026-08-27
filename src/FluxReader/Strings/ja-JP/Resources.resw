@@ -20,6 +20,7 @@
   <data name="AppIconAutomation" xml:space="preserve"><value>FluxReader アイコン</value></data>
   <data name="AddFeed" xml:space="preserve"><value>フィードを追加</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>すべてのフィードを更新</value></data>
+  <data name="RefreshFeed" xml:space="preserve"><value>フィードを更新</value></data>
   <data name="LastRefreshedAt" xml:space="preserve"><value>最終更新: {0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>すべて既読にする</value></data>
   <data name="Settings" xml:space="preserve"><value>設定</value></data>

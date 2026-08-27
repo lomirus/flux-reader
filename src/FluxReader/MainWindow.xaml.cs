@@ -418,6 +418,14 @@ public sealed partial class MainWindow : Window
         DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, NativeCursor.SetArrow);
     }
 
+    private async void RefreshNavigationFeedMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { Tag: FeedNavigationItem { Feed: { } feed } })
+        {
+            await ViewModel.RefreshFeedAsync(feed, _lifetime.Token);
+        }
+    }
+
     private async void PrimaryNavigationItemMenu_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not MenuFlyoutItem { Tag: FeedNavigationItem item })

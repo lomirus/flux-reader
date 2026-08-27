@@ -361,11 +361,23 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task RefreshAsync()
+    private Task RefreshAsync() => RefreshFeedsAsync(Feeds.ToArray());
+
+    public Task RefreshFeedAsync(
+        Feed feed,
+        CancellationToken cancellationToken = default)
     {
-        if (IsBusy || Feeds.Count == 0)
+        ArgumentNullException.ThrowIfNull(feed);
+        return RefreshFeedsAsync([feed], cancellationToken);
+    }
+
+    private async Task RefreshFeedsAsync(
+        IReadOnlyCollection<Feed> feeds,
+        CancellationToken cancellationToken = default)
+    {
+        if (IsBusy || feeds.Count == 0)
         {
-            if (Feeds.Count == 0)
+            if (feeds.Count == 0)
             {
                 ShowStatus(
                     _localization.GetString("AddFeedFirst"),
@@ -378,7 +390,7 @@ public sealed partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var tasks = Feeds.Select(feed => RefreshFeedAsync(feed));
+            var tasks = feeds.Select(feed => RefreshFeedCoreAsync(feed, cancellationToken));
             var outcomes = await Task.WhenAll(tasks);
             var newTitles = outcomes
                 .Where(outcome => outcome.Result is not null)
@@ -394,28 +406,38 @@ public sealed partial class MainViewModel : ObservableObject
             UpdateFeedRefreshErrors(outcomes);
             var selectedFeedIds = _selectedFeedIds.ToArray();
             var selectedGroupId = SelectedGroup?.Id;
-            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId);
-            await ReloadArticlesAsync();
+            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
+            await ReloadArticlesAsync(cancellationToken);
 
             if (newTitles.Length > 0)
             {
                 _notifications.ShowNewArticles(newTitles.Length, newTitles[0]);
             }
 
-            ShowStatus(
-                failures.Length == 0
-                    ? _localization.FormatRefreshComplete(newTitles.Length)
-                    : _localization.Format("RefreshPartialFailureSummary", newTitles.Length, failures.Length),
-                failures.Length == 0
-                    ? StatusNotificationSeverity.Success
-                    : StatusNotificationSeverity.Warning,
-                failures.Length == 0
-                    ? null
-                    : _localization.GetString("RefreshPartialFailureTitle"),
-                failures.Length == 0
-                    ? null
-                    : _localization.GetString("ViewDetails"),
-                failures);
+            if (feeds.Count == 1 && failures.Length == 1)
+            {
+                ShowStatus(
+                    failures[0].Description,
+                    StatusNotificationSeverity.Error,
+                    _localization.GetString("FeedRefreshFailed"));
+            }
+            else
+            {
+                ShowStatus(
+                    failures.Length == 0
+                        ? _localization.FormatRefreshComplete(newTitles.Length)
+                        : _localization.Format("RefreshPartialFailureSummary", newTitles.Length, failures.Length),
+                    failures.Length == 0
+                        ? StatusNotificationSeverity.Success
+                        : StatusNotificationSeverity.Warning,
+                    failures.Length == 0
+                        ? null
+                        : _localization.GetString("RefreshPartialFailureTitle"),
+                    failures.Length == 0
+                        ? null
+                        : _localization.GetString("ViewDetails"),
+                    failures);
+            }
         }
         finally
         {
@@ -764,6 +786,7 @@ public sealed partial class MainViewModel : ObservableObject
             .Where(item => item.Group is not null)
             .ToDictionary(item => item.Group!.Id, item => item.IsExpanded);
         var actionLabels = new FeedNavigationItem.ActionLabels(
+            _localization.GetString("RefreshFeed"),
             _localization.GetString("ChangeGroup"),
             _localization.GetString("Remove"),
             _localization.GetString("RenameGroup"),
@@ -864,7 +887,7 @@ public sealed partial class MainViewModel : ObservableObject
                 .Where(feed => importedFeedIds.Contains(feed.Id))
                 .ToArray();
             var outcomes = await Task.WhenAll(
-                importedFeeds.Select(feed => RefreshFeedAsync(feed, cancellationToken)));
+                importedFeeds.Select(feed => RefreshFeedCoreAsync(feed, cancellationToken)));
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
@@ -916,7 +939,7 @@ public sealed partial class MainViewModel : ObservableObject
             ? uri
             : null;
 
-    private async Task<FeedRefreshOutcome> RefreshFeedAsync(
+    private async Task<FeedRefreshOutcome> RefreshFeedCoreAsync(
         Feed feed,
         CancellationToken cancellationToken = default)
     {

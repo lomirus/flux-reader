@@ -20,6 +20,7 @@
   <data name="AppIconAutomation" xml:space="preserve"><value>FluxReader icon</value></data>
   <data name="AddFeed" xml:space="preserve"><value>Add feed</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Refresh all feeds</value></data>
+  <data name="RefreshFeed" xml:space="preserve"><value>Refresh feed</value></data>
   <data name="LastRefreshedAt" xml:space="preserve"><value>Last refreshed: {0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Mark all as read</value></data>
   <data name="Settings" xml:space="preserve"><value>Settings</value></data>

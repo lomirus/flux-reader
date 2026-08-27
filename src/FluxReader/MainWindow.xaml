@@ -238,6 +238,15 @@
                                 <Grid.ContextFlyout>
                                     <MenuFlyout Opened="NavigationItemMenu_Opened">
                                         <MenuFlyoutItem
+                                            Click="RefreshNavigationFeedMenu_Click"
+                                            Text="{x:Bind RefreshActionText}"
+                                            Tag="{x:Bind}"
+                                            Visibility="{x:Bind FeedActionVisibility}">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="&#xE72C;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem
                                             Click="PrimaryNavigationItemMenu_Click"
                                             Text="{x:Bind PrimaryActionText}"
                                             Tag="{x:Bind}">

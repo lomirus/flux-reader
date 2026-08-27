@@ -20,6 +20,7 @@
   <data name="AppIconAutomation" xml:space="preserve"><value>FluxReader 图标</value></data>
   <data name="AddFeed" xml:space="preserve"><value>添加订阅</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>刷新所有订阅</value></data>
+  <data name="RefreshFeed" xml:space="preserve"><value>刷新此订阅源</value></data>
   <data name="LastRefreshedAt" xml:space="preserve"><value>上次刷新：{0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>全部标为已读</value></data>
   <data name="Settings" xml:space="preserve"><value>设置</value></data>

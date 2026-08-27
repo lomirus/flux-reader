@@ -16,6 +16,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
     {
         Feed = feed;
         IsChild = isChild;
+        RefreshActionText = labels.RefreshFeed;
         PrimaryActionText = labels.ChangeGroup;
         RemoveActionText = labels.RemoveFeed;
         _refreshFailedText = labels.RefreshFailed;
@@ -25,6 +26,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
     private FeedNavigationItem(FeedGroup group, IEnumerable<Feed> feeds, ActionLabels labels)
     {
         Group = group;
+        RefreshActionText = labels.RefreshFeed;
         PrimaryActionText = labels.RenameGroup;
         RemoveActionText = labels.RemoveGroup;
         _refreshFailedText = labels.RefreshFailed;
@@ -42,6 +44,8 @@ public sealed partial class FeedNavigationItem : ObservableObject
 
     public ObservableCollection<FeedNavigationItem> Children { get; } = [];
 
+    public string RefreshActionText { get; }
+
     public string PrimaryActionText { get; }
 
     public string RemoveActionText { get; }
@@ -53,6 +57,10 @@ public sealed partial class FeedNavigationItem : ObservableObject
     public GridLength NavigationIndent => new(IsChild ? ChildIndentWidth : 0);
 
     public Visibility ChevronVisibility => IsGroup ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility FeedActionVisibility => Feed is not null
+        ? Visibility.Visible
+        : Visibility.Collapsed;
 
     public string ChevronGlyph => IsExpanded ? "\uE70D" : "\uE76C";
 
@@ -91,6 +99,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
         ActionLabels labels) => new(group, feeds, labels);
 
     public sealed record ActionLabels(
+        string RefreshFeed,
         string ChangeGroup,
         string RemoveFeed,
         string RenameGroup,
