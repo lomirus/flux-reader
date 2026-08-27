@@ -926,15 +926,18 @@ public sealed partial class MainWindow : Window
             RequestedTheme = RootGrid.ActualTheme,
             Title = localization.GetString("RemoveGroupTitle"),
             Content = localization.Format("RemoveGroupMessage", group.Name),
-            PrimaryButtonText = localization.GetString("Remove"),
+            PrimaryButtonText = localization.GetString("RemoveGroupAndFeeds"),
             PrimaryButtonStyle = (Style)App.Current.Resources["DestructiveButtonStyle"],
+            SecondaryButtonText = localization.GetString("RemoveGroupOnly"),
             CloseButtonText = localization.GetString("Cancel"),
             DefaultButton = ContentDialogButton.None
         };
 
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        var result = await dialog.ShowAsync();
+        if (result is ContentDialogResult.Primary or ContentDialogResult.Secondary)
         {
-            await ViewModel.DeleteFeedGroupAsync(group, _lifetime.Token);
+            var deleteFeeds = result == ContentDialogResult.Primary;
+            await ViewModel.DeleteFeedGroupAsync(group, deleteFeeds, _lifetime.Token);
             HideArticleReader();
         }
     }

@@ -53,11 +53,14 @@
   <data name="RenameGroup" xml:space="preserve"><value>グループ名を変更</value></data>
   <data name="RemoveGroup" xml:space="preserve"><value>グループを削除</value></data>
   <data name="RemoveGroupTitle" xml:space="preserve"><value>グループを削除しますか？</value></data>
-  <data name="RemoveGroupMessage" xml:space="preserve"><value>「{0}」を削除します。含まれるフィードは「グループなし」に移動します。</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>「{0}」内のフィードの処理方法を選択してください。フィードの削除は元に戻せません。</value></data>
+  <data name="RemoveGroupOnly" xml:space="preserve"><value>グループのみ削除</value></data>
+  <data name="RemoveGroupAndFeeds" xml:space="preserve"><value>グループとフィードを削除</value></data>
   <data name="InvalidGroupName" xml:space="preserve"><value>グループ名を入力してください。</value></data>
   <data name="GroupCreated" xml:space="preserve"><value>グループ「{0}」を作成しました。</value></data>
   <data name="GroupRenamed" xml:space="preserve"><value>グループ名を「{0}」に変更しました。</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>グループ「{0}」を削除しました。</value></data>
+  <data name="GroupAndFeedsRemoved" xml:space="preserve"><value>グループ「{0}」とそのすべてのフィードを削除しました。</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>「{0}」のグループを変更しました。</value></data>
   <data name="FeedsGroupChanged" xml:space="preserve"><value>{0} 件のフィードのグループを変更しました。</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>フィードグループを更新できませんでした: {0}</value></data>

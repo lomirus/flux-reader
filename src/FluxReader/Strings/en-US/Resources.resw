@@ -53,11 +53,14 @@
   <data name="RenameGroup" xml:space="preserve"><value>Rename group</value></data>
   <data name="RemoveGroup" xml:space="preserve"><value>Remove group</value></data>
   <data name="RemoveGroupTitle" xml:space="preserve"><value>Remove group?</value></data>
-  <data name="RemoveGroupMessage" xml:space="preserve"><value>“{0}” will be removed. Its feeds will be moved to No group.</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>Choose what to do with the feeds in “{0}”. Removing feeds cannot be undone.</value></data>
+  <data name="RemoveGroupOnly" xml:space="preserve"><value>Remove group only</value></data>
+  <data name="RemoveGroupAndFeeds" xml:space="preserve"><value>Remove group and feeds</value></data>
   <data name="InvalidGroupName" xml:space="preserve"><value>Enter a group name.</value></data>
   <data name="GroupCreated" xml:space="preserve"><value>Created group “{0}”.</value></data>
   <data name="GroupRenamed" xml:space="preserve"><value>Renamed group to “{0}”.</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>Removed group “{0}”.</value></data>
+  <data name="GroupAndFeedsRemoved" xml:space="preserve"><value>Removed group “{0}” and all its feeds.</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>Changed the group for “{0}”.</value></data>
   <data name="FeedsGroupChanged" xml:space="preserve"><value>Changed the group for {0} feeds.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Couldn't update feed groups: {0}</value></data>

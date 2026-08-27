@@ -508,11 +508,40 @@ public sealed class RssRepository
             },
             cancellationToken);
 
-    public Task DeleteFeedGroupAsync(long groupId, CancellationToken cancellationToken = default) =>
-        ExecuteAsync(
-            "DELETE FROM feed_groups WHERE id = $id;",
-            command => command.Parameters.AddWithValue("$id", groupId),
-            cancellationToken);
+    public async Task DeleteFeedGroupAsync(
+        long groupId,
+        bool deleteFeeds,
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            if (deleteFeeds)
+            {
+                await using var feedCommand = connection.CreateCommand();
+                feedCommand.Transaction = (SqliteTransaction)transaction;
+                feedCommand.CommandText = "DELETE FROM feeds WHERE group_id = $id;";
+                feedCommand.Parameters.AddWithValue("$id", groupId);
+                await feedCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await using (var groupCommand = connection.CreateCommand())
+            {
+                groupCommand.Transaction = (SqliteTransaction)transaction;
+                groupCommand.CommandText = "DELETE FROM feed_groups WHERE id = $id;";
+                groupCommand.Parameters.AddWithValue("$id", groupId);
+                await groupCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
 
     public Task SetFeedGroupAsync(
         long feedId,

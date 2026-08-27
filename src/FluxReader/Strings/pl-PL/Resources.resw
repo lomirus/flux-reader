@@ -53,11 +53,14 @@
   <data name="RenameGroup" xml:space="preserve"><value>Zmień nazwę grupy</value></data>
   <data name="RemoveGroup" xml:space="preserve"><value>Usuń grupę</value></data>
   <data name="RemoveGroupTitle" xml:space="preserve"><value>Usunąć grupę?</value></data>
-  <data name="RemoveGroupMessage" xml:space="preserve"><value>Grupa „{0}” zostanie usunięta. Jej kanały zostaną przeniesione do Bez grupy.</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>Wybierz, co zrobić z kanałami w grupie „{0}”. Usunięcia kanałów nie można cofnąć.</value></data>
+  <data name="RemoveGroupOnly" xml:space="preserve"><value>Usuń tylko grupę</value></data>
+  <data name="RemoveGroupAndFeeds" xml:space="preserve"><value>Usuń grupę i kanały</value></data>
   <data name="InvalidGroupName" xml:space="preserve"><value>Wprowadź nazwę grupy.</value></data>
   <data name="GroupCreated" xml:space="preserve"><value>Utworzono grupę „{0}”.</value></data>
   <data name="GroupRenamed" xml:space="preserve"><value>Zmieniono nazwę grupy na „{0}”.</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>Usunięto grupę „{0}”.</value></data>
+  <data name="GroupAndFeedsRemoved" xml:space="preserve"><value>Usunięto grupę „{0}” i wszystkie jej kanały.</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>Zmieniono grupę kanału „{0}”.</value></data>
   <data name="FeedsGroupChanged" xml:space="preserve"><value>Zmieniono grupę wybranych kanałów: {0}.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Nie udało się zaktualizować grup kanałów: {0}</value></data>

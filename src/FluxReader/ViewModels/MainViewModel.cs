@@ -578,6 +578,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public async Task DeleteFeedGroupAsync(
         FeedGroup group,
+        bool deleteFeeds,
         CancellationToken cancellationToken = default)
     {
         if (IsBusy)
@@ -588,12 +589,22 @@ public sealed partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var selectedFeedIds = _selectedFeedIds.ToArray();
+            var deletedFeedIds = deleteFeeds
+                ? Feeds
+                    .Where(feed => feed.GroupId == group.Id)
+                    .Select(feed => feed.Id)
+                    .ToHashSet()
+                : new HashSet<long>();
+            var selectedFeedIds = _selectedFeedIds
+                .Where(feedId => !deletedFeedIds.Contains(feedId))
+                .ToArray();
             var selectedGroupId = SelectedGroup?.Id == group.Id ? null : SelectedGroup?.Id;
-            await _repository.DeleteFeedGroupAsync(group.Id, cancellationToken);
+            await _repository.DeleteFeedGroupAsync(group.Id, deleteFeeds, cancellationToken);
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(_localization.Format("GroupRemoved", group.Name));
+            ShowStatus(_localization.Format(
+                deleteFeeds ? "GroupAndFeedsRemoved" : "GroupRemoved",
+                group.Name));
         }
         catch (Exception exception)
         {

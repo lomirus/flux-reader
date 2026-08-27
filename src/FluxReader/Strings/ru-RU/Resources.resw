@@ -53,11 +53,14 @@
   <data name="RenameGroup" xml:space="preserve"><value>Переименовать группу</value></data>
   <data name="RemoveGroup" xml:space="preserve"><value>Удалить группу</value></data>
   <data name="RemoveGroupTitle" xml:space="preserve"><value>Удалить группу?</value></data>
-  <data name="RemoveGroupMessage" xml:space="preserve"><value>Группа «{0}» будет удалена. Её ленты будут перемещены в раздел «Без группы».</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>Выберите, что сделать с лентами в группе «{0}». Удаление лент нельзя отменить.</value></data>
+  <data name="RemoveGroupOnly" xml:space="preserve"><value>Удалить только группу</value></data>
+  <data name="RemoveGroupAndFeeds" xml:space="preserve"><value>Удалить группу и ленты</value></data>
   <data name="InvalidGroupName" xml:space="preserve"><value>Введите название группы.</value></data>
   <data name="GroupCreated" xml:space="preserve"><value>Группа «{0}» создана.</value></data>
   <data name="GroupRenamed" xml:space="preserve"><value>Группа переименована в «{0}».</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>Группа «{0}» удалена.</value></data>
+  <data name="GroupAndFeedsRemoved" xml:space="preserve"><value>Группа «{0}» и все её ленты удалены.</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>Группа для «{0}» изменена.</value></data>
   <data name="FeedsGroupChanged" xml:space="preserve"><value>Группа для {0} лент изменена.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Не удалось обновить группы лент: {0}</value></data>

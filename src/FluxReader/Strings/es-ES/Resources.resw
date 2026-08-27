@@ -53,11 +53,14 @@
   <data name="RenameGroup" xml:space="preserve"><value>Cambiar nombre del grupo</value></data>
   <data name="RemoveGroup" xml:space="preserve"><value>Quitar grupo</value></data>
   <data name="RemoveGroupTitle" xml:space="preserve"><value>¿Quitar el grupo?</value></data>
-  <data name="RemoveGroupMessage" xml:space="preserve"><value>Se quitará «{0}». Sus fuentes pasarán a Sin grupo.</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>Elige qué hacer con las fuentes de «{0}». La eliminación de las fuentes no se puede deshacer.</value></data>
+  <data name="RemoveGroupOnly" xml:space="preserve"><value>Quitar solo el grupo</value></data>
+  <data name="RemoveGroupAndFeeds" xml:space="preserve"><value>Eliminar grupo y fuentes</value></data>
   <data name="InvalidGroupName" xml:space="preserve"><value>Introduce un nombre de grupo.</value></data>
   <data name="GroupCreated" xml:space="preserve"><value>Se ha creado el grupo «{0}».</value></data>
   <data name="GroupRenamed" xml:space="preserve"><value>El grupo ahora se llama «{0}».</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>Se ha quitado el grupo «{0}».</value></data>
+  <data name="GroupAndFeedsRemoved" xml:space="preserve"><value>Se han eliminado el grupo «{0}» y todas sus fuentes.</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>Se ha cambiado el grupo de «{0}».</value></data>
   <data name="FeedsGroupChanged" xml:space="preserve"><value>Se ha cambiado el grupo de {0} fuentes.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>No se pudieron actualizar los grupos de fuentes: {0}</value></data>

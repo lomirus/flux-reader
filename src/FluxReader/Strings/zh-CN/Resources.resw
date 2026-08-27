@@ -53,11 +53,14 @@
   <data name="RenameGroup" xml:space="preserve"><value>重命名分组</value></data>
   <data name="RemoveGroup" xml:space="preserve"><value>移除分组</value></data>
   <data name="RemoveGroupTitle" xml:space="preserve"><value>移除分组？</value></data>
-  <data name="RemoveGroupMessage" xml:space="preserve"><value>将移除“{0}”，其中的订阅会移至“未分组”。</value></data>
+  <data name="RemoveGroupMessage" xml:space="preserve"><value>请选择如何处理“{0}”中的订阅。删除订阅后无法撤销。</value></data>
+  <data name="RemoveGroupOnly" xml:space="preserve"><value>仅移除分组</value></data>
+  <data name="RemoveGroupAndFeeds" xml:space="preserve"><value>移除分组和订阅</value></data>
   <data name="InvalidGroupName" xml:space="preserve"><value>请输入分组名称。</value></data>
   <data name="GroupCreated" xml:space="preserve"><value>已创建分组“{0}”。</value></data>
   <data name="GroupRenamed" xml:space="preserve"><value>已将分组重命名为“{0}”。</value></data>
   <data name="GroupRemoved" xml:space="preserve"><value>已移除分组“{0}”。</value></data>
+  <data name="GroupAndFeedsRemoved" xml:space="preserve"><value>已移除分组“{0}”及其中的所有订阅。</value></data>
   <data name="FeedGroupChanged" xml:space="preserve"><value>已更改“{0}”的分组。</value></data>
   <data name="FeedsGroupChanged" xml:space="preserve"><value>已更改 {0} 个订阅的分组。</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>更新订阅分组失败：{0}</value></data>
