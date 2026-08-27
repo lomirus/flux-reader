@@ -43,12 +43,6 @@ public sealed partial class MainViewModel : ObservableObject
     public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
-    public partial bool IsStatusOpen { get; set; }
-
-    [ObservableProperty]
-    public partial string StatusMessage { get; set; } = string.Empty;
-
-    [ObservableProperty]
     public partial string ArticleCountText { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -66,6 +60,8 @@ public sealed partial class MainViewModel : ObservableObject
         _localization = localization;
         ApplyLocalization();
     }
+
+    public event EventHandler<StatusNotificationRequestedEventArgs>? StatusNotificationRequested;
 
     public ObservableCollection<Feed> Feeds { get; } = [];
 
@@ -102,7 +98,6 @@ public sealed partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ArticleListTitle));
         UpdateArticleCount();
-        IsStatusOpen = false;
         foreach (var article in Articles)
         {
             article.RefreshLocalization();
@@ -126,12 +121,16 @@ public sealed partial class MainViewModel : ObservableObject
             await ReloadArticlesAsync(cancellationToken);
             if (!_notifications.IsAvailable)
             {
-                ShowStatus(_localization.GetString("NotificationUnavailable"));
+                ShowStatus(
+                    _localization.GetString("NotificationUnavailable"),
+                    StatusNotificationSeverity.Warning);
             }
         }
         catch (Exception exception)
         {
-            ShowStatus(_localization.Format("InitializationFailed", exception.Message));
+            ShowStatus(
+                _localization.Format("InitializationFailed", exception.Message),
+                StatusNotificationSeverity.Error);
         }
         finally
         {
@@ -152,7 +151,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (!Uri.TryCreate(input.Trim(), UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
         {
-            ShowStatus(_localization.GetString("InvalidFeedAddress"));
+            ShowStatus(
+                _localization.GetString("InvalidFeedAddress"),
+                StatusNotificationSeverity.Warning);
             return;
         }
 
@@ -162,11 +163,15 @@ public sealed partial class MainViewModel : ObservableObject
             var feed = await _refreshService.AddFeedAsync(uri, groupId, cancellationToken);
             await ReloadFeedsAsync([feed.Id], null, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(_localization.Format("SubscribedToFeed", feed.Title));
+            ShowStatus(
+                _localization.Format("SubscribedToFeed", feed.Title),
+                StatusNotificationSeverity.Success);
         }
         catch (Exception exception)
         {
-            ShowStatus(_localization.Format("AddFeedFailed", exception.Message));
+            ShowStatus(
+                _localization.Format("AddFeedFailed", exception.Message),
+                StatusNotificationSeverity.Error);
         }
         finally
         {
@@ -359,7 +364,9 @@ public sealed partial class MainViewModel : ObservableObject
         {
             if (Feeds.Count == 0)
             {
-                ShowStatus(_localization.GetString("AddFeedFirst"));
+                ShowStatus(
+                    _localization.GetString("AddFeedFirst"),
+                    StatusNotificationSeverity.Informational);
             }
 
             return;
@@ -395,9 +402,13 @@ public sealed partial class MainViewModel : ObservableObject
                 _notifications.ShowNewArticles(newTitles.Length, newTitles[0]);
             }
 
-            ShowStatus(errorCount == 0
-                ? _localization.FormatRefreshComplete(newTitles.Length)
-                : _localization.Format("RefreshCompleteWithErrors", newTitles.Length, errorCount));
+            ShowStatus(
+                errorCount == 0
+                    ? _localization.FormatRefreshComplete(newTitles.Length)
+                    : _localization.Format("RefreshCompleteWithErrors", newTitles.Length, errorCount),
+                errorCount == 0
+                    ? StatusNotificationSeverity.Success
+                    : StatusNotificationSeverity.Warning);
         }
         finally
         {
@@ -437,7 +448,9 @@ public sealed partial class MainViewModel : ObservableObject
             SelectedArticle = null;
         }
 
-        ShowStatus(_localization.GetString("MarkedAllRead"));
+        ShowStatus(
+            _localization.GetString("MarkedAllRead"),
+            StatusNotificationSeverity.Success);
     }
 
     [RelayCommand]
@@ -471,7 +484,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (SelectedArticle is null ||
             !Uri.TryCreate(SelectedArticle.Link, UriKind.Absolute, out var uri))
         {
-            ShowStatus(_localization.GetString("ArticleLinkUnavailable"));
+            ShowStatus(
+                _localization.GetString("ArticleLinkUnavailable"),
+                StatusNotificationSeverity.Warning);
             return;
         }
 
@@ -499,9 +514,11 @@ public sealed partial class MainViewModel : ObservableObject
             await _repository.DeleteFeedsAsync(deletedFeedIds, cancellationToken);
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(normalizedFeeds.Length == 1
-                ? _localization.Format("FeedRemoved", normalizedFeeds[0].Title)
-                : _localization.Format("FeedsRemoved", normalizedFeeds.Length));
+            ShowStatus(
+                normalizedFeeds.Length == 1
+                    ? _localization.Format("FeedRemoved", normalizedFeeds[0].Title)
+                    : _localization.Format("FeedsRemoved", normalizedFeeds.Length),
+                StatusNotificationSeverity.Success);
         }
         finally
         {
@@ -519,7 +536,9 @@ public sealed partial class MainViewModel : ObservableObject
         var normalizedName = name.Trim();
         if (normalizedName.Length == 0)
         {
-            ShowStatus(_localization.GetString("InvalidGroupName"));
+            ShowStatus(
+                _localization.GetString("InvalidGroupName"),
+                StatusNotificationSeverity.Warning);
             return;
         }
 
@@ -529,11 +548,15 @@ public sealed partial class MainViewModel : ObservableObject
             var group = await _repository.AddFeedGroupAsync(normalizedName, cancellationToken);
             await ReloadFeedsAsync([], group.Id, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(_localization.Format("GroupCreated", group.Name));
+            ShowStatus(
+                _localization.Format("GroupCreated", group.Name),
+                StatusNotificationSeverity.Success);
         }
         catch (Exception exception)
         {
-            ShowStatus(_localization.Format("GroupOperationFailed", exception.Message));
+            ShowStatus(
+                _localization.Format("GroupOperationFailed", exception.Message),
+                StatusNotificationSeverity.Error);
         }
         finally
         {
@@ -554,7 +577,9 @@ public sealed partial class MainViewModel : ObservableObject
         var normalizedName = name.Trim();
         if (normalizedName.Length == 0)
         {
-            ShowStatus(_localization.GetString("InvalidGroupName"));
+            ShowStatus(
+                _localization.GetString("InvalidGroupName"),
+                StatusNotificationSeverity.Warning);
             return;
         }
 
@@ -564,11 +589,15 @@ public sealed partial class MainViewModel : ObservableObject
             await _repository.RenameFeedGroupAsync(group.Id, normalizedName, cancellationToken);
             await ReloadFeedsAsync([], group.Id, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(_localization.Format("GroupRenamed", normalizedName));
+            ShowStatus(
+                _localization.Format("GroupRenamed", normalizedName),
+                StatusNotificationSeverity.Success);
         }
         catch (Exception exception)
         {
-            ShowStatus(_localization.Format("GroupOperationFailed", exception.Message));
+            ShowStatus(
+                _localization.Format("GroupOperationFailed", exception.Message),
+                StatusNotificationSeverity.Error);
         }
         finally
         {
@@ -602,13 +631,17 @@ public sealed partial class MainViewModel : ObservableObject
             await _repository.DeleteFeedGroupAsync(group.Id, deleteFeeds, cancellationToken);
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(_localization.Format(
-                deleteFeeds ? "GroupAndFeedsRemoved" : "GroupRemoved",
-                group.Name));
+            ShowStatus(
+                _localization.Format(
+                    deleteFeeds ? "GroupAndFeedsRemoved" : "GroupRemoved",
+                    group.Name),
+                StatusNotificationSeverity.Success);
         }
         catch (Exception exception)
         {
-            ShowStatus(_localization.Format("GroupOperationFailed", exception.Message));
+            ShowStatus(
+                _localization.Format("GroupOperationFailed", exception.Message),
+                StatusNotificationSeverity.Error);
         }
         finally
         {
@@ -638,13 +671,17 @@ public sealed partial class MainViewModel : ObservableObject
                 cancellationToken);
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
-            ShowStatus(normalizedFeeds.Length == 1
-                ? _localization.Format("FeedGroupChanged", normalizedFeeds[0].Title)
-                : _localization.Format("FeedsGroupChanged", normalizedFeeds.Length));
+            ShowStatus(
+                normalizedFeeds.Length == 1
+                    ? _localization.Format("FeedGroupChanged", normalizedFeeds[0].Title)
+                    : _localization.Format("FeedsGroupChanged", normalizedFeeds.Length),
+                StatusNotificationSeverity.Success);
         }
         catch (Exception exception)
         {
-            ShowStatus(_localization.Format("GroupOperationFailed", exception.Message));
+            ShowStatus(
+                _localization.Format("GroupOperationFailed", exception.Message),
+                StatusNotificationSeverity.Error);
         }
         finally
         {
@@ -879,11 +916,12 @@ public sealed partial class MainViewModel : ObservableObject
             ? uri
             : null;
 
-    private void ShowStatus(string message)
-    {
-        StatusMessage = message;
-        IsStatusOpen = true;
-    }
+    private void ShowStatus(
+        string message,
+        StatusNotificationSeverity severity = StatusNotificationSeverity.Informational) =>
+        StatusNotificationRequested?.Invoke(
+            this,
+            new StatusNotificationRequestedEventArgs(message, severity));
 }
 
 public sealed record SubscriptionImportResult(

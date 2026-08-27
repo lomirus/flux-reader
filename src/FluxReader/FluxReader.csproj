@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="CommunityToolkit.WinUI.Behaviors" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <!-- Keep Windows App SDK component references minimal. The aggregate
          Microsoft.WindowsAppSDK package also brings unused AI/ML features. -->

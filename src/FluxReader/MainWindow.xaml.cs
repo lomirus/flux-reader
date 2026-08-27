@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Xml;
+using CommunityToolkit.WinUI.Behaviors;
 using FluxReader.Core.Services;
 using FluxReader.Models;
 using FluxReader.Services;
@@ -31,6 +32,8 @@ public sealed partial class MainWindow : Window
     private const double MinimumReaderPaneWidth = 360;
     private const double SplitterWidth = 8;
     private const int DefaultRefreshIntervalMinutes = 15;
+    private static readonly TimeSpan DefaultStatusNotificationDuration = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan WarningStatusNotificationDuration = TimeSpan.FromSeconds(8);
 
     private readonly CancellationTokenSource _lifetime = new();
     private readonly DispatcherTimer _refreshTimer = new()
@@ -38,6 +41,8 @@ public sealed partial class MainWindow : Window
         Interval = TimeSpan.FromMinutes(DefaultRefreshIntervalMinutes)
     };
     private readonly Storyboard _refreshIconSpinStoryboard = new();
+    private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
+    private long _statusInfoBarIsOpenCallbackToken;
     private bool _isSynchronizingFeedListSelection;
     private AppSettings _settings = new();
     private bool _settingsLoaded;
@@ -46,6 +51,7 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         ConfigureRefreshIconAnimation();
+        ConfigureStatusInfoBarAnimation();
         Title = "FluxReader";
         SetWindowIcon();
         ExtendsContentIntoTitleBar = true;
@@ -61,6 +67,7 @@ public sealed partial class MainWindow : Window
             app.Localization);
         RootGrid.DataContext = ViewModel;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        ViewModel.StatusNotificationRequested += ViewModel_StatusNotificationRequested;
         ApplyLocalization();
         RootGrid.Loaded += RootGrid_Loaded;
         _refreshTimer.Tick += RefreshTimer_Tick;
@@ -265,6 +272,27 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void ViewModel_StatusNotificationRequested(
+        object? sender,
+        StatusNotificationRequestedEventArgs args) =>
+        StatusNotificationQueue.Show(new Notification
+        {
+            Message = args.Message,
+            Severity = args.Severity switch
+            {
+                StatusNotificationSeverity.Success => InfoBarSeverity.Success,
+                StatusNotificationSeverity.Warning => InfoBarSeverity.Warning,
+                StatusNotificationSeverity.Error => InfoBarSeverity.Error,
+                _ => InfoBarSeverity.Informational
+            },
+            Duration = args.Severity switch
+            {
+                StatusNotificationSeverity.Error => null,
+                StatusNotificationSeverity.Warning => WarningStatusNotificationDuration,
+                _ => DefaultStatusNotificationDuration
+            }
+        });
+
     private void NormalizeFeedListSelection(
         IReadOnlyCollection<FeedNavigationItem> selectedItems,
         FeedListSelection selection)
@@ -466,6 +494,7 @@ public sealed partial class MainWindow : Window
         var language = settingsPage.SelectedLanguage;
         App.Current.Localization.SetLanguage(language);
         _settings = _settings with { Language = language };
+        StatusNotificationQueue.Clear();
         ApplyLocalization();
         ViewModel.ApplyLocalization();
         settingsPage.ApplyLocalization();
@@ -769,6 +798,24 @@ public sealed partial class MainWindow : Window
         Storyboard.SetTarget(animation, RefreshIconRotation);
         Storyboard.SetTargetProperty(animation, nameof(RotateTransform.Angle));
         _refreshIconSpinStoryboard.Children.Add(animation);
+    }
+
+    private void ConfigureStatusInfoBarAnimation()
+    {
+        var animation = new PopInThemeAnimation();
+        Storyboard.SetTarget(animation, StatusInfoBar);
+        _statusInfoBarEntranceStoryboard.Children.Add(animation);
+        _statusInfoBarIsOpenCallbackToken = StatusInfoBar.RegisterPropertyChangedCallback(
+            InfoBar.IsOpenProperty,
+            StatusInfoBar_IsOpenChanged);
+    }
+
+    private void StatusInfoBar_IsOpenChanged(DependencyObject sender, DependencyProperty property)
+    {
+        if (StatusInfoBar.IsOpen)
+        {
+            _statusInfoBarEntranceStoryboard.Begin();
+        }
     }
 
     private void RootGrid_ActualThemeChanged(FrameworkElement sender, object args) =>
@@ -1096,6 +1143,10 @@ public sealed partial class MainWindow : Window
         CloseSettingsPage();
         RootGrid.ActualThemeChanged -= RootGrid_ActualThemeChanged;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.StatusNotificationRequested -= ViewModel_StatusNotificationRequested;
+        StatusInfoBar.UnregisterPropertyChangedCallback(
+            InfoBar.IsOpenProperty,
+            _statusInfoBarIsOpenCallbackToken);
         _refreshTimer.Stop();
         _refreshTimer.Tick -= RefreshTimer_Tick;
         _lifetime.Cancel();
