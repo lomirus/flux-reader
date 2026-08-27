@@ -71,7 +71,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<FeedGroup> FeedGroups { get; } = [];
 
-    public ObservableCollection<FeedNavigationItem> FeedNavigationItems { get; } = [];
+    public ObservableCollection<FeedNavigationItem> FeedNavigationRows { get; } = [];
 
     public ObservableCollection<Article> Articles { get; } = [];
 
@@ -279,6 +279,37 @@ public sealed partial class MainViewModel : ObservableObject
     {
         ApplyNavigationSelection([], group.Id);
         await ReloadArticlesAsync(cancellationToken);
+    }
+
+    public void ToggleFeedNavigationGroup(FeedNavigationItem item)
+    {
+        if (!item.IsGroup)
+        {
+            return;
+        }
+
+        var groupIndex = FeedNavigationRows.IndexOf(item);
+        if (groupIndex < 0)
+        {
+            return;
+        }
+
+        if (item.IsExpanded)
+        {
+            foreach (var child in item.Children)
+            {
+                FeedNavigationRows.Remove(child);
+            }
+        }
+        else
+        {
+            for (var index = 0; index < item.Children.Count; index++)
+            {
+                FeedNavigationRows.Insert(groupIndex + index + 1, item.Children[index]);
+            }
+        }
+
+        item.IsExpanded = !item.IsExpanded;
     }
 
     public async Task SelectAllArticlesAsync(CancellationToken cancellationToken = default)
@@ -667,7 +698,7 @@ public sealed partial class MainViewModel : ObservableObject
         IReadOnlyCollection<long> selectedFeedIds,
         long? selectedGroupId)
     {
-        var expansionStates = FeedNavigationItems
+        var expansionStates = FeedNavigationRows
             .Where(item => item.Group is not null)
             .ToDictionary(item => item.Group!.Id, item => item.IsExpanded);
         var actionLabels = new FeedNavigationItem.ActionLabels(
@@ -675,10 +706,15 @@ public sealed partial class MainViewModel : ObservableObject
             _localization.GetString("Remove"),
             _localization.GetString("RenameGroup"),
             _localization.GetString("RemoveGroup"));
-        FeedNavigationItems.Clear();
-        foreach (var feed in Feeds.Where(feed => feed.GroupId is null))
+        FeedNavigationRows.Clear();
+
+        var ungroupedItems = Feeds
+            .Where(feed => feed.GroupId is null)
+            .Select(feed => FeedNavigationItem.ForFeed(feed, actionLabels))
+            .ToArray();
+        foreach (var item in ungroupedItems)
         {
-            FeedNavigationItems.Add(FeedNavigationItem.ForFeed(feed, actionLabels));
+            FeedNavigationRows.Add(item);
         }
 
         foreach (var group in FeedGroups)
@@ -688,7 +724,14 @@ public sealed partial class MainViewModel : ObservableObject
                 Feeds.Where(feed => feed.GroupId == group.Id),
                 actionLabels);
             item.IsExpanded = !expansionStates.TryGetValue(group.Id, out var isExpanded) || isExpanded;
-            FeedNavigationItems.Add(item);
+            FeedNavigationRows.Add(item);
+            if (item.IsExpanded)
+            {
+                foreach (var child in item.Children)
+                {
+                    FeedNavigationRows.Add(child);
+                }
+            }
         }
 
         ApplyNavigationSelection(selectedFeedIds, selectedGroupId);
@@ -716,18 +759,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedGroup = selectedGroup;
         SelectedNavigationItem = SelectedFeed is not null
             ? FindFeedNavigationItem(SelectedFeed.Id)
-            : FeedNavigationItems.FirstOrDefault(item => item.Group?.Id == SelectedGroup?.Id);
-
-        foreach (var item in FeedNavigationItems)
-        {
-            item.IsSelected = item.Feed is not null
-                ? _selectedFeedIds.Contains(item.Feed.Id)
-                : item.Group?.Id == SelectedGroup?.Id;
-            foreach (var child in item.Children)
-            {
-                child.IsSelected = child.Feed is not null && _selectedFeedIds.Contains(child.Feed.Id);
-            }
-        }
+            : FeedNavigationRows.FirstOrDefault(item => item.Group?.Id == SelectedGroup?.Id);
 
         if (selectionChanged)
         {
@@ -741,7 +773,8 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     private FeedNavigationItem? FindFeedNavigationItem(long feedId) =>
-        FeedNavigationItems
+        FeedNavigationRows
+            .Where(item => !item.IsChild)
             .SelectMany(item => item.IsGroup ? item.Children : [item])
             .FirstOrDefault(item => item.Feed?.Id == feedId);
 

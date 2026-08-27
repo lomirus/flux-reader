@@ -14,6 +14,62 @@
     </Window.SystemBackdrop>
 
     <Grid x:Name="RootGrid">
+        <Grid.Resources>
+            <x:Double x:Key="FeedNavigationRowHeight">32</x:Double>
+
+            <DataTemplate
+                x:Key="FeedNavigationItemContentTemplate"
+                x:DataType="models:FeedNavigationItem">
+                <Grid
+                    Background="Transparent"
+                    MinWidth="140"
+                    ColumnSpacing="8"
+                    Padding="0,0,8,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Width="16" Height="16">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="14"
+                            Glyph="{x:Bind Glyph}"
+                            Visibility="{x:Bind IconFallbackVisibility, Mode=OneWay}" />
+                        <Border CornerRadius="3">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                ImageFailed="FeedIcon_ImageFailed"
+                                ImageOpened="FeedIcon_ImageOpened"
+                                Source="{x:Bind IconSource, Mode=OneWay}"
+                                Stretch="UniformToFill"
+                                Tag="{x:Bind}" />
+                        </Border>
+                    </Grid>
+                    <TextBlock
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind Title, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Opacity="0.65"
+                        Text="{x:Bind UnreadDisplay, Mode=OneWay}" />
+                </Grid>
+            </DataTemplate>
+
+            <Style
+                x:Key="FeedNavigationListItemStyle"
+                BasedOn="{StaticResource DefaultListViewItemStyle}"
+                TargetType="ListViewItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Margin" Value="4,0" />
+                <Setter Property="MinHeight" Value="{StaticResource FeedNavigationRowHeight}" />
+                <Setter Property="Padding" Value="0,3,0,5" />
+            </Style>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="Auto" />
@@ -128,22 +184,27 @@
                     FontSize="12"
                     FontWeight="SemiBold"
                     Opacity="0.65" />
-                <TreeView
-                    x:Name="FeedTree"
+                <ListView
+                    x:Name="FeedList"
                     Grid.Row="3"
-                    ItemsSource="{Binding FeedNavigationItems}"
-                    PreviewKeyDown="FeedTree_KeyDown"
-                    SelectionMode="None">
-                    <TreeView.ItemTemplate>
+                    IsMultiSelectCheckBoxEnabled="False"
+                    ItemContainerStyle="{StaticResource FeedNavigationListItemStyle}"
+                    ItemsSource="{Binding FeedNavigationRows}"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    SelectionChanged="FeedList_SelectionChanged"
+                    SelectionMode="Extended">
+                    <ListView.ItemTemplate>
                         <DataTemplate x:DataType="models:FeedNavigationItem">
-                            <controls:FeedTreeViewItem
-                                HorizontalContentAlignment="Stretch"
-                                IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
-                                ItemsSource="{x:Bind Children}"
-                                Tag="{x:Bind}"
-                                Tapped="FeedNavigationItem_Tapped"
-                                VerticalContentAlignment="Stretch">
-                                <controls:FeedTreeViewItem.ContextFlyout>
+                            <Grid
+                                Padding="4,0,0,0"
+                                Background="Transparent"
+                                Tag="{x:Bind}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{x:Bind NavigationIndent}" />
+                                    <ColumnDefinition Width="32" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.ContextFlyout>
                                     <MenuFlyout Opened="NavigationItemMenu_Opened">
                                         <MenuFlyoutItem
                                             Click="PrimaryNavigationItemMenu_Click"
@@ -162,51 +223,36 @@
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                     </MenuFlyout>
-                                </controls:FeedTreeViewItem.ContextFlyout>
-                                <controls:FeedTreeViewItem.Content>
-                                    <Grid
-                                        Background="Transparent"
-                                        MinWidth="140"
-                                        ColumnSpacing="8"
-                                        Padding="0,0,8,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid Width="16" Height="16">
-                                            <FontIcon
-                                                VerticalAlignment="Center"
-                                                FontSize="14"
-                                                Glyph="{x:Bind Glyph}"
-                                                Visibility="{x:Bind IconFallbackVisibility, Mode=OneWay}" />
-                                            <Border CornerRadius="3">
-                                                <Image
-                                                    Width="16"
-                                                    Height="16"
-                                                    ImageFailed="FeedIcon_ImageFailed"
-                                                    ImageOpened="FeedIcon_ImageOpened"
-                                                    Source="{x:Bind IconSource, Mode=OneWay}"
-                                                    Stretch="UniformToFill"
-                                                    Tag="{x:Bind}" />
-                                            </Border>
-                                        </Grid>
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Text="{x:Bind Title, Mode=OneWay}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            VerticalAlignment="Center"
-                                            Opacity="0.65"
-                                            Text="{x:Bind UnreadDisplay, Mode=OneWay}" />
-                                    </Grid>
-                                </controls:FeedTreeViewItem.Content>
-                            </controls:FeedTreeViewItem>
+                                </Grid.ContextFlyout>
+                                <Button
+                                    x:Name="ExpandCollapseChevron"
+                                    Grid.Column="1"
+                                    Width="32"
+                                    Height="20"
+                                    MinWidth="0"
+                                    MinHeight="0"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="FeedGroupChevron_Click"
+                                    Tag="{x:Bind}"
+                                    Visibility="{x:Bind ChevronVisibility}">
+                                    <Button.Resources>
+                                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="Transparent" />
+                                        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="Transparent" />
+                                    </Button.Resources>
+                                    <FontIcon FontSize="14" Glyph="{x:Bind ChevronGlyph, Mode=OneWay}" />
+                                </Button>
+                                <ContentControl
+                                    Grid.Column="2"
+                                    Content="{x:Bind}"
+                                    ContentTemplate="{StaticResource FeedNavigationItemContentTemplate}"
+                                    HorizontalContentAlignment="Stretch"
+                                    IsTabStop="False" />
+                            </Grid>
                         </DataTemplate>
-                    </TreeView.ItemTemplate>
-                </TreeView>
+                    </ListView.ItemTemplate>
+                </ListView>
             </Grid>
 
             <controls:HorizontalResizeSplitter Grid.Column="1">

@@ -9,9 +9,12 @@ namespace FluxReader.Models;
 
 public sealed partial class FeedNavigationItem : ObservableObject
 {
-    private FeedNavigationItem(Feed feed, ActionLabels labels)
+    private const double ChildIndentWidth = 18;
+
+    private FeedNavigationItem(Feed feed, ActionLabels labels, bool isChild)
     {
         Feed = feed;
+        IsChild = isChild;
         PrimaryActionText = labels.ChangeGroup;
         RemoveActionText = labels.RemoveFeed;
         feed.PropertyChanged += Feed_PropertyChanged;
@@ -24,7 +27,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
         RemoveActionText = labels.RemoveGroup;
         foreach (var feed in feeds)
         {
-            var child = new FeedNavigationItem(feed, labels);
+            var child = new FeedNavigationItem(feed, labels, isChild: true);
             child.PropertyChanged += Child_PropertyChanged;
             Children.Add(child);
         }
@@ -42,6 +45,14 @@ public sealed partial class FeedNavigationItem : ObservableObject
 
     public bool IsGroup => Group is not null;
 
+    public bool IsChild { get; }
+
+    public GridLength NavigationIndent => new(IsChild ? ChildIndentWidth : 0);
+
+    public Visibility ChevronVisibility => IsGroup ? Visibility.Visible : Visibility.Collapsed;
+
+    public string ChevronGlyph => IsExpanded ? "\uE70D" : "\uE76C";
+
     public string Title => Feed?.Title ?? Group?.Name ?? string.Empty;
 
     public string Glyph => IsGroup ? "\uE8B7" : "\uE789";
@@ -58,12 +69,10 @@ public sealed partial class FeedNavigationItem : ObservableObject
     public partial bool IsExpanded { get; set; } = true;
 
     [ObservableProperty]
-    public partial bool IsSelected { get; set; }
-
-    [ObservableProperty]
     public partial Visibility IconFallbackVisibility { get; set; } = Visibility.Visible;
 
-    public static FeedNavigationItem ForFeed(Feed feed, ActionLabels labels) => new(feed, labels);
+    public static FeedNavigationItem ForFeed(Feed feed, ActionLabels labels) =>
+        new(feed, labels, isChild: false);
 
     public static FeedNavigationItem ForGroup(
         FeedGroup group,
@@ -75,6 +84,8 @@ public sealed partial class FeedNavigationItem : ObservableObject
         string RemoveFeed,
         string RenameGroup,
         string RemoveGroup);
+
+    partial void OnIsExpandedChanged(bool value) => OnPropertyChanged(nameof(ChevronGlyph));
 
     private void Feed_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
