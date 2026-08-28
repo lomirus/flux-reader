@@ -469,8 +469,12 @@ public sealed partial class MainViewModel : ObservableObject
             UpdateFeedRefreshErrors(outcomes);
             var selectedFeedIds = _selectedFeedIds.ToArray();
             var selectedGroupId = SelectedGroup?.Id;
-            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
-            await ReloadArticlesAsync(cancellationToken);
+            await ReloadFeedsAsync(
+                selectedFeedIds,
+                selectedGroupId,
+                cancellationToken,
+                preserveNavigationItems: true);
+            await ReloadArticlesAsync(cancellationToken, preserveSelectedArticle: true);
 
             foreach (var result in outcomes
                          .Select(outcome => outcome.Result)
@@ -892,30 +896,143 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task ReloadFeedsAsync(
         IReadOnlyCollection<long> selectedFeedIds,
         long? selectedGroupId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool preserveNavigationItems = false)
     {
         var groups = await _repository.GetFeedGroupsAsync(cancellationToken);
         var feeds = await _repository.GetFeedsAsync(cancellationToken);
         ApplyFeedRefreshErrors(feeds);
 
-        FeedGroups.Clear();
-        foreach (var group in groups)
+        if (!preserveNavigationItems || !TrySynchronizeFeedsAndNavigation(groups, feeds))
         {
-            FeedGroups.Add(group);
-        }
+            FeedGroups.Clear();
+            foreach (var group in groups)
+            {
+                FeedGroups.Add(group);
+            }
 
-        Feeds.Clear();
-        foreach (var feed in feeds)
-        {
-            Feeds.Add(feed);
+            Feeds.Clear();
+            foreach (var feed in feeds)
+            {
+                Feeds.Add(feed);
+            }
+
+            RebuildFeedNavigation(selectedFeedIds, selectedGroupId);
         }
 
         OnPropertyChanged(nameof(LastRefreshedAt));
         UnreadTotal = Feeds.Sum(feed => feed.UnreadCount);
-        RebuildFeedNavigation(selectedFeedIds, selectedGroupId);
+        OnPropertyChanged(nameof(ArticleListTitle));
     }
 
-    private async Task ReloadArticlesAsync(CancellationToken cancellationToken = default)
+    private bool TrySynchronizeFeedsAndNavigation(
+        IReadOnlyList<FeedGroup> groups,
+        IReadOnlyList<Feed> feeds)
+    {
+        if (groups.Count != FeedGroups.Count || feeds.Count != Feeds.Count)
+        {
+            return false;
+        }
+
+        var currentGroups = FeedGroups.ToDictionary(group => group.Id);
+        var currentFeeds = Feeds.ToDictionary(feed => feed.Id);
+        if (groups.Any(group =>
+                !currentGroups.TryGetValue(group.Id, out var currentGroup) ||
+                !string.Equals(currentGroup.Name, group.Name, StringComparison.Ordinal)) ||
+            feeds.Any(feed =>
+                !currentFeeds.TryGetValue(feed.Id, out var currentFeed) ||
+                !string.Equals(currentFeed.Url, feed.Url, StringComparison.Ordinal) ||
+                currentFeed.GroupId != feed.GroupId))
+        {
+            return false;
+        }
+
+        var rootItems = FeedNavigationRows
+            .Where(item => !item.IsChild)
+            .ToArray();
+        var feedItems = rootItems
+            .Where(item => item.Feed is not null)
+            .ToDictionary(item => item.Feed!.Id);
+        var groupItems = rootItems
+            .Where(item => item.Group is not null)
+            .ToDictionary(item => item.Group!.Id);
+        if (feedItems.Count != feeds.Count(feed => feed.GroupId is null) ||
+            groupItems.Count != groups.Count ||
+            feeds.Any(feed => feed.GroupId is null && !feedItems.ContainsKey(feed.Id)) ||
+            groups.Any(group => !groupItems.ContainsKey(group.Id)))
+        {
+            return false;
+        }
+
+        foreach (var group in groups)
+        {
+            var childIds = groupItems[group.Id].Children
+                .Select(item => item.Feed!.Id)
+                .ToHashSet();
+            if (!childIds.SetEquals(feeds
+                    .Where(feed => feed.GroupId == group.Id)
+                    .Select(feed => feed.Id)))
+            {
+                return false;
+            }
+        }
+
+        foreach (var feed in feeds)
+        {
+            UpdateFeed(currentFeeds[feed.Id], feed);
+        }
+
+        var synchronizedGroups = groups
+            .Select(group => currentGroups[group.Id])
+            .ToArray();
+        var synchronizedFeeds = feeds
+            .Select(feed => currentFeeds[feed.Id])
+            .ToArray();
+        SynchronizeItems(FeedGroups, synchronizedGroups);
+        SynchronizeItems(Feeds, synchronizedFeeds);
+
+        var navigationRows = new List<FeedNavigationItem>();
+        foreach (var feed in synchronizedFeeds.Where(feed => feed.GroupId is null))
+        {
+            navigationRows.Add(feedItems[feed.Id]);
+        }
+
+        foreach (var group in synchronizedGroups)
+        {
+            var groupItem = groupItems[group.Id];
+            var childItems = groupItem.Children.ToDictionary(item => item.Feed!.Id);
+            var synchronizedChildren = synchronizedFeeds
+                .Where(feed => feed.GroupId == group.Id)
+                .Select(feed => childItems[feed.Id])
+                .ToArray();
+            SynchronizeItems(groupItem.Children, synchronizedChildren);
+            navigationRows.Add(groupItem);
+            if (groupItem.IsExpanded)
+            {
+                navigationRows.AddRange(synchronizedChildren);
+            }
+        }
+
+        SynchronizeItems(FeedNavigationRows, navigationRows);
+        return true;
+    }
+
+    private static void UpdateFeed(Feed target, Feed source)
+    {
+        target.Title = source.Title;
+        target.SiteUrl = source.SiteUrl;
+        target.Description = source.Description;
+        target.IconUrl = source.IconUrl;
+        target.LastRefreshedAt = source.LastRefreshedAt;
+        target.LastRefreshError = source.LastRefreshError;
+        target.UnreadCount = source.UnreadCount;
+        target.ETag = source.ETag;
+        target.LastModifiedAt = source.LastModifiedAt;
+    }
+
+    private async Task ReloadArticlesAsync(
+        CancellationToken cancellationToken = default,
+        bool preserveSelectedArticle = false)
     {
         var loadVersion = Interlocked.Increment(ref _articleLoadVersion);
         var selectionVersion = Volatile.Read(ref _navigationSelectionVersion);
@@ -935,19 +1052,73 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        Articles.Clear();
         var feedTitleVisibility = SelectedFeedCount == 1
             ? Microsoft.UI.Xaml.Visibility.Collapsed
             : Microsoft.UI.Xaml.Visibility.Visible;
         foreach (var article in articles)
         {
             article.FeedTitleVisibility = feedTitleVisibility;
-            Articles.Add(article);
         }
 
-        SelectedArticle = null;
+        var selectedArticle = preserveSelectedArticle ? SelectedArticle : null;
+        if (selectedArticle is not null && articles.Any(article => article.Id == selectedArticle.Id))
+        {
+            SynchronizeArticles(articles, selectedArticle);
+        }
+        else
+        {
+            Articles.Clear();
+            foreach (var article in articles)
+            {
+                Articles.Add(article);
+            }
+
+            SelectedArticle = null;
+        }
+
         UpdateArticleCount();
         OnPropertyChanged(nameof(ArticleListTitle));
+    }
+
+    private void SynchronizeArticles(IReadOnlyList<Article> articles, Article selectedArticle)
+    {
+        var currentArticles = Articles.ToDictionary(article => article.Id);
+        currentArticles[selectedArticle.Id] = selectedArticle;
+        var synchronizedArticles = articles
+            .Select(article => currentArticles.GetValueOrDefault(article.Id) ?? article)
+            .ToArray();
+
+        SynchronizeItems(Articles, synchronizedArticles);
+    }
+
+    private static void SynchronizeItems<T>(
+        ObservableCollection<T> collection,
+        IReadOnlyList<T> items)
+        where T : class
+    {
+        for (var index = 0; index < items.Count; index++)
+        {
+            var item = items[index];
+            if (index < collection.Count && ReferenceEquals(collection[index], item))
+            {
+                continue;
+            }
+
+            var currentIndex = collection.IndexOf(item);
+            if (currentIndex >= 0)
+            {
+                collection.Move(currentIndex, index);
+            }
+            else
+            {
+                collection.Insert(index, item);
+            }
+        }
+
+        while (collection.Count > items.Count)
+        {
+            collection.RemoveAt(collection.Count - 1);
+        }
     }
 
     private void UpdateArticleCount(int? count = null) =>
@@ -1088,8 +1259,12 @@ public sealed partial class MainViewModel : ObservableObject
             UpdateFeedRefreshErrors(outcomes);
             var selectedFeedIds = _selectedFeedIds.ToArray();
             var selectedGroupId = SelectedGroup?.Id;
-            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
-            await ReloadArticlesAsync(cancellationToken);
+            await ReloadFeedsAsync(
+                selectedFeedIds,
+                selectedGroupId,
+                cancellationToken,
+                preserveNavigationItems: true);
+            await ReloadArticlesAsync(cancellationToken, preserveSelectedArticle: true);
             DiagnosticLog.MemorySnapshot(
                 "opml.background_refresh_completed",
                 new

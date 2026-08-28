@@ -33,9 +33,9 @@ public sealed partial class Feed : ObservableObject
     [NotifyPropertyChangedFor(nameof(UnreadDisplay))]
     public partial int UnreadCount { get; set; }
 
-    public string? ETag { get; init; }
+    public string? ETag { get; internal set; }
 
-    public DateTimeOffset? LastModifiedAt { get; init; }
+    public DateTimeOffset? LastModifiedAt { get; internal set; }
 
     public string UnreadDisplay => UnreadCount == 0 ? string.Empty : UnreadCount.ToString();
 }
