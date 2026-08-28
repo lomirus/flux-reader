@@ -1481,9 +1481,11 @@ public sealed partial class MainWindow : Window
             Title = localization.GetString("RemoveGroupTitle"),
             Content = localization.Format("RemoveGroupMessage", group.Name),
             PrimaryButtonText = localization.GetString("RemoveGroupAndFeeds"),
-            PrimaryButtonStyle = (Style)App.Current.Resources["DestructiveButtonStyle"],
+            PrimaryButtonStyle = (Style)App.Current.Resources["WrappingDestructiveButtonStyle"],
             SecondaryButtonText = localization.GetString("RemoveGroupOnly"),
+            SecondaryButtonStyle = (Style)App.Current.Resources["WrappingDialogButtonStyle"],
             CloseButtonText = localization.GetString("Cancel"),
+            CloseButtonStyle = (Style)App.Current.Resources["WrappingDialogButtonStyle"],
             DefaultButton = ContentDialogButton.None
         };
 

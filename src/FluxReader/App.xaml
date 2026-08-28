@@ -158,6 +158,31 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            <DataTemplate x:Key="WrappingDialogButtonContentTemplate">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Text="{Binding}"
+                    TextAlignment="Center"
+                    TextWrapping="WrapWholeWords" />
+            </DataTemplate>
+            <Style
+                x:Key="WrappingDialogButtonStyle"
+                BasedOn="{StaticResource DefaultButtonStyle}"
+                TargetType="Button">
+                <Setter
+                    Property="ContentTemplate"
+                    Value="{StaticResource WrappingDialogButtonContentTemplate}" />
+                <Setter Property="VerticalAlignment" Value="Stretch" />
+            </Style>
+            <Style
+                x:Key="WrappingDestructiveButtonStyle"
+                BasedOn="{StaticResource DestructiveButtonStyle}"
+                TargetType="Button">
+                <Setter
+                    Property="ContentTemplate"
+                    Value="{StaticResource WrappingDialogButtonContentTemplate}" />
+                <Setter Property="VerticalAlignment" Value="Stretch" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
