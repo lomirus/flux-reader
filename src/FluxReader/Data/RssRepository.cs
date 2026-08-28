@@ -1,5 +1,6 @@
 using System.Globalization;
 using FluxReader.Core.Models;
+using FluxReader.Core.Services;
 using FluxReader.Models;
 using FluxReader.Services;
 using Microsoft.Data.Sqlite;
@@ -169,6 +170,7 @@ public sealed class RssRepository
         IReadOnlyCollection<long>? feedIds,
         long? groupId,
         ArticleFilter filter,
+        string? searchQuery,
         CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken);
@@ -201,11 +203,21 @@ public sealed class RssRepository
                   {feedFilter}
                   AND ($group_id IS NULL OR f.group_id = $group_id)
                   AND ($filter <> 1 OR a.is_read = 0)
-                ORDER BY COALESCE(a.published_utc, a.inserted_utc) DESC
+                  AND ($search_query IS NULL OR
+                       article_search_rank(a.title, a.summary, a.content, $search_query) >= 0)
+                ORDER BY CASE WHEN $search_query IS NULL THEN 0
+                              ELSE article_search_rank(
+                                  a.title, a.summary, a.content, $search_query)
+                         END,
+                         COALESCE(a.published_utc, a.inserted_utc) DESC,
+                         a.id DESC
                 LIMIT 2000;
                 """;
             command.Parameters.AddWithValue("$group_id", groupId is null ? DBNull.Value : groupId.Value);
             command.Parameters.AddWithValue("$filter", (int)filter);
+            command.Parameters.AddWithValue(
+                "$search_query",
+                string.IsNullOrWhiteSpace(searchQuery) ? DBNull.Value : searchQuery.Trim());
 
             var articles = new List<Article>();
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -707,6 +719,10 @@ public sealed class RssRepository
     {
         var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+        connection.CreateFunction<string?, string?, string?, string?, int>(
+            "article_search_rank",
+            ArticleSearchMatcher.GetMatchRank,
+            isDeterministic: true);
         return connection;
     }
 

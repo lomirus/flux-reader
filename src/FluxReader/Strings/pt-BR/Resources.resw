@@ -28,6 +28,7 @@
   <data name="SelectedFeeds" xml:space="preserve"><value>{0} feeds selecionados</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Artigos não lidos</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>Mostrar apenas artigos não lidos</value></data>
+  <data name="SearchArticles" xml:space="preserve"><value>Pesquisar artigos</value></data>
   <data name="Feeds" xml:space="preserve"><value>Feeds</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>Redimensionar o painel de feeds</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>Redimensionar o painel da lista de artigos</value></data>

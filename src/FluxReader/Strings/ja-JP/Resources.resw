@@ -28,6 +28,7 @@
   <data name="SelectedFeeds" xml:space="preserve"><value>{0} 件のフィードを選択</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>未読の記事</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>未読の記事のみを表示</value></data>
+  <data name="SearchArticles" xml:space="preserve"><value>記事を検索</value></data>
   <data name="Feeds" xml:space="preserve"><value>フィード</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>フィードペインのサイズを変更</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>記事一覧ペインのサイズを変更</value></data>

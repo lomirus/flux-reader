@@ -364,6 +364,10 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Grid Padding="16,12,12,10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -424,6 +428,13 @@
                         VerticalAlignment="Center"
                         Opacity="0.6"
                         Text="{Binding ArticleCountText}" />
+                    <AutoSuggestBox
+                        x:Name="ArticleSearchBox"
+                        Grid.Row="1"
+                        Grid.ColumnSpan="4"
+                        Margin="0,8,0,0"
+                        QueryIcon="Find"
+                        TextChanged="ArticleSearchBox_TextChanged" />
                 </Grid>
                 <ListView
                     x:Name="ArticleList"

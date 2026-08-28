@@ -28,6 +28,7 @@
   <data name="SelectedFeeds" xml:space="preserve"><value>{0} flux sélectionnés</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Articles non lus</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>Afficher uniquement les articles non lus</value></data>
+  <data name="SearchArticles" xml:space="preserve"><value>Rechercher des articles</value></data>
   <data name="Feeds" xml:space="preserve"><value>Flux</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>Redimensionner le volet des flux</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>Redimensionner le volet de la liste des articles</value></data>

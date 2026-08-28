@@ -35,6 +35,7 @@ public sealed partial class MainWindow : Window
     private const int DefaultRefreshIntervalMinutes = 15;
     private static readonly TimeSpan DefaultStatusNotificationDuration = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan WarningStatusNotificationDuration = TimeSpan.FromSeconds(8);
+    private static readonly TimeSpan ArticleSearchDebounceDelay = TimeSpan.FromMilliseconds(300);
 
     private readonly CancellationTokenSource _lifetime = new();
     private readonly DispatcherTimer _refreshTimer = new()
@@ -49,6 +50,7 @@ public sealed partial class MainWindow : Window
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
     private long _statusInfoBarIsOpenCallbackToken;
     private bool _areFeedGroupSelectionIndicatorsEnabled = true;
+    private CancellationTokenSource? _articleSearchDebounce;
     private bool _isSynchronizingFeedListSelection;
     private AppSettings _settings = new();
     private bool _settingsLoaded;
@@ -614,6 +616,38 @@ public sealed partial class MainWindow : Window
         HideArticleReader();
     }
 
+    private async void ArticleSearchBox_TextChanged(
+        AutoSuggestBox sender,
+        AutoSuggestBoxTextChangedEventArgs args)
+    {
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
+        {
+            return;
+        }
+
+        _articleSearchDebounce?.Cancel();
+        var searchDebounce = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+        _articleSearchDebounce = searchDebounce;
+        try
+        {
+            await Task.Delay(ArticleSearchDebounceDelay, searchDebounce.Token);
+            await ViewModel.SetArticleSearchQueryAsync(sender.Text, searchDebounce.Token);
+            HideArticleReader();
+        }
+        catch (OperationCanceledException) when (searchDebounce.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_articleSearchDebounce, searchDebounce))
+            {
+                _articleSearchDebounce = null;
+            }
+
+            searchDebounce.Dispose();
+        }
+    }
+
     private void Settings_Click(object sender, RoutedEventArgs e)
     {
         if (!_settingsLoaded || SettingsFrame.Visibility == Visibility.Visible)
@@ -959,6 +993,10 @@ public sealed partial class MainWindow : Window
         var showUnreadOnly = localization.GetString("ShowUnreadOnly");
         AutomationProperties.SetName(UnreadFilterToggleButton, showUnreadOnly);
         ToolTipService.SetToolTip(UnreadFilterToggleButton, showUnreadOnly);
+
+        var searchArticles = localization.GetString("SearchArticles");
+        ArticleSearchBox.PlaceholderText = searchArticles;
+        AutomationProperties.SetName(ArticleSearchBox, searchArticles);
 
         var markAllRead = localization.GetString("MarkAllRead");
         AutomationProperties.SetName(MarkCurrentListReadButton, markAllRead);
@@ -1412,6 +1450,7 @@ public sealed partial class MainWindow : Window
         _refreshTimer.Tick -= RefreshTimer_Tick;
         _diagnosticTimer.Stop();
         _diagnosticTimer.Tick -= DiagnosticTimer_Tick;
+        _articleSearchDebounce?.Cancel();
         _lifetime.Cancel();
         _lifetime.Dispose();
     }

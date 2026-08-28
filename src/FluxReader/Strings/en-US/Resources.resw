@@ -28,6 +28,7 @@
   <data name="SelectedFeeds" xml:space="preserve"><value>{0} feeds selected</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>Unread articles</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>Show unread articles only</value></data>
+  <data name="SearchArticles" xml:space="preserve"><value>Search articles</value></data>
   <data name="Feeds" xml:space="preserve"><value>Feeds</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>Resize feed pane</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>Resize article list pane</value></data>

@@ -49,6 +49,9 @@ public sealed partial class MainViewModel : ObservableObject
     public partial string ArticleCountText { get; set; } = string.Empty;
 
     [ObservableProperty]
+    public partial string ArticleSearchQuery { get; set; } = string.Empty;
+
+    [ObservableProperty]
     public partial int UnreadTotal { get; set; }
 
     public MainViewModel(
@@ -394,6 +397,20 @@ public sealed partial class MainViewModel : ObservableObject
     public async Task SetArticleFilterAsync(ArticleFilter filter, CancellationToken cancellationToken = default)
     {
         CurrentFilter = filter;
+        await ReloadArticlesAsync(cancellationToken);
+    }
+
+    public async Task SetArticleSearchQueryAsync(
+        string? searchQuery,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedSearchQuery = searchQuery?.Trim() ?? string.Empty;
+        if (string.Equals(ArticleSearchQuery, normalizedSearchQuery, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        ArticleSearchQuery = normalizedSearchQuery;
         await ReloadArticlesAsync(cancellationToken);
     }
 
@@ -1039,15 +1056,18 @@ public sealed partial class MainViewModel : ObservableObject
         var feedIds = _selectedFeedIds.ToArray();
         var groupId = SelectedGroup?.Id;
         var filter = CurrentFilter;
+        var searchQuery = ArticleSearchQuery;
         var articles = await _repository.GetArticlesAsync(
             feedIds.Length == 0 ? null : feedIds,
             groupId,
             filter,
+            searchQuery,
             cancellationToken);
         if (loadVersion != Volatile.Read(ref _articleLoadVersion) ||
             selectionVersion != Volatile.Read(ref _navigationSelectionVersion) ||
             groupId != SelectedGroup?.Id ||
-            filter != CurrentFilter)
+            filter != CurrentFilter ||
+            !string.Equals(searchQuery, ArticleSearchQuery, StringComparison.Ordinal))
         {
             return;
         }

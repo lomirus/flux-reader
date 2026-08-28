@@ -28,6 +28,7 @@
   <data name="SelectedFeeds" xml:space="preserve"><value>피드 {0}개 선택됨</value></data>
   <data name="UnreadArticles" xml:space="preserve"><value>읽지 않은 기사</value></data>
   <data name="ShowUnreadOnly" xml:space="preserve"><value>읽지 않은 기사만 표시</value></data>
+  <data name="SearchArticles" xml:space="preserve"><value>기사 검색</value></data>
   <data name="Feeds" xml:space="preserve"><value>피드</value></data>
   <data name="ResizeFeedPane" xml:space="preserve"><value>피드 창 크기 조정</value></data>
   <data name="ResizeArticleListPane" xml:space="preserve"><value>기사 목록 창 크기 조정</value></data>
