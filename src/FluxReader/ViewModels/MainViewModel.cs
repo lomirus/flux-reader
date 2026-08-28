@@ -43,6 +43,7 @@ public sealed partial class MainViewModel : ObservableObject
     public partial ArticleFilter CurrentFilter { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
     public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
@@ -437,7 +438,9 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    private bool CanRefresh() => !IsBusy;
+
+    [RelayCommand(CanExecute = nameof(CanRefresh))]
     private Task RefreshAsync() => RefreshFeedsAsync(Feeds.ToArray());
 
     public Task RefreshFeedAsync(
@@ -644,13 +647,24 @@ public sealed partial class MainViewModel : ObservableObject
         await Launcher.LaunchUriAsync(uri);
     }
 
-    public async Task DeleteFeedsAsync(
+    public async Task<bool> DeleteFeedsAsync(
         IReadOnlyCollection<Feed> feeds,
         CancellationToken cancellationToken = default)
     {
-        if (IsBusy || feeds.Count == 0)
+        if (feeds.Count == 0)
         {
-            return;
+            return false;
+        }
+
+        if (IsBusy)
+        {
+            DiagnosticLog.Warning(
+                "feed.delete_rejected",
+                new { reason = "view_model_busy", feedCount = feeds.Count });
+            ShowStatus(
+                _localization.GetString("SubscriptionOperationBusy"),
+                StatusNotificationSeverity.Warning);
+            return false;
         }
 
         IsBusy = true;
@@ -670,6 +684,7 @@ public sealed partial class MainViewModel : ObservableObject
                     ? _localization.Format("FeedRemoved", normalizedFeeds[0].Title)
                     : _localization.Format("FeedsRemoved", normalizedFeeds.Length),
                 StatusNotificationSeverity.Success);
+            return true;
         }
         finally
         {
@@ -826,14 +841,20 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    public async Task DeleteFeedGroupAsync(
+    public async Task<bool> DeleteFeedGroupAsync(
         FeedGroup group,
         bool deleteFeeds,
         CancellationToken cancellationToken = default)
     {
         if (IsBusy)
         {
-            return;
+            DiagnosticLog.Warning(
+                "feed_group.delete_rejected",
+                new { reason = "view_model_busy", groupId = group.Id, deleteFeeds });
+            ShowStatus(
+                _localization.GetString("SubscriptionOperationBusy"),
+                StatusNotificationSeverity.Warning);
+            return false;
         }
 
         IsBusy = true;
@@ -857,12 +878,14 @@ public sealed partial class MainViewModel : ObservableObject
                     deleteFeeds ? "GroupAndFeedsRemoved" : "GroupRemoved",
                     group.Name),
                 StatusNotificationSeverity.Success);
+            return true;
         }
         catch (Exception exception)
         {
             ShowStatus(
                 _localization.Format("GroupOperationFailed", exception.Message),
                 StatusNotificationSeverity.Error);
+            return false;
         }
         finally
         {
@@ -1255,6 +1278,19 @@ public sealed partial class MainViewModel : ObservableObject
         IReadOnlyList<long> feedIds,
         CancellationToken cancellationToken)
     {
+        if (IsBusy)
+        {
+            DiagnosticLog.Warning(
+                "opml.background_refresh_rejected",
+                new
+                {
+                    reason = "view_model_busy",
+                    importedFeedCount = feedIds.Count
+                });
+            return;
+        }
+
+        IsBusy = true;
         var startedAt = Stopwatch.GetTimestamp();
         try
         {
@@ -1318,6 +1354,10 @@ public sealed partial class MainViewModel : ObservableObject
                     importedFeedCount = feedIds.Count,
                     elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
                 });
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 

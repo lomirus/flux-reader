@@ -719,6 +719,14 @@ public sealed partial class MainWindow : Window
 
     private void NavigationItemMenu_Opened(object sender, object e)
     {
+        if (sender is MenuFlyout menu)
+        {
+            foreach (var item in menu.Items)
+            {
+                item.IsEnabled = !ViewModel.IsBusy;
+            }
+        }
+
         // TODO(winui): Remove this workaround after microsoft-ui-xaml#9542 is fixed
         // and the project uses a Windows App SDK version that contains the fix.
         // Opening a ContextFlyout can currently leave a loading or resize cursor
@@ -1466,8 +1474,10 @@ public sealed partial class MainWindow : Window
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
-            await ViewModel.DeleteFeedsAsync(feeds, _lifetime.Token);
-            HideArticleReader();
+            if (await ViewModel.DeleteFeedsAsync(feeds, _lifetime.Token))
+            {
+                HideArticleReader();
+            }
         }
     }
 
@@ -1493,8 +1503,10 @@ public sealed partial class MainWindow : Window
         if (result is ContentDialogResult.Primary or ContentDialogResult.Secondary)
         {
             var deleteFeeds = result == ContentDialogResult.Primary;
-            await ViewModel.DeleteFeedGroupAsync(group, deleteFeeds, _lifetime.Token);
-            HideArticleReader();
+            if (await ViewModel.DeleteFeedGroupAsync(group, deleteFeeds, _lifetime.Token))
+            {
+                HideArticleReader();
+            }
         }
     }
 
