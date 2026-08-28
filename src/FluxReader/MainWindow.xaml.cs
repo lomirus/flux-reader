@@ -545,6 +545,14 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private async void EditNavigationFeedMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { Tag: FeedNavigationItem { Feed: { } feed } })
+        {
+            await EditFeedAsync(feed);
+        }
+    }
+
     private async void PrimaryNavigationItemMenu_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not MenuFlyoutItem { Tag: FeedNavigationItem item })
@@ -1158,6 +1166,49 @@ public sealed partial class MainWindow : Window
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             await ViewModel.RenameFeedGroupAsync(group, input.Text, _lifetime.Token);
+        }
+    }
+
+    private async Task EditFeedAsync(Feed feed)
+    {
+        var localization = App.Current.Localization;
+        var nameInput = new TextBox
+        {
+            Header = localization.GetString("FeedName"),
+            MaxLength = 200,
+            Text = feed.Title
+        };
+        var addressInput = new TextBox
+        {
+            Header = localization.GetString("FeedAddress"),
+            MaxLength = 2048,
+            Text = feed.Url
+        };
+        var content = new StackPanel
+        {
+            Width = 320,
+            Spacing = 12
+        };
+        content.Children.Add(nameInput);
+        content.Children.Add(addressInput);
+        var dialog = new ContentDialog
+        {
+            XamlRoot = RootGrid.XamlRoot,
+            RequestedTheme = RootGrid.ActualTheme,
+            Title = localization.GetString("EditFeed"),
+            Content = content,
+            PrimaryButtonText = localization.GetString("Save"),
+            CloseButtonText = localization.GetString("Cancel"),
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            await ViewModel.UpdateFeedSubscriptionAsync(
+                feed,
+                nameInput.Text,
+                addressInput.Text,
+                _lifetime.Token);
         }
     }
 

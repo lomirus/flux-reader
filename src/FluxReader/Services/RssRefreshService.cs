@@ -97,7 +97,7 @@ public sealed class RssRefreshService : IDisposable
             cancellationToken);
 
         return new FeedRefreshResult(
-            parsedFeed.Title,
+            feed.Title,
             parsedFeed.IconUri?.AbsoluteUri ?? string.Empty,
             insertedTitles,
             false);

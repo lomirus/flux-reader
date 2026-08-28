@@ -37,6 +37,11 @@
   <data name="OpenInBrowser" xml:space="preserve"><value>ブラウザーで開く</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>未読にする</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS または Atom のアドレス</value></data>
+  <data name="EditFeed" xml:space="preserve"><value>フィードを編集</value></data>
+  <data name="FeedName" xml:space="preserve"><value>フィード名</value></data>
+  <data name="InvalidFeedName" xml:space="preserve"><value>フィード名を入力してください。</value></data>
+  <data name="FeedUpdated" xml:space="preserve"><value>「{0}」を更新しました。</value></data>
+  <data name="FeedUpdateFailed" xml:space="preserve"><value>フィードを更新できませんでした: {0}</value></data>
   <data name="Add" xml:space="preserve"><value>追加</value></data>
   <data name="Cancel" xml:space="preserve"><value>キャンセル</value></data>
   <data name="Close" xml:space="preserve"><value>閉じる</value></data>
@@ -86,6 +91,7 @@
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows 通知を利用できません。詳細は notifications.log に記録されました。閲覧と更新には影響しません。</value></data>
   <data name="InitializationFailed" xml:space="preserve"><value>初期化に失敗しました: {0}</value></data>
   <data name="InvalidFeedAddress" xml:space="preserve"><value>有効な HTTP または HTTPS のフィードアドレスを入力してください。</value></data>
+  <data name="FeedAddressAlreadySubscribed" xml:space="preserve"><value>このアドレスは別のフィードで既に使用されています。</value></data>
   <data name="SubscribedToFeed" xml:space="preserve"><value>「{0}」を購読しました。</value></data>
   <data name="AddFeedFailed" xml:space="preserve"><value>フィードを追加できませんでした: {0}</value></data>
   <data name="AddFeedFirst" xml:space="preserve"><value>先に RSS または Atom フィードを追加してください。</value></data>

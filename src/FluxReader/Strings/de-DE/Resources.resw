@@ -37,6 +37,11 @@
   <data name="OpenInBrowser" xml:space="preserve"><value>Im Browser öffnen</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>Als ungelesen markieren</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS- oder Atom-Adresse</value></data>
+  <data name="EditFeed" xml:space="preserve"><value>Feed bearbeiten</value></data>
+  <data name="FeedName" xml:space="preserve"><value>Feedname</value></data>
+  <data name="InvalidFeedName" xml:space="preserve"><value>Geben Sie einen Feednamen ein.</value></data>
+  <data name="FeedUpdated" xml:space="preserve"><value>„{0}“ wurde aktualisiert.</value></data>
+  <data name="FeedUpdateFailed" xml:space="preserve"><value>Der Feed konnte nicht aktualisiert werden: {0}</value></data>
   <data name="Add" xml:space="preserve"><value>Hinzufügen</value></data>
   <data name="Cancel" xml:space="preserve"><value>Abbrechen</value></data>
   <data name="Close" xml:space="preserve"><value>Schließen</value></data>
@@ -86,6 +91,7 @@
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows-Benachrichtigungen sind nicht verfügbar. Details wurden in notifications.log protokolliert; Lesen und Aktualisieren sind nicht betroffen.</value></data>
   <data name="InitializationFailed" xml:space="preserve"><value>Initialisierung fehlgeschlagen: {0}</value></data>
   <data name="InvalidFeedAddress" xml:space="preserve"><value>Geben Sie eine gültige HTTP- oder HTTPS-Feedadresse ein.</value></data>
+  <data name="FeedAddressAlreadySubscribed" xml:space="preserve"><value>Diese Adresse wird bereits von einem anderen Feed verwendet.</value></data>
   <data name="SubscribedToFeed" xml:space="preserve"><value>„{0}“ wurde abonniert.</value></data>
   <data name="AddFeedFailed" xml:space="preserve"><value>Der Feed konnte nicht hinzugefügt werden: {0}</value></data>
   <data name="AddFeedFirst" xml:space="preserve"><value>Fügen Sie zuerst einen RSS- oder Atom-Feed hinzu.</value></data>

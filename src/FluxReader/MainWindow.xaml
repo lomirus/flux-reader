@@ -286,6 +286,15 @@
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                         <MenuFlyoutItem
+                                            Click="EditNavigationFeedMenu_Click"
+                                            Text="{x:Bind EditActionText}"
+                                            Tag="{x:Bind}"
+                                            Visibility="{x:Bind FeedActionVisibility}">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="&#xE70F;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem
                                             Click="PrimaryNavigationItemMenu_Click"
                                             Text="{x:Bind PrimaryActionText}"
                                             Tag="{x:Bind}">

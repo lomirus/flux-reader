@@ -37,6 +37,11 @@
   <data name="OpenInBrowser" xml:space="preserve"><value>在瀏覽器中開啟</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>標示為未讀</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS 或 Atom 網址</value></data>
+  <data name="EditFeed" xml:space="preserve"><value>編輯訂閱</value></data>
+  <data name="FeedName" xml:space="preserve"><value>訂閱名稱</value></data>
+  <data name="InvalidFeedName" xml:space="preserve"><value>請輸入訂閱名稱。</value></data>
+  <data name="FeedUpdated" xml:space="preserve"><value>已更新「{0}」。</value></data>
+  <data name="FeedUpdateFailed" xml:space="preserve"><value>更新訂閱失敗：{0}</value></data>
   <data name="Add" xml:space="preserve"><value>新增</value></data>
   <data name="Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="Close" xml:space="preserve"><value>關閉</value></data>
@@ -86,6 +91,7 @@
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows 系統通知目前無法使用，錯誤已寫入 notifications.log；閱讀和重新整理功能不受影響。</value></data>
   <data name="InitializationFailed" xml:space="preserve"><value>初始化失敗：{0}</value></data>
   <data name="InvalidFeedAddress" xml:space="preserve"><value>請輸入有效的 HTTP 或 HTTPS 訂閱網址。</value></data>
+  <data name="FeedAddressAlreadySubscribed" xml:space="preserve"><value>此網址已由其他訂閱使用。</value></data>
   <data name="SubscribedToFeed" xml:space="preserve"><value>已訂閱「{0}」。</value></data>
   <data name="AddFeedFailed" xml:space="preserve"><value>新增訂閱失敗：{0}</value></data>
   <data name="AddFeedFirst" xml:space="preserve"><value>請先新增一個 RSS 或 Atom 訂閱。</value></data>

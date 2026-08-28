@@ -37,6 +37,11 @@
   <data name="OpenInBrowser" xml:space="preserve"><value>Abrir en el navegador</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>Marcar como no leído</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>Dirección RSS o Atom</value></data>
+  <data name="EditFeed" xml:space="preserve"><value>Editar fuente</value></data>
+  <data name="FeedName" xml:space="preserve"><value>Nombre de la fuente</value></data>
+  <data name="InvalidFeedName" xml:space="preserve"><value>Escribe un nombre para la fuente.</value></data>
+  <data name="FeedUpdated" xml:space="preserve"><value>Se actualizó “{0}”.</value></data>
+  <data name="FeedUpdateFailed" xml:space="preserve"><value>No se pudo actualizar la fuente: {0}</value></data>
   <data name="Add" xml:space="preserve"><value>Añadir</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Close" xml:space="preserve"><value>Cerrar</value></data>
@@ -86,6 +91,7 @@
   <data name="NotificationUnavailable" xml:space="preserve"><value>Las notificaciones de Windows no están disponibles. Los detalles se han escrito en notifications.log; la lectura y la actualización no se ven afectadas.</value></data>
   <data name="InitializationFailed" xml:space="preserve"><value>Error de inicialización: {0}</value></data>
   <data name="InvalidFeedAddress" xml:space="preserve"><value>Introduce una dirección de fuente HTTP o HTTPS válida.</value></data>
+  <data name="FeedAddressAlreadySubscribed" xml:space="preserve"><value>Otra fuente ya utiliza esta dirección.</value></data>
   <data name="SubscribedToFeed" xml:space="preserve"><value>Te has suscrito a «{0}».</value></data>
   <data name="AddFeedFailed" xml:space="preserve"><value>No se pudo añadir la fuente: {0}</value></data>
   <data name="AddFeedFirst" xml:space="preserve"><value>Añade primero una fuente RSS o Atom.</value></data>

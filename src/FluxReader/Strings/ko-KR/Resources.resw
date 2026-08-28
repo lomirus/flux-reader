@@ -37,6 +37,11 @@
   <data name="OpenInBrowser" xml:space="preserve"><value>브라우저에서 열기</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>읽지 않음으로 표시</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS 또는 Atom 주소</value></data>
+  <data name="EditFeed" xml:space="preserve"><value>피드 편집</value></data>
+  <data name="FeedName" xml:space="preserve"><value>피드 이름</value></data>
+  <data name="InvalidFeedName" xml:space="preserve"><value>피드 이름을 입력하세요.</value></data>
+  <data name="FeedUpdated" xml:space="preserve"><value>“{0}”을(를) 업데이트했습니다.</value></data>
+  <data name="FeedUpdateFailed" xml:space="preserve"><value>피드를 업데이트할 수 없습니다: {0}</value></data>
   <data name="Add" xml:space="preserve"><value>추가</value></data>
   <data name="Cancel" xml:space="preserve"><value>취소</value></data>
   <data name="Close" xml:space="preserve"><value>닫기</value></data>
@@ -86,6 +91,7 @@
   <data name="NotificationUnavailable" xml:space="preserve"><value>Windows 알림을 사용할 수 없습니다. 자세한 내용은 notifications.log에 기록되었습니다. 읽기와 새로 고침에는 영향이 없습니다.</value></data>
   <data name="InitializationFailed" xml:space="preserve"><value>초기화하지 못했습니다: {0}</value></data>
   <data name="InvalidFeedAddress" xml:space="preserve"><value>유효한 HTTP 또는 HTTPS 피드 주소를 입력하세요.</value></data>
+  <data name="FeedAddressAlreadySubscribed" xml:space="preserve"><value>이 주소는 이미 다른 피드에서 사용 중입니다.</value></data>
   <data name="SubscribedToFeed" xml:space="preserve"><value>“{0}”을(를) 구독했습니다.</value></data>
   <data name="AddFeedFailed" xml:space="preserve"><value>피드를 추가하지 못했습니다: {0}</value></data>
   <data name="AddFeedFirst" xml:space="preserve"><value>먼저 RSS 또는 Atom 피드를 추가하세요.</value></data>

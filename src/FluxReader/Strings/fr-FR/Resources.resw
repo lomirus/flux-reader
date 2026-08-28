@@ -37,6 +37,11 @@
   <data name="OpenInBrowser" xml:space="preserve"><value>Ouvrir dans le navigateur</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>Marquer comme non lu</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>Adresse RSS ou Atom</value></data>
+  <data name="EditFeed" xml:space="preserve"><value>Modifier le flux</value></data>
+  <data name="FeedName" xml:space="preserve"><value>Nom du flux</value></data>
+  <data name="InvalidFeedName" xml:space="preserve"><value>Saisissez un nom de flux.</value></data>
+  <data name="FeedUpdated" xml:space="preserve"><value>« {0} » a été mis à jour.</value></data>
+  <data name="FeedUpdateFailed" xml:space="preserve"><value>Impossible de mettre à jour le flux : {0}</value></data>
   <data name="Add" xml:space="preserve"><value>Ajouter</value></data>
   <data name="Cancel" xml:space="preserve"><value>Annuler</value></data>
   <data name="Close" xml:space="preserve"><value>Fermer</value></data>
@@ -86,6 +91,7 @@
   <data name="NotificationUnavailable" xml:space="preserve"><value>Les notifications Windows ne sont pas disponibles. Les détails ont été consignés dans notifications.log ; la lecture et l’actualisation ne sont pas affectées.</value></data>
   <data name="InitializationFailed" xml:space="preserve"><value>Échec de l’initialisation : {0}</value></data>
   <data name="InvalidFeedAddress" xml:space="preserve"><value>Saisissez une adresse de flux HTTP ou HTTPS valide.</value></data>
+  <data name="FeedAddressAlreadySubscribed" xml:space="preserve"><value>Cette adresse est déjà utilisée par un autre flux.</value></data>
   <data name="SubscribedToFeed" xml:space="preserve"><value>Abonnement à « {0} » effectué.</value></data>
   <data name="AddFeedFailed" xml:space="preserve"><value>Impossible d’ajouter le flux : {0}</value></data>
   <data name="AddFeedFirst" xml:space="preserve"><value>Ajoutez d’abord un flux RSS ou Atom.</value></data>

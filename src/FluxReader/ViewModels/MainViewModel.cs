@@ -698,6 +698,76 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    public async Task UpdateFeedSubscriptionAsync(
+        Feed feed,
+        string name,
+        string address,
+        CancellationToken cancellationToken = default)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var normalizedName = name.Trim();
+        if (normalizedName.Length == 0)
+        {
+            ShowStatus(
+                _localization.GetString("InvalidFeedName"),
+                StatusNotificationSeverity.Warning);
+            return;
+        }
+
+        if (!Uri.TryCreate(address.Trim(), UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+        {
+            ShowStatus(
+                _localization.GetString("InvalidFeedAddress"),
+                StatusNotificationSeverity.Warning);
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var selectedFeedIds = _selectedFeedIds.ToArray();
+            var selectedGroupId = SelectedGroup?.Id;
+            var updated = await _repository.UpdateFeedSubscriptionAsync(
+                feed.Id,
+                normalizedName,
+                uri.AbsoluteUri,
+                cancellationToken);
+            if (!updated)
+            {
+                ShowStatus(
+                    _localization.GetString("FeedAddressAlreadySubscribed"),
+                    StatusNotificationSeverity.Warning);
+                return;
+            }
+
+            if (!string.Equals(feed.Url, uri.AbsoluteUri, StringComparison.Ordinal))
+            {
+                _feedRefreshErrors.Remove(feed.Id);
+            }
+
+            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
+            await ReloadArticlesAsync(cancellationToken);
+            ShowStatus(
+                _localization.Format("FeedUpdated", normalizedName),
+                StatusNotificationSeverity.Success);
+        }
+        catch (Exception exception)
+        {
+            ShowStatus(
+                _localization.Format("FeedUpdateFailed", exception.Message),
+                StatusNotificationSeverity.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     public async Task RenameFeedGroupAsync(
         FeedGroup group,
         string name,
@@ -896,6 +966,7 @@ public sealed partial class MainViewModel : ObservableObject
             .ToDictionary(item => item.Group!.Id, item => item.IsExpanded);
         var actionLabels = new FeedNavigationItem.ActionLabels(
             _localization.GetString("RefreshFeed"),
+            _localization.GetString("EditFeed"),
             _localization.GetString("ChangeGroup"),
             _localization.GetString("Remove"),
             _localization.GetString("RenameGroup"),

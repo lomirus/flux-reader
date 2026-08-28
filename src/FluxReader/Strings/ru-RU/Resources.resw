@@ -37,6 +37,11 @@
   <data name="OpenInBrowser" xml:space="preserve"><value>Открыть в браузере</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>Отметить как непрочитанное</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>Адрес RSS- или Atom-ленты</value></data>
+  <data name="EditFeed" xml:space="preserve"><value>Изменить ленту</value></data>
+  <data name="FeedName" xml:space="preserve"><value>Название ленты</value></data>
+  <data name="InvalidFeedName" xml:space="preserve"><value>Введите название ленты.</value></data>
+  <data name="FeedUpdated" xml:space="preserve"><value>Лента «{0}» обновлена.</value></data>
+  <data name="FeedUpdateFailed" xml:space="preserve"><value>Не удалось обновить ленту: {0}</value></data>
   <data name="Add" xml:space="preserve"><value>Добавить</value></data>
   <data name="Cancel" xml:space="preserve"><value>Отмена</value></data>
   <data name="Close" xml:space="preserve"><value>Закрыть</value></data>
@@ -86,6 +91,7 @@
   <data name="NotificationUnavailable" xml:space="preserve"><value>Уведомления Windows недоступны. Подробности записаны в notifications.log; это не влияет на чтение и обновление.</value></data>
   <data name="InitializationFailed" xml:space="preserve"><value>Не удалось выполнить инициализацию: {0}</value></data>
   <data name="InvalidFeedAddress" xml:space="preserve"><value>Введите допустимый адрес HTTP- или HTTPS-ленты.</value></data>
+  <data name="FeedAddressAlreadySubscribed" xml:space="preserve"><value>Этот адрес уже используется другой лентой.</value></data>
   <data name="SubscribedToFeed" xml:space="preserve"><value>Вы подписались на «{0}».</value></data>
   <data name="AddFeedFailed" xml:space="preserve"><value>Не удалось добавить ленту: {0}</value></data>
   <data name="AddFeedFirst" xml:space="preserve"><value>Сначала добавьте RSS- или Atom-ленту.</value></data>

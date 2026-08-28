@@ -361,7 +361,6 @@ public sealed class RssRepository
                 command.Transaction = (SqliteTransaction)transaction;
                 command.CommandText = """
                     UPDATE feeds SET
-                        title = $title,
                         site_url = $site_url,
                         icon_url = $icon_url,
                         description = $description,
@@ -371,7 +370,6 @@ public sealed class RssRepository
                     WHERE id = $id;
                     """;
                 command.Parameters.AddWithValue("$id", feed.Id);
-                command.Parameters.AddWithValue("$title", parsedFeed.Title);
                 command.Parameters.AddWithValue("$site_url", parsedFeed.SiteUri?.AbsoluteUri ?? string.Empty);
                 command.Parameters.AddWithValue("$icon_url", parsedFeed.IconUri?.AbsoluteUri ?? string.Empty);
                 command.Parameters.AddWithValue("$description", parsedFeed.Description);
@@ -389,6 +387,53 @@ public sealed class RssRepository
                 (SqliteTransaction)transaction);
             await transaction.CommitAsync(cancellationToken);
             return inserted;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<bool> UpdateFeedSubscriptionAsync(
+        long feedId,
+        string title,
+        string url,
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                UPDATE feeds SET
+                    url = $url,
+                    title = $title,
+                    site_url = CASE WHEN url COLLATE BINARY = $url THEN site_url ELSE '' END,
+                    icon_url = CASE WHEN url COLLATE BINARY = $url THEN icon_url ELSE '' END,
+                    description = CASE WHEN url COLLATE BINARY = $url THEN description ELSE '' END,
+                    last_refreshed_utc = CASE
+                        WHEN url COLLATE BINARY = $url THEN last_refreshed_utc
+                        ELSE NULL
+                    END,
+                    etag = CASE WHEN url COLLATE BINARY = $url THEN etag ELSE NULL END,
+                    last_modified_utc = CASE
+                        WHEN url COLLATE BINARY = $url THEN last_modified_utc
+                        ELSE NULL
+                    END
+                WHERE id = $id
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM feeds AS other
+                      WHERE other.id <> $id
+                        AND other.url = $url COLLATE NOCASE
+                  )
+                RETURNING id;
+                """;
+            command.Parameters.AddWithValue("$id", feedId);
+            command.Parameters.AddWithValue("$title", title);
+            command.Parameters.AddWithValue("$url", url);
+            return await command.ExecuteScalarAsync(cancellationToken) is not null;
         }
         finally
         {

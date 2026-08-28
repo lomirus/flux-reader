@@ -17,6 +17,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
         Feed = feed;
         IsChild = isChild;
         RefreshActionText = labels.RefreshFeed;
+        EditActionText = labels.EditFeed;
         PrimaryActionText = labels.ChangeGroup;
         RemoveActionText = labels.RemoveFeed;
         _refreshFailedText = labels.RefreshFailed;
@@ -27,6 +28,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
     {
         Group = group;
         RefreshActionText = labels.RefreshFeed;
+        EditActionText = labels.EditFeed;
         PrimaryActionText = labels.RenameGroup;
         RemoveActionText = labels.RemoveGroup;
         _refreshFailedText = labels.RefreshFailed;
@@ -45,6 +47,8 @@ public sealed partial class FeedNavigationItem : ObservableObject
     public ObservableCollection<FeedNavigationItem> Children { get; } = [];
 
     public string RefreshActionText { get; }
+
+    public string EditActionText { get; }
 
     public string PrimaryActionText { get; }
 
@@ -100,6 +104,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
 
     public sealed record ActionLabels(
         string RefreshFeed,
+        string EditFeed,
         string ChangeGroup,
         string RemoveFeed,
         string RenameGroup,
