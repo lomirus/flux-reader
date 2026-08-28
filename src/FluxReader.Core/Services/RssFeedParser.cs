@@ -92,8 +92,9 @@ public sealed class RssFeedParser
         var summaryMarkup = FirstValue(item, "description", "summary");
         var contentMarkup = FirstValue(item, "encoded", "content");
         var summary = HtmlTextConverter.ToPlainText(summaryMarkup, 2_000);
-        var content = HtmlTextConverter.ToPlainText(
-            string.IsNullOrWhiteSpace(contentMarkup) ? summaryMarkup : contentMarkup);
+        var content = ArticleContentParser.Normalize(
+            string.IsNullOrWhiteSpace(contentMarkup) ? summaryMarkup : contentMarkup,
+            link ?? sourceUri);
         var externalId = FirstValue(item, "guid", "id");
 
         return new ParsedArticle(
@@ -129,8 +130,9 @@ public sealed class RssFeedParser
         var summaryMarkup = Value(entry, "summary");
         var contentMarkup = Value(entry, "content");
         var summary = HtmlTextConverter.ToPlainText(summaryMarkup, 2_000);
-        var content = HtmlTextConverter.ToPlainText(
-            string.IsNullOrWhiteSpace(contentMarkup) ? summaryMarkup : contentMarkup);
+        var content = ArticleContentParser.Normalize(
+            string.IsNullOrWhiteSpace(contentMarkup) ? summaryMarkup : contentMarkup,
+            link ?? sourceUri);
 
         return new ParsedArticle(
             BuildExternalId(Value(entry, "id"), link, title, publishedAt),

@@ -98,6 +98,67 @@ public sealed class RssFeedParserTests
     }
 
     [TestMethod]
+    public async Task ParseAsync_Atom_PreservesImageFromHtmlContent()
+    {
+        const string xml = """
+            <feed xmlns="http://www.w3.org/2005/Atom">
+              <title>Servo Blog</title>
+              <entry>
+                <id>https://servo.org/blog/example/</id>
+                <title>Article with image</title>
+                <link href="https://servo.org/blog/example/" />
+                <updated>2026-07-31T00:00:00Z</updated>
+                <content type="html">&lt;p&gt;Before&lt;/p&gt;&lt;figure&gt;&lt;a href=&quot;https://servo.org/img/blog/example.png&quot;&gt;&lt;img src=&quot;https://servo.org/img/blog/example.png&quot; alt=&quot;Servo screenshot&quot; /&gt;&lt;/a&gt;&lt;/figure&gt;&lt;p&gt;After&lt;/p&gt;</content>
+              </entry>
+            </feed>
+            """;
+
+        var result = await ParseAsync(xml);
+        var blocks = ArticleContentParser.Parse(result.Articles[0].Content);
+
+        Assert.HasCount(3, blocks);
+        Assert.AreEqual("Before", blocks[0].Text);
+        Assert.AreEqual(new Uri("https://servo.org/img/blog/example.png"), blocks[1].ImageUri);
+        Assert.AreEqual("Servo screenshot", blocks[1].Text);
+        Assert.AreEqual("After", blocks[2].Text);
+    }
+
+    [TestMethod]
+    public async Task ParseAsync_Rss2_PreservesArticleImagesAsSafeContent()
+    {
+        const string xml = """
+            <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+              <channel>
+                <title>Example Feed</title>
+                <item>
+                  <guid>article-with-images</guid>
+                  <title>Images</title>
+                  <link>https://example.com/posts/228</link>
+                  <content:encoded><![CDATA[
+                    <p>Before</p>
+                    <img src="./cover.png" alt="Cover">
+                    <p>![](./All-in-One Clipboard Promotion.png)</p>
+                    <img src="javascript:alert(1)" alt="Unsafe">
+                  ]]></content:encoded>
+                </item>
+              </channel>
+            </rss>
+            """;
+
+        var result = await ParseAsync(xml);
+        var article = result.Articles[0];
+        var blocks = ArticleContentParser.Parse(article.Content);
+
+        Assert.HasCount(3, blocks);
+        Assert.AreEqual("Before", blocks[0].Text);
+        Assert.AreEqual(new Uri("https://example.com/posts/cover.png"), blocks[1].ImageUri);
+        Assert.AreEqual(
+            new Uri("https://example.com/posts/All-in-One%20Clipboard%20Promotion.png"),
+            blocks[2].ImageUri);
+        Assert.IsFalse(article.Content.Contains("javascript:", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
     public async Task ParseAsync_EmptyValidFeed_IsAccepted()
     {
         const string xml = """

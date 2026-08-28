@@ -96,6 +96,22 @@ public sealed partial class MainWindow : Window
         SetFeedIconFallbackVisibility(sender, isImageLoaded: false);
     }
 
+    private void ArticleBodyImage_ImageOpened(object sender, RoutedEventArgs e)
+    {
+        if (sender is Image { Tag: ArticleBodyBlock block })
+        {
+            block.HasImageFailed = false;
+        }
+    }
+
+    private void ArticleBodyImage_ImageFailed(object sender, ExceptionRoutedEventArgs e)
+    {
+        if (sender is Image { Tag: ArticleBodyBlock block })
+        {
+            block.HasImageFailed = true;
+        }
+    }
+
     private static void SetFeedIconFallbackVisibility(object sender, bool isImageLoaded)
     {
         if (sender is not Image image)

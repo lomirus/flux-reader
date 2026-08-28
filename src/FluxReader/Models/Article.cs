@@ -1,5 +1,6 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using FluxReader.Core.Services;
 using Microsoft.UI.Xaml;
 
 namespace FluxReader.Models;
@@ -7,6 +8,7 @@ namespace FluxReader.Models;
 public sealed partial class Article : ObservableObject
 {
     private const int MaximumListPreviewLength = 256;
+    private IReadOnlyList<ArticleBodyBlock>? _contentBlocks;
 
     public long Id { get; init; }
 
@@ -48,11 +50,17 @@ public sealed partial class Article : ObservableObject
 
     public string DisplayContent => string.IsNullOrWhiteSpace(Content) ? Summary : Content;
 
+    public IReadOnlyList<ArticleBodyBlock> ContentBlocks => _contentBlocks ??=
+        ArticleContentParser.Parse(DisplayContent, TryCreateArticleUri())
+            .Select(ArticleBodyBlock.From)
+            .ToArray();
+
     public string ListPreview
     {
         get
         {
             var preview = string.IsNullOrWhiteSpace(Summary) ? Content : Summary;
+            preview = ArticleContentParser.ToPlainText(preview, TryCreateArticleUri());
             return preview.Length <= MaximumListPreviewLength
                 ? preview
                 : string.Concat(preview.AsSpan(0, MaximumListPreviewLength), "…");
@@ -66,4 +74,10 @@ public sealed partial class Article : ObservableObject
         OnPropertyChanged(nameof(PublishedDisplay));
         OnPropertyChanged(nameof(Byline));
     }
+
+    private Uri? TryCreateArticleUri() =>
+        Uri.TryCreate(Link, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+            ? uri
+            : null;
 }
