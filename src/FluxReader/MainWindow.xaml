@@ -506,6 +506,7 @@
                             Grid.Column="1"
                             FontSize="30"
                             FontWeight="SemiBold"
+                            IsTextSelectionEnabled="True"
                             MaxLines="4"
                             Text="{Binding SelectedArticle.Title}"
                             TextWrapping="Wrap" />
