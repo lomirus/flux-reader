@@ -456,10 +456,9 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var tasks = feeds.Select(feed => RefreshFeedCoreAsync(feed, cancellationToken));
             var outcomes = await Task.WhenAll(tasks);
-            var newTitles = outcomes
+            var newArticleCount = outcomes
                 .Where(outcome => outcome.Result is not null)
-                .SelectMany(outcome => outcome.Result!.NewArticleTitles)
-                .ToArray();
+                .Sum(outcome => outcome.Result!.NewArticles.Count);
             var failures = outcomes
                 .Where(outcome => outcome.Error is not null)
                 .Select(outcome => new StatusNotificationDetail(
@@ -478,8 +477,7 @@ public sealed partial class MainViewModel : ObservableObject
                          .OfType<FeedRefreshResult>())
             {
                 await _notifications.ShowNewArticlesAsync(
-                    result.FeedTitle,
-                    result.NewArticleTitles,
+                    result.NewArticles,
                     result.FeedIconUrl,
                     cancellationToken);
             }
@@ -495,8 +493,8 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 ShowStatus(
                     failures.Length == 0
-                        ? _localization.FormatRefreshComplete(newTitles.Length)
-                        : _localization.Format("RefreshPartialFailureSummary", newTitles.Length, failures.Length),
+                        ? _localization.FormatRefreshComplete(newArticleCount)
+                        : _localization.Format("RefreshPartialFailureSummary", newArticleCount, failures.Length),
                     failures.Length == 0
                         ? StatusNotificationSeverity.Success
                         : StatusNotificationSeverity.Warning,
@@ -514,7 +512,7 @@ public sealed partial class MainViewModel : ObservableObject
                 new
                 {
                     feedCount = feeds.Count,
-                    newArticleCount = newTitles.Length,
+                    newArticleCount,
                     failureCount = failures.Length,
                     elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
                 });
@@ -1101,7 +1099,7 @@ public sealed partial class MainViewModel : ObservableObject
                     failureCount = outcomes.Count(outcome => outcome.Error is not null),
                     newArticleCount = outcomes
                         .Where(outcome => outcome.Result is not null)
-                        .Sum(outcome => outcome.Result!.NewArticleTitles.Count),
+                        .Sum(outcome => outcome.Result!.NewArticles.Count),
                     elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
                 });
         }

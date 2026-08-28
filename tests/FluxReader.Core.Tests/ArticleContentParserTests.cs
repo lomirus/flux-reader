@@ -59,4 +59,28 @@ public sealed class ArticleContentParserTests
         Assert.AreEqual(ArticleContentBlockKind.Text, blocks[0].Kind);
         StringAssert.Contains(blocks[0].Text, "file:///C:/secret.png");
     }
+
+    [TestMethod]
+    public void CreatePreviewText_PrefersSummaryAndConvertsItToPlainText()
+    {
+        var preview = ArticleContentParser.CreatePreviewText(
+            "<p>Summary <strong>text</strong></p>",
+            "Content text",
+            null,
+            256);
+
+        Assert.AreEqual("Summary text", preview);
+    }
+
+    [TestMethod]
+    public void CreatePreviewText_UsesContentWhenSummaryIsEmptyAndLimitsLength()
+    {
+        var preview = ArticleContentParser.CreatePreviewText(
+            "  ",
+            "Content text",
+            null,
+            7);
+
+        Assert.AreEqual("Content…", preview);
+    }
 }

@@ -344,7 +344,7 @@ public sealed class RssRepository
         }
     }
 
-    public async Task<IReadOnlyList<string>> UpdateFeedAsync(
+    public async Task<IReadOnlyList<ParsedArticle>> UpdateFeedAsync(
         Feed feed,
         ParsedFeed parsedFeed,
         string? etag,
@@ -662,14 +662,14 @@ public sealed class RssRepository
         }
     }
 
-    private async Task<List<string>> UpsertArticlesCoreAsync(
+    private async Task<List<ParsedArticle>> UpsertArticlesCoreAsync(
         SqliteConnection connection,
         long feedId,
         IReadOnlyList<ParsedArticle> articles,
         CancellationToken cancellationToken,
         SqliteTransaction? transaction = null)
     {
-        var insertedTitles = new List<string>();
+        var insertedArticles = new List<ParsedArticle>();
         foreach (var article in articles)
         {
             await using var command = connection.CreateCommand();
@@ -696,11 +696,11 @@ public sealed class RssRepository
 
             if (await command.ExecuteScalarAsync(cancellationToken) is not null)
             {
-                insertedTitles.Add(article.Title);
+                insertedArticles.Add(article);
             }
         }
 
-        return insertedTitles;
+        return insertedArticles;
     }
 
     private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken)

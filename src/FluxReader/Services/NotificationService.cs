@@ -1,3 +1,5 @@
+using FluxReader.Core.Models;
+using FluxReader.Core.Services;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 
@@ -5,6 +7,7 @@ namespace FluxReader.Services;
 
 public sealed class NotificationService : IDisposable
 {
+    private const int MaximumArticleDescriptionLength = 256;
     private readonly NotificationIconCache _iconCache;
     private readonly string _logPath;
     private readonly object _logSync = new();
@@ -63,15 +66,14 @@ public sealed class NotificationService : IDisposable
     }
 
     public async Task ShowNewArticlesAsync(
-        string feedTitle,
-        IReadOnlyList<string> articleTitles,
+        IReadOnlyList<ParsedArticle> articles,
         string? feedIconUrl,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(articleTitles);
+        ArgumentNullException.ThrowIfNull(articles);
 
         var manager = _manager;
-        if (!_registered || manager is null || articleTitles.Count == 0)
+        if (!_registered || manager is null || articles.Count == 0)
         {
             return;
         }
@@ -96,24 +98,29 @@ public sealed class NotificationService : IDisposable
             return;
         }
 
-        foreach (var articleTitle in articleTitles)
+        foreach (var article in articles)
         {
-            ShowNewArticle(manager, feedTitle, articleTitle, iconUri);
+            var description = ArticleContentParser.CreatePreviewText(
+                article.Summary,
+                article.Content,
+                article.Link,
+                MaximumArticleDescriptionLength);
+            ShowNewArticle(manager, article.Title, description, iconUri);
         }
     }
 
     private void ShowNewArticle(
         AppNotificationManager manager,
-        string feedTitle,
         string articleTitle,
+        string articleDescription,
         Uri? iconUri)
     {
         try
         {
             var builder = new AppNotificationBuilder()
                 .AddArgument("action", "open")
-                .AddText(feedTitle)
-                .AddText(articleTitle);
+                .AddText(articleTitle)
+                .AddText(articleDescription);
             if (iconUri is not null)
             {
                 builder.SetAppLogoOverride(iconUri);

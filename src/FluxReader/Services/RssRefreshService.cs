@@ -81,15 +81,14 @@ public sealed class RssRefreshService : IDisposable
         {
             await _repository.TouchFeedAsync(feed.Id, cancellationToken);
             return new FeedRefreshResult(
-                feed.Title,
                 feed.IconUrl,
-                Array.Empty<string>(),
+                Array.Empty<ParsedArticle>(),
                 true);
         }
 
         var parsedFeed = download.ParsedFeed
                          ?? throw new InvalidOperationException(_localization.GetString("EmptyFeedResponse"));
-        var insertedTitles = await _repository.UpdateFeedAsync(
+        var insertedArticles = await _repository.UpdateFeedAsync(
             feed,
             parsedFeed,
             download.ETag,
@@ -97,9 +96,8 @@ public sealed class RssRefreshService : IDisposable
             cancellationToken);
 
         return new FeedRefreshResult(
-            feed.Title,
             parsedFeed.IconUri?.AbsoluteUri ?? string.Empty,
-            insertedTitles,
+            insertedArticles,
             false);
     }
 
@@ -225,7 +223,6 @@ public sealed class RssRefreshService : IDisposable
 }
 
 public sealed record FeedRefreshResult(
-    string FeedTitle,
     string FeedIconUrl,
-    IReadOnlyList<string> NewArticleTitles,
+    IReadOnlyList<ParsedArticle> NewArticles,
     bool NotModified);

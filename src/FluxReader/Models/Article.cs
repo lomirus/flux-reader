@@ -80,16 +80,11 @@ public sealed partial class Article : ObservableObject
     public bool HasMaterializedContentBlocks => _contentBlocks is not null;
 
     public string ListPreview
-    {
-        get
-        {
-            var preview = string.IsNullOrWhiteSpace(Summary) ? Content : Summary;
-            preview = ArticleContentParser.ToPlainText(preview, TryCreateArticleUri());
-            return preview.Length <= MaximumListPreviewLength
-                ? preview
-                : string.Concat(preview.AsSpan(0, MaximumListPreviewLength), "…");
-        }
-    }
+        => ArticleContentParser.CreatePreviewText(
+            Summary,
+            Content,
+            TryCreateArticleUri(),
+            MaximumListPreviewLength);
 
     public string UnreadGlyph => IsRead ? string.Empty : "●";
 

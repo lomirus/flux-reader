@@ -64,6 +64,20 @@ public static partial class ArticleContentParser
         return string.Join("\n\n", parts);
     }
 
+    public static string CreatePreviewText(
+        string? summary,
+        string? content,
+        Uri? baseUri,
+        int maximumLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumLength);
+        var source = string.IsNullOrWhiteSpace(summary) ? content : summary;
+        var preview = ToPlainText(source, baseUri);
+        return preview.Length <= maximumLength
+            ? preview
+            : string.Concat(preview.AsSpan(0, maximumLength), "…");
+    }
+
     private static string NormalizeHtmlImage(Match match, Uri? baseUri)
     {
         var attributes = match.Groups["attributes"].Value;
