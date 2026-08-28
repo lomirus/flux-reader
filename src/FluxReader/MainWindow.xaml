@@ -419,36 +419,48 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <TextBlock
                                     Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                     Text="{x:Bind UnreadGlyph, Mode=OneWay}" />
-                                <StackPanel Grid.Column="1" Spacing="4">
-                                    <TextBlock
-                                        FontWeight="SemiBold"
-                                        MaxLines="2"
-                                        Text="{x:Bind Title}"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        Opacity="0.65"
-                                        Text="{x:Bind FeedTitle}"
-                                        TextTrimming="CharacterEllipsis"
-                                        Visibility="{x:Bind FeedTitleVisibility}" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        MaxLines="2"
-                                        Opacity="0.6"
-                                        Text="{x:Bind ListPreview}"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="5">
-                                    <TextBlock
-                                        FontSize="11"
-                                        Opacity="0.55"
-                                        Text="{x:Bind PublishedDisplay}" />
-                                </StackPanel>
+                                <TextBlock
+                                    Grid.Column="1"
+                                    FontWeight="SemiBold"
+                                    MaxLines="2"
+                                    Text="{x:Bind Title}"
+                                    TextTrimming="CharacterEllipsis"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    HorizontalAlignment="Right"
+                                    FontSize="11"
+                                    Opacity="0.55"
+                                    Text="{x:Bind PublishedDisplay}" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Grid.ColumnSpan="2"
+                                    Margin="0,4,0,0"
+                                    FontSize="12"
+                                    Opacity="0.65"
+                                    Text="{x:Bind FeedTitle}"
+                                    TextTrimming="CharacterEllipsis"
+                                    Visibility="{x:Bind FeedTitleVisibility}" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Grid.ColumnSpan="2"
+                                    Margin="0,4,0,0"
+                                    FontSize="12"
+                                    MaxLines="2"
+                                    Opacity="0.6"
+                                    Text="{x:Bind ListPreview}"
+                                    TextTrimming="CharacterEllipsis"
+                                    TextWrapping="Wrap" />
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
