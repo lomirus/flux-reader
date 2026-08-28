@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Text;
 using System.Xml;
 using CommunityToolkit.WinUI.Behaviors;
 using FluxReader.Core.Services;
@@ -148,10 +147,11 @@ public sealed partial class MainWindow : Window
         var renderVersion = ++_articleRenderVersion;
         if (article is null)
         {
+            HideArticleContent();
             return;
         }
 
-        ArticleWebView.Visibility = Visibility.Collapsed;
+        ShowArticleLoading();
 
         try
         {
@@ -170,10 +170,7 @@ public sealed partial class MainWindow : Window
                 article.Id,
                 article.FeedId);
             _pendingArticleNavigations.Enqueue(navigation);
-            var encodedDocument = Convert.ToBase64String(Encoding.UTF8.GetBytes(document));
-            var articleUri = $"data:text/html;base64,{encodedDocument}";
-            ArticleWebView.Visibility = Visibility.Visible;
-            ArticleWebView.CoreWebView2.Navigate(articleUri);
+            ArticleWebView.NavigateToString(document);
         }
         catch (Exception exception)
         {
@@ -194,7 +191,7 @@ public sealed partial class MainWindow : Window
                         Path.Combine(AppContext.BaseDirectory, "WebView2Loader.dll"))
                 });
             _pendingArticleNavigations.Clear();
-            ArticleWebView.Visibility = Visibility.Collapsed;
+            HideArticleContent();
         }
     }
 
@@ -265,10 +262,21 @@ public sealed partial class MainWindow : Window
         WebView2 sender,
         CoreWebView2NavigationStartingEventArgs args)
     {
-        if (args.Uri.StartsWith("data:text/html;base64,", StringComparison.OrdinalIgnoreCase) &&
-            _pendingArticleNavigations.TryDequeue(out var navigation))
+        // NavigateToString does not expose its navigation ID. The request is
+        // enqueued immediately before the call, so the next starting navigation
+        // is the reliable point at which to associate the ID.
+        if (_pendingArticleNavigations.TryDequeue(out var navigation))
         {
             _articleNavigations[args.NavigationId] = navigation;
+            DiagnosticLog.Information(
+                "article.html_navigation_started",
+                new
+                    {
+                        args.NavigationId,
+                        navigation.RenderVersion,
+                        navigation.ArticleId,
+                        navigation.FeedId
+                    });
             return;
         }
 
@@ -290,19 +298,43 @@ public sealed partial class MainWindow : Window
         WebView2 sender,
         CoreWebView2NavigationCompletedEventArgs args)
     {
-        if (!_articleNavigations.Remove(args.NavigationId, out var navigation) ||
-            navigation.RenderVersion != _articleRenderVersion)
+        if (!_articleNavigations.Remove(args.NavigationId, out var navigation))
+        {
+            DiagnosticLog.Warning(
+                "article.html_navigation_completed_untracked",
+                new
+                {
+                    args.NavigationId,
+                    args.IsSuccess,
+                    webErrorStatus = args.WebErrorStatus.ToString()
+                });
+            return;
+        }
+
+        DiagnosticLog.Information(
+            "article.html_navigation_completed",
+            new
+            {
+                args.NavigationId,
+                args.IsSuccess,
+                navigation.RenderVersion,
+                currentRenderVersion = _articleRenderVersion,
+                navigation.ArticleId,
+                navigation.FeedId,
+                webErrorStatus = args.WebErrorStatus.ToString()
+            });
+        if (navigation.RenderVersion != _articleRenderVersion)
         {
             return;
         }
 
         if (args.IsSuccess)
         {
-            ArticleWebView.Visibility = Visibility.Visible;
+            ShowArticleContent();
             return;
         }
 
-        ArticleWebView.Visibility = Visibility.Collapsed;
+        HideArticleContent();
         DiagnosticLog.Warning(
             "article.html_navigation_failed",
             new
@@ -543,6 +575,7 @@ public sealed partial class MainWindow : Window
         if (e.PropertyName == nameof(MainViewModel.SelectedArticle))
         {
             var article = ViewModel.SelectedArticle;
+            var renderTask = RenderSelectedArticleAsync();
             DiagnosticLog.MemorySnapshot(
                 "article.selection_changed",
                 new
@@ -552,7 +585,7 @@ public sealed partial class MainWindow : Window
                     contentCharacterCount = article?.DisplayContent.Length,
                     containsHtml = ArticleContentParser.ContainsHtmlMarkup(article?.DisplayContent)
                 });
-            await RenderSelectedArticleAsync();
+            await renderTask;
         }
     }
 
@@ -1223,8 +1256,36 @@ public sealed partial class MainWindow : Window
 
         EmptyArticleTitleText.Text = localization.GetString("SelectArticle");
         EmptyArticleDescriptionText.Text = localization.GetString("ArticleContentHint");
+        var loadingArticle = localization.GetString("LoadingArticle");
+        ArticleLoadingText.Text = loadingArticle;
+        AutomationProperties.SetName(ArticleLoadingProgressRing, loadingArticle);
         OpenInBrowserText.Text = localization.GetString("OpenInBrowser");
         MarkUnreadText.Text = localization.GetString("MarkUnread");
+    }
+
+    private void ShowArticleLoading()
+    {
+        // Keep WebView2 rendered while it navigates. The opaque loading layer
+        // covers the stale document without throttling the browser process.
+        ArticleWebView.Visibility = Visibility.Visible;
+        ArticleWebView.IsHitTestVisible = false;
+        ArticleLoadingView.Visibility = Visibility.Visible;
+        ArticleLoadingProgressRing.IsActive = true;
+    }
+
+    private void ShowArticleContent()
+    {
+        ArticleLoadingProgressRing.IsActive = false;
+        ArticleLoadingView.Visibility = Visibility.Collapsed;
+        ArticleWebView.IsHitTestVisible = true;
+    }
+
+    private void HideArticleContent()
+    {
+        ArticleLoadingProgressRing.IsActive = false;
+        ArticleLoadingView.Visibility = Visibility.Collapsed;
+        ArticleWebView.IsHitTestVisible = false;
+        ArticleWebView.Visibility = Visibility.Collapsed;
     }
 
     private void UpdateRefreshButtonToolTip()

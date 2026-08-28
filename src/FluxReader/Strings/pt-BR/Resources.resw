@@ -35,6 +35,7 @@
   <data name="ResizePaneTooltip" xml:space="preserve"><value>Arraste para redimensionar; clique duas vezes para redefinir</value></data>
   <data name="SelectArticle" xml:space="preserve"><value>Selecione um artigo</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>O conteúdo do artigo será exibido aqui</value></data>
+  <data name="LoadingArticle" xml:space="preserve"><value>Carregando artigo…</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>Abrir no navegador</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>Marcar como não lido</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>Endereço RSS ou Atom</value></data>

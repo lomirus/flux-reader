@@ -35,6 +35,7 @@
   <data name="ResizePaneTooltip" xml:space="preserve"><value>拖曳調整寬度；按兩下還原預設值</value></data>
   <data name="SelectArticle" xml:space="preserve"><value>選取一篇文章</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>文章內容會顯示在這裡</value></data>
+  <data name="LoadingArticle" xml:space="preserve"><value>正在載入文章…</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>在瀏覽器中開啟</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>標示為未讀</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS 或 Atom 網址</value></data>

@@ -566,10 +566,32 @@
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <WebView2
-                        x:Name="ArticleWebView"
-                        Grid.Row="3"
-                        Visibility="Collapsed" />
+                    <Grid Grid.Row="3">
+                        <WebView2
+                            x:Name="ArticleWebView"
+                            IsHitTestVisible="False"
+                            Visibility="Collapsed" />
+                        <Grid
+                            x:Name="ArticleLoadingView"
+                            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                            Visibility="Collapsed">
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="12">
+                                <ProgressRing
+                                    x:Name="ArticleLoadingProgressRing"
+                                    Width="32"
+                                    Height="32"
+                                    HorizontalAlignment="Center"
+                                    IsActive="False" />
+                                <TextBlock
+                                    x:Name="ArticleLoadingText"
+                                    HorizontalAlignment="Center"
+                                    Opacity="0.65" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
                 </Grid>
             </Grid>
         </Grid>

@@ -35,6 +35,7 @@
   <data name="ResizePaneTooltip" xml:space="preserve"><value>Zum Skalieren ziehen; zum Zurücksetzen doppelklicken</value></data>
   <data name="SelectArticle" xml:space="preserve"><value>Artikel auswählen</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>Der Artikelinhalt wird hier angezeigt</value></data>
+  <data name="LoadingArticle" xml:space="preserve"><value>Artikel wird geladen…</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>Im Browser öffnen</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>Als ungelesen markieren</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS- oder Atom-Adresse</value></data>

@@ -35,6 +35,7 @@
   <data name="ResizePaneTooltip" xml:space="preserve"><value>Перетащите, чтобы изменить размер; дважды щёлкните, чтобы сбросить</value></data>
   <data name="SelectArticle" xml:space="preserve"><value>Выберите статью</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>Здесь появится содержимое статьи</value></data>
+  <data name="LoadingArticle" xml:space="preserve"><value>Загрузка статьи…</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>Открыть в браузере</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>Отметить как непрочитанное</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>Адрес RSS- или Atom-ленты</value></data>

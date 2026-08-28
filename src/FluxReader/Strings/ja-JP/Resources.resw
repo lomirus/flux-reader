@@ -35,6 +35,7 @@
   <data name="ResizePaneTooltip" xml:space="preserve"><value>ドラッグしてサイズを変更、ダブルクリックしてリセット</value></data>
   <data name="SelectArticle" xml:space="preserve"><value>記事を選択してください</value></data>
   <data name="ArticleContentHint" xml:space="preserve"><value>記事の内容がここに表示されます</value></data>
+  <data name="LoadingArticle" xml:space="preserve"><value>記事を読み込んでいます…</value></data>
   <data name="OpenInBrowser" xml:space="preserve"><value>ブラウザーで開く</value></data>
   <data name="MarkUnread" xml:space="preserve"><value>未読にする</value></data>
   <data name="FeedAddress" xml:space="preserve"><value>RSS または Atom のアドレス</value></data>
