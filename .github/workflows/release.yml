@@ -30,10 +30,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
           cache: true
@@ -58,10 +58,10 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
           cache: true
@@ -71,7 +71,7 @@ jobs:
             Directory.Packages.props
 
       - name: Cache installer prerequisites
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: artifacts/cache/prerequisites
           key: installer-prerequisites-${{ runner.os }}-${{ matrix.architecture }}-${{ hashFiles('scripts/Build-Installer.ps1') }}
@@ -83,7 +83,7 @@ jobs:
         run: ./scripts/Build-Installer.ps1 -Version ${{ needs.validate_version.outputs.version }} -Architecture ${{ matrix.architecture }}
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: FluxReader-${{ matrix.architecture }}
           path: artifacts/installers/FluxReaderSetup-*.exe
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download installers
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: FluxReader-*
           path: artifacts
