@@ -26,7 +26,9 @@ public static partial class HtmlTextConverter
     [GeneratedRegex(@"<(script|style)\b[^>]*>.*?</\1\s*>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex ScriptAndStyleRegex();
 
-    [GeneratedRegex(@"<(br\s*/?|/p|/div|/li|/h[1-6])\s*>", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(
+        @"<(br\s*/?|/(?:p|div|li|h[1-6]|pre|blockquote|section|article|tr|table|ul|ol|dl|dt|dd|figure|figcaption))\s*>",
+        RegexOptions.IgnoreCase)]
     private static partial Regex BlockBreakRegex();
 
     [GeneratedRegex(@"<[^>]+>", RegexOptions.Singleline)]

@@ -37,7 +37,7 @@ public sealed class RssFeedParserTests
         Assert.HasCount(1, result.Articles);
         Assert.AreEqual("Hello & WinUI", result.Articles[0].Title);
         Assert.AreEqual("A short summary.", result.Articles[0].Summary);
-        Assert.AreEqual("Full article text.", result.Articles[0].Content);
+        Assert.AreEqual("<p>Full <em>article</em> text.</p>", result.Articles[0].Content);
     }
 
     [TestMethod]
@@ -94,7 +94,7 @@ public sealed class RssFeedParserTests
 
         Assert.HasCount(1, result.Articles);
         Assert.AreEqual(new Uri("https://example.com/posts/1"), result.Articles[0].Link);
-        Assert.AreEqual("Body", result.Articles[0].Content);
+        Assert.AreEqual("<p>Body</p>", result.Articles[0].Content);
     }
 
     [TestMethod]
@@ -114,13 +114,12 @@ public sealed class RssFeedParserTests
             """;
 
         var result = await ParseAsync(xml);
-        var blocks = ArticleContentParser.Parse(result.Articles[0].Content);
+        var content = result.Articles[0].Content;
 
-        Assert.HasCount(3, blocks);
-        Assert.AreEqual("Before", blocks[0].Text);
-        Assert.AreEqual(new Uri("https://servo.org/img/blog/example.png"), blocks[1].ImageUri);
-        Assert.AreEqual("Servo screenshot", blocks[1].Text);
-        Assert.AreEqual("After", blocks[2].Text);
+        StringAssert.Contains(content, "<p>Before</p>");
+        StringAssert.Contains(content, "src=\"https://servo.org/img/blog/example.png\"");
+        StringAssert.Contains(content, "alt=\"Servo screenshot\"");
+        StringAssert.Contains(content, "<p>After</p>");
     }
 
     [TestMethod]
@@ -147,15 +146,38 @@ public sealed class RssFeedParserTests
 
         var result = await ParseAsync(xml);
         var article = result.Articles[0];
-        var blocks = ArticleContentParser.Parse(article.Content);
-
-        Assert.HasCount(3, blocks);
-        Assert.AreEqual("Before", blocks[0].Text);
-        Assert.AreEqual(new Uri("https://example.com/posts/cover.png"), blocks[1].ImageUri);
-        Assert.AreEqual(
-            new Uri("https://example.com/posts/All-in-One%20Clipboard%20Promotion.png"),
-            blocks[2].ImageUri);
+        StringAssert.Contains(article.Content, "<p>Before</p>");
+        StringAssert.Contains(article.Content, "src=\"https://example.com/posts/cover.png\"");
         Assert.IsFalse(article.Content.Contains("javascript:", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public async Task ParseAsync_Atom_PreservesXhtmlStructureWithoutScripts()
+    {
+        const string xml = """
+            <feed xmlns="http://www.w3.org/2005/Atom">
+              <title>Atom Feed</title>
+              <entry>
+                <id>https://example.com/posts/1</id>
+                <link href="https://example.com/posts/1" />
+                <updated>2026-08-25T10:00:00Z</updated>
+                <content type="xhtml">
+                  <div xmlns="http://www.w3.org/1999/xhtml">
+                    <h2>Heading</h2>
+                    <pre><code>preserved()</code></pre>
+                    <script>alert(1)</script>
+                  </div>
+                </content>
+              </entry>
+            </feed>
+            """;
+
+        var result = await ParseAsync(xml);
+        var content = result.Articles[0].Content;
+
+        StringAssert.Contains(content, "<h2>Heading</h2>");
+        StringAssert.Contains(content, "<pre><code>preserved()</code></pre>");
+        Assert.IsFalse(content.Contains("<script", StringComparison.OrdinalIgnoreCase));
     }
 
     [TestMethod]

@@ -1,4 +1,3 @@
-using FluxReader.Core.Models;
 using FluxReader.Core.Services;
 
 namespace FluxReader.Core.Tests;
@@ -7,57 +6,90 @@ namespace FluxReader.Core.Tests;
 public sealed class ArticleContentParserTests
 {
     [TestMethod]
-    public void Parse_ResolvesMarkdownImageWithRelativePathAndSpaces()
+    public void PrepareHtml_PreservesSemanticArticleMarkup()
     {
-        const string content = "Before\n\n![](./All-in-One Clipboard Promotion.png)\n\nAfter";
+        const string content = """
+            <h2>Example</h2>
+            <p>Before <strong>important</strong> text.</p>
+            <pre><code>client.messages.create(
+                model="example"
+            )</code></pre>
+            <ul><li>First</li><li>Second</li></ul>
+            """;
 
-        var blocks = ArticleContentParser.Parse(
-            content,
-            new Uri("https://example.com/posts/228"));
+        var html = ArticleContentParser.PrepareHtml(content, null);
 
-        Assert.HasCount(3, blocks);
-        Assert.AreEqual(ArticleContentBlockKind.Text, blocks[0].Kind);
-        Assert.AreEqual("Before", blocks[0].Text);
-        Assert.AreEqual(ArticleContentBlockKind.Image, blocks[1].Kind);
-        Assert.AreEqual(
-            new Uri("https://example.com/posts/All-in-One%20Clipboard%20Promotion.png"),
-            blocks[1].ImageUri);
-        Assert.AreEqual("After", blocks[2].Text);
+        StringAssert.Contains(html, "<h2>Example</h2>");
+        StringAssert.Contains(html, "<strong>important</strong>");
+        StringAssert.Contains(html, "<pre><code>");
+        StringAssert.Contains(html, "model=\"example\"");
+        StringAssert.Contains(html, "<ul><li>First</li><li>Second</li></ul>");
     }
 
     [TestMethod]
-    public void Parse_ExtractsHtmlImageAndPreservesItsPosition()
+    public void PrepareHtml_RemovesActiveContentAndEventHandlers()
     {
         const string content = """
-            <p>Before</p>
-            <img src="../images/photo.png" alt="A photo">
-            <p>After</p>
+            <p onclick="alert(1)">Safe text</p>
+            <script src="https://example.com/tracker.js">alert(1)</script>
+            <iframe src="https://example.com/frame"></iframe>
+            <form action="https://example.com/submit"><input name="secret"></form>
+            <img src="javascript:alert(1)" onerror="alert(1)" alt="Unsafe">
             """;
 
-        var blocks = ArticleContentParser.Parse(
+        var html = ArticleContentParser.PrepareHtml(
+            content,
+            new Uri("https://example.com/articles/1"));
+
+        StringAssert.Contains(html, "Safe text");
+        Assert.IsFalse(html.Contains("onclick", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(html.Contains("<script", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(html.Contains("<iframe", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(html.Contains("<form", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(html.Contains("<input", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(html.Contains("javascript:", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(html.Contains("onerror", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void PrepareHtml_ResolvesRelativeLinksAndOpensExternalLinksOutsideTheDocument()
+    {
+        const string content = """
+            <a href="../guide">Guide</a>
+            <a href="#section">Section</a>
+            """;
+
+        var html = ArticleContentParser.PrepareHtml(
             content,
             new Uri("https://example.com/posts/2026/entry"));
 
-        Assert.HasCount(3, blocks);
-        Assert.AreEqual("Before", blocks[0].Text);
-        Assert.AreEqual(ArticleContentBlockKind.Image, blocks[1].Kind);
-        Assert.AreEqual("A photo", blocks[1].Text);
-        Assert.AreEqual(
-            new Uri("https://example.com/posts/images/photo.png"),
-            blocks[1].ImageUri);
-        Assert.AreEqual("After", blocks[2].Text);
+        StringAssert.Contains(html, "href=\"https://example.com/posts/guide\"");
+        StringAssert.Contains(html, "target=\"_blank\"");
+        StringAssert.Contains(html, "rel=\"noopener noreferrer\"");
+        StringAssert.Contains(html, "<a href=\"#section\">Section</a>");
     }
 
     [TestMethod]
-    public void Parse_DoesNotLoadNonHttpImage()
+    public void PrepareHtml_PromotesLazyImageSource()
     {
-        const string content = "Before ![unsafe](file:///C:/secret.png) After";
+        const string content = "<img data-src=\"./images/photo.png\" alt=\"A photo\">";
 
-        var blocks = ArticleContentParser.Parse(content);
+        var html = ArticleContentParser.PrepareHtml(
+            content,
+            new Uri("https://example.com/posts/2026/entry"));
 
-        Assert.HasCount(1, blocks);
-        Assert.AreEqual(ArticleContentBlockKind.Text, blocks[0].Kind);
-        StringAssert.Contains(blocks[0].Text, "file:///C:/secret.png");
+        StringAssert.Contains(html, "src=\"https://example.com/posts/2026/images/photo.png\"");
+        Assert.IsFalse(html.Contains("data-src", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void ToPlainText_UsesImageAlternativeText()
+    {
+        const string content = "<p>Before</p><img src=\"https://example.com/photo.png\" alt=\"A photo\"><p>After</p>";
+
+        var text = ArticleContentParser.ToPlainText(content);
+
+        Assert.AreEqual("Before\n\nA photo\nAfter", text);
     }
 
     [TestMethod]
@@ -65,7 +97,7 @@ public sealed class ArticleContentParserTests
     {
         var preview = ArticleContentParser.CreatePreviewText(
             "<p>Summary <strong>text</strong></p>",
-            "Content text",
+            "<p>Content text</p>",
             null,
             256);
 
@@ -77,10 +109,26 @@ public sealed class ArticleContentParserTests
     {
         var preview = ArticleContentParser.CreatePreviewText(
             "  ",
-            "Content text",
+            "<p>Content text</p>",
             null,
             7);
 
         Assert.AreEqual("Content…", preview);
+    }
+
+    [TestMethod]
+    public void CreateHtmlDocument_DisablesScriptsAndStylesCodeBlocks()
+    {
+        var document = ArticleHtmlDocumentBuilder.Create(
+            "<pre><code>message = client.messages.create()</code></pre>",
+            null,
+            useDarkTheme: true);
+
+        StringAssert.Contains(document, "script-src 'none'");
+        StringAssert.Contains(document, "frame-src 'none'");
+        StringAssert.Contains(document, "color-scheme: dark");
+        StringAssert.Contains(document, "background: transparent");
+        StringAssert.Contains(document, "font-family: \"Cascadia Mono\"");
+        StringAssert.Contains(document, "<pre><code>message = client.messages.create()</code></pre>");
     }
 }

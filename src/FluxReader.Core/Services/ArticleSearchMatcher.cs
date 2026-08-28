@@ -24,7 +24,7 @@ public static class ArticleSearchMatcher
         }
 
         return Contains(summary, normalizedSearchQuery) ||
-               Contains(content, normalizedSearchQuery)
+               Contains(ArticleContentParser.ToPlainText(content), normalizedSearchQuery)
             ? BodyMatchRank
             : NoMatchRank;
     }

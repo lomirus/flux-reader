@@ -1,12 +1,35 @@
 using System.Net;
 using System.Text.RegularExpressions;
-using FluxReader.Core.Models;
+using AngleSharp.Dom;
+using AngleSharp.Html.Parser;
 
 namespace FluxReader.Core.Services;
 
 public static partial class ArticleContentParser
 {
-    public static string Normalize(
+    private const string BlockedElementSelector =
+        "script, style, iframe, frame, frameset, object, embed, applet, form, input, " +
+        "button, textarea, select, option, meta, link, base, title, noscript, template";
+
+    private static readonly HashSet<string> AllowedElements = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
+        "blockquote", "br", "caption", "cite", "code", "col", "colgroup", "data",
+        "dd", "del", "details", "dfn", "div", "dl", "dt", "em", "figcaption",
+        "figure", "footer", "h1", "h2", "h3", "h4", "h5", "h6", "header",
+        "hgroup", "hr", "i", "img", "ins", "kbd", "li", "main", "mark", "ol",
+        "p", "picture", "pre", "q", "rp", "rt", "ruby", "s", "samp", "section",
+        "small", "source", "span", "strong", "sub", "summary", "sup", "table",
+        "tbody", "td", "tfoot", "th", "thead", "time", "tr", "u", "ul", "var",
+        "video", "wbr"
+    };
+
+    private static readonly HashSet<string> GlobalAttributes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "class", "dir", "id", "lang", "role", "title"
+    };
+
+    public static string PrepareHtml(
         string? value,
         Uri? baseUri,
         int maximumLength = 200_000)
@@ -17,51 +40,55 @@ public static partial class ArticleContentParser
             return string.Empty;
         }
 
-        var text = ScriptAndStyleRegex().Replace(value, string.Empty);
-        text = HtmlImageRegex().Replace(text, match => NormalizeHtmlImage(match, baseUri));
-        text = HtmlTextConverter.ToPlainText(text, int.MaxValue);
-        text = MarkdownImageRegex().Replace(text, match => NormalizeMarkdownImage(match, baseUri));
-
-        return text.Length <= maximumLength
-            ? text
-            : string.Concat(text.AsSpan(0, maximumLength), "…");
-    }
-
-    public static IReadOnlyList<ArticleContentBlock> Parse(string? value, Uri? baseUri = null)
-    {
-        var text = Normalize(value, baseUri, int.MaxValue);
-        if (text.Length == 0)
+        var source = value.Length <= maximumLength
+            ? value
+            : string.Concat(value.AsSpan(0, maximumLength), "…");
+        source = source.Trim();
+        if (!ContainsHtmlMarkup(source))
         {
-            return [];
+            return source;
         }
 
-        var blocks = new List<ArticleContentBlock>();
-        var textStart = 0;
-        foreach (Match match in MarkdownImageRegex().Matches(text))
+        var document = new HtmlParser().ParseDocument(source);
+        var body = document.Body;
+        if (body is null)
         {
-            if (!TryResolveImageUri(match.Groups["target"].Value, baseUri, out var imageUri))
+            return string.Empty;
+        }
+
+        foreach (var element in body.QuerySelectorAll(BlockedElementSelector).ToArray())
+        {
+            element.Remove();
+        }
+
+        foreach (var element in body.QuerySelectorAll("*").ToArray())
+        {
+            if (!AllowedElements.Contains(element.LocalName))
             {
+                Unwrap(element);
                 continue;
             }
 
-            AddTextBlock(blocks, text[textStart..match.Index]);
-            blocks.Add(new ArticleContentBlock(
-                ArticleContentBlockKind.Image,
-                WebUtility.HtmlDecode(match.Groups["alt"].Value).Trim(),
-                imageUri));
-            textStart = match.Index + match.Length;
+            PromoteLazyImageSource(element, baseUri);
+            SanitizeAttributes(element, baseUri);
+            ConfigureExternalLink(element);
         }
 
-        AddTextBlock(blocks, text[textStart..]);
-        return blocks;
+        return body.InnerHtml.Trim();
     }
+
+    public static bool ContainsHtmlMarkup(string? value) =>
+        !string.IsNullOrEmpty(value) && HtmlMarkupRegex().IsMatch(value);
 
     public static string ToPlainText(string? value, Uri? baseUri = null)
     {
-        var parts = Parse(value, baseUri)
-            .Select(block => block.Text)
-            .Where(text => !string.IsNullOrWhiteSpace(text));
-        return string.Join("\n\n", parts);
+        var html = PrepareHtml(value, baseUri, int.MaxValue);
+        html = HtmlImageRegex().Replace(html, match =>
+        {
+            var alt = GetAttributeValue(match.Groups["attributes"].Value, "alt");
+            return string.IsNullOrWhiteSpace(alt) ? string.Empty : $"\n{alt}\n";
+        });
+        return HtmlTextConverter.ToPlainText(html, int.MaxValue);
     }
 
     public static string CreatePreviewText(
@@ -78,64 +105,190 @@ public static partial class ArticleContentParser
             : string.Concat(preview.AsSpan(0, maximumLength), "…");
     }
 
-    private static string NormalizeHtmlImage(Match match, Uri? baseUri)
+    private static void PromoteLazyImageSource(IElement element, Uri? baseUri)
     {
-        var attributes = match.Groups["attributes"].Value;
-        var source = GetAttributeValue(attributes, "src") ??
-                     GetAttributeValue(attributes, "data-src");
-        if (!TryResolveImageUri(source, baseUri, out var imageUri))
+        if (!element.LocalName.Equals("img", StringComparison.OrdinalIgnoreCase) ||
+            element.HasAttribute("src"))
         {
-            return string.Empty;
+            return;
         }
 
-        var alternativeText = HtmlTextConverter.ToPlainText(
-            GetAttributeValue(attributes, "alt"),
-            500);
-        return $"\n\n![{EscapeAlternativeText(alternativeText)}]({GetMarkdownUri(imageUri)})\n\n";
+        var lazySource = element.GetAttribute("data-src");
+        var normalizedSource = NormalizeResourceUri(lazySource, baseUri, allowDataImage: true);
+        if (normalizedSource is not null)
+        {
+            element.SetAttribute("src", normalizedSource);
+        }
     }
 
-    private static string NormalizeMarkdownImage(Match match, Uri? baseUri)
+    private static void SanitizeAttributes(IElement element, Uri? baseUri)
     {
-        if (!TryResolveImageUri(match.Groups["target"].Value, baseUri, out var imageUri))
+        foreach (var attribute in element.Attributes.ToArray())
         {
-            return match.Value;
+            var name = attribute.Name;
+            if (!IsAttributeAllowed(element.LocalName, name))
+            {
+                element.RemoveAttribute(name);
+                continue;
+            }
+
+            if (name.Equals("href", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("cite", StringComparison.OrdinalIgnoreCase))
+            {
+                var normalizedUri = NormalizeLinkUri(attribute.Value, baseUri);
+                if (normalizedUri is null)
+                {
+                    element.RemoveAttribute(name);
+                }
+                else
+                {
+                    element.SetAttribute(name, normalizedUri);
+                }
+
+                continue;
+            }
+
+            if (name.Equals("src", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("poster", StringComparison.OrdinalIgnoreCase))
+            {
+                var normalizedUri = NormalizeResourceUri(
+                    attribute.Value,
+                    baseUri,
+                    allowDataImage: element.LocalName is "img" or "video");
+                if (normalizedUri is null)
+                {
+                    element.RemoveAttribute(name);
+                }
+                else
+                {
+                    element.SetAttribute(name, normalizedUri);
+                }
+            }
+        }
+    }
+
+    private static bool IsAttributeAllowed(string elementName, string attributeName)
+    {
+        if (GlobalAttributes.Contains(attributeName) ||
+            attributeName.StartsWith("aria-", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
         }
 
-        var alternativeText = WebUtility.HtmlDecode(match.Groups["alt"].Value).Trim();
-        return $"![{EscapeAlternativeText(alternativeText)}]({GetMarkdownUri(imageUri)})";
+        return elementName.ToLowerInvariant() switch
+        {
+            "a" => attributeName.Equals("href", StringComparison.OrdinalIgnoreCase),
+            "audio" => IsOneOf(attributeName, "controls", "loop", "muted", "preload", "src"),
+            "blockquote" or "q" or "del" or "ins" =>
+                IsOneOf(attributeName, "cite", "datetime"),
+            "col" or "colgroup" => attributeName.Equals("span", StringComparison.OrdinalIgnoreCase),
+            "data" => attributeName.Equals("value", StringComparison.OrdinalIgnoreCase),
+            "details" => attributeName.Equals("open", StringComparison.OrdinalIgnoreCase),
+            "img" => IsOneOf(attributeName, "alt", "height", "loading", "src", "width"),
+            "li" => attributeName.Equals("value", StringComparison.OrdinalIgnoreCase),
+            "ol" => IsOneOf(attributeName, "reversed", "start", "type"),
+            "source" => IsOneOf(attributeName, "media", "src", "type"),
+            "td" or "th" => IsOneOf(attributeName, "colspan", "rowspan", "scope"),
+            "time" => attributeName.Equals("datetime", StringComparison.OrdinalIgnoreCase),
+            "video" => IsOneOf(
+                attributeName,
+                "controls",
+                "height",
+                "loop",
+                "muted",
+                "playsinline",
+                "poster",
+                "preload",
+                "src",
+                "width"),
+            _ => false
+        };
     }
 
-    private static bool TryResolveImageUri(string? value, Uri? baseUri, out Uri imageUri)
+    private static void ConfigureExternalLink(IElement element)
     {
-        imageUri = null!;
+        if (!element.LocalName.Equals("a", StringComparison.OrdinalIgnoreCase) ||
+            element.GetAttribute("href") is not { } href ||
+            href.StartsWith('#'))
+        {
+            return;
+        }
+
+        element.SetAttribute("target", "_blank");
+        element.SetAttribute("rel", "noopener noreferrer");
+    }
+
+    private static bool IsOneOf(string value, params string[] candidates) =>
+        candidates.Any(candidate => value.Equals(candidate, StringComparison.OrdinalIgnoreCase));
+
+    private static string? NormalizeLinkUri(string? value, Uri? baseUri)
+    {
+        var candidate = WebUtility.HtmlDecode(value ?? string.Empty).Trim();
+        if (candidate.StartsWith('#'))
+        {
+            return candidate;
+        }
+
+        return TryResolveUri(candidate, baseUri, out var uri) &&
+               (uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+                uri.Scheme.Equals(Uri.UriSchemeMailto, StringComparison.OrdinalIgnoreCase))
+            ? uri.AbsoluteUri
+            : null;
+    }
+
+    private static string? NormalizeResourceUri(
+        string? value,
+        Uri? baseUri,
+        bool allowDataImage)
+    {
+        var candidate = WebUtility.HtmlDecode(value ?? string.Empty).Trim();
+        if (allowDataImage && SafeDataImageRegex().IsMatch(candidate))
+        {
+            return candidate;
+        }
+
+        return TryResolveUri(candidate, baseUri, out var uri) &&
+               (uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            ? uri.AbsoluteUri
+            : null;
+    }
+
+    private static bool TryResolveUri(string value, Uri? baseUri, out Uri uri)
+    {
+        uri = null!;
         if (string.IsNullOrWhiteSpace(value))
         {
             return false;
         }
 
-        var candidate = WebUtility.HtmlDecode(value).Trim();
-        if (candidate.Length >= 2 && candidate[0] == '<' && candidate[^1] == '>')
-        {
-            candidate = candidate[1..^1].Trim();
-        }
-        else
-        {
-            var titleMatch = MarkdownTitleRegex().Match(candidate);
-            if (titleMatch.Success)
-            {
-                candidate = titleMatch.Groups["target"].Value.Trim();
-            }
-        }
-
-        if (!Uri.TryCreate(baseUri, candidate, out var resolvedUri) ||
-            !resolvedUri.IsAbsoluteUri ||
-            (resolvedUri.Scheme != Uri.UriSchemeHttps && resolvedUri.Scheme != Uri.UriSchemeHttp))
+        var success = baseUri is null
+            ? Uri.TryCreate(value, UriKind.Absolute, out var resolvedUri)
+            : Uri.TryCreate(baseUri, value, out resolvedUri);
+        if (!success || resolvedUri is null)
         {
             return false;
         }
 
-        imageUri = resolvedUri;
+        uri = resolvedUri;
         return true;
+    }
+
+    private static void Unwrap(IElement element)
+    {
+        var parent = element.Parent;
+        if (parent is null)
+        {
+            return;
+        }
+
+        while (element.FirstChild is { } child)
+        {
+            parent.InsertBefore(child, element);
+        }
+
+        element.Remove();
     }
 
     private static string? GetAttributeValue(string attributes, string name)
@@ -160,24 +313,8 @@ public static partial class ArticleContentParser
         return null;
     }
 
-    private static string EscapeAlternativeText(string value) =>
-        value.Replace('[', '(').Replace(']', ')').ReplaceLineEndings(" ");
-
-    private static string GetMarkdownUri(Uri uri) =>
-        uri.AbsoluteUri.Replace("(", "%28", StringComparison.Ordinal)
-            .Replace(")", "%29", StringComparison.Ordinal);
-
-    private static void AddTextBlock(List<ArticleContentBlock> blocks, string value)
-    {
-        var text = value.Trim();
-        if (text.Length > 0)
-        {
-            blocks.Add(new ArticleContentBlock(ArticleContentBlockKind.Text, text));
-        }
-    }
-
-    [GeneratedRegex(@"<(script|style)\b[^>]*>.*?</\1\s*>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
-    private static partial Regex ScriptAndStyleRegex();
+    [GeneratedRegex(@"<\s*/?\s*[A-Za-z][^>]*>", RegexOptions.Singleline)]
+    private static partial Regex HtmlMarkupRegex();
 
     [GeneratedRegex(@"<img\b(?<attributes>[^>]*)/?\s*>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex HtmlImageRegex();
@@ -185,9 +322,6 @@ public static partial class ArticleContentParser
     [GeneratedRegex(@"(?<name>[A-Za-z_:][\w:.-]*)\s*=\s*(?:""(?<double>[^""]*)""|'(?<single>[^']*)'|(?<bare>[^\s""'=<>`]+))", RegexOptions.Singleline)]
     private static partial Regex HtmlAttributeRegex();
 
-    [GeneratedRegex(@"!\[(?<alt>[^\]\r\n]*)\]\(\s*(?<target><[^>\r\n]+>|[^)\r\n]+?)\s*\)")]
-    private static partial Regex MarkdownImageRegex();
-
-    [GeneratedRegex(@"^(?<target>.+?)\s+(?:""[^""\r\n]*""|'[^'\r\n]*')$")]
-    private static partial Regex MarkdownTitleRegex();
+    [GeneratedRegex(@"^data:image/(?:avif|gif|jpeg|png|webp);base64,[A-Za-z0-9+/=\r\n]+$", RegexOptions.IgnoreCase)]
+    private static partial Regex SafeDataImageRegex();
 }

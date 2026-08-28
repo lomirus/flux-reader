@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using System.Xml;
 using CommunityToolkit.WinUI.Behaviors;
 using FluxReader.Core.Services;
@@ -16,8 +17,10 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.Web.WebView2.Core;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.Storage.Streams;
 using WinRT.Interop;
 
 namespace FluxReader;
@@ -48,12 +51,23 @@ public sealed partial class MainWindow : Window
     };
     private readonly Storyboard _refreshIconSpinStoryboard = new();
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
+    private readonly Queue<ArticleNavigationRequest> _pendingArticleNavigations = new();
+    private readonly Dictionary<ulong, ArticleNavigationRequest> _articleNavigations = new();
     private long _statusInfoBarIsOpenCallbackToken;
     private bool _areFeedGroupSelectionIndicatorsEnabled = true;
+    private bool _articleWebViewConfigured;
+    private Task<CoreWebView2Environment>? _articleWebViewEnvironmentTask;
+    private Task? _articleWebViewInitializationTask;
+    private long _articleRenderVersion;
     private CancellationTokenSource? _articleSearchDebounce;
     private bool _isSynchronizingFeedListSelection;
     private AppSettings _settings = new();
     private bool _settingsLoaded;
+
+    private readonly record struct ArticleNavigationRequest(
+        long RenderVersion,
+        long ArticleId,
+        long FeedId);
 
     public MainWindow()
     {
@@ -64,8 +78,8 @@ public sealed partial class MainWindow : Window
         SetWindowIcon();
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        RootGrid.ActualThemeChanged += RootGrid_ActualThemeChanged;
         UpdateTitleBarButtonColors();
+        ArticleWebView.DefaultBackgroundColor = Colors.Transparent;
 
         var app = App.Current;
         ViewModel = new MainViewModel(
@@ -74,6 +88,7 @@ public sealed partial class MainWindow : Window
             app.Notifications,
             app.Localization);
         RootGrid.DataContext = ViewModel;
+        RootGrid.ActualThemeChanged += RootGrid_ActualThemeChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         ViewModel.StatusNotificationRequested += ViewModel_StatusNotificationRequested;
         ApplyLocalization();
@@ -104,45 +119,6 @@ public sealed partial class MainWindow : Window
         SetFeedIconFallbackVisibility(sender, isImageLoaded: false);
     }
 
-    private void ArticleBodyImage_ImageOpened(object sender, RoutedEventArgs e)
-    {
-        if (sender is Image { Tag: ArticleBodyBlock block })
-        {
-            block.HasImageFailed = false;
-            DiagnosticLog.MemorySnapshot(
-                "article.image_opened",
-                new
-                {
-                    articleId = ViewModel.SelectedArticle?.Id,
-                    feedId = ViewModel.SelectedArticle?.FeedId,
-                    imageHost = block.ImageUri?.Host,
-                    imageExtension = block.ImageUri is null
-                        ? null
-                        : Path.GetExtension(block.ImageUri.AbsolutePath)
-                });
-        }
-    }
-
-    private void ArticleBodyImage_ImageFailed(object sender, ExceptionRoutedEventArgs e)
-    {
-        if (sender is Image { Tag: ArticleBodyBlock block })
-        {
-            block.HasImageFailed = true;
-            DiagnosticLog.Warning(
-                "article.image_failed",
-                new
-                {
-                    articleId = ViewModel.SelectedArticle?.Id,
-                    feedId = ViewModel.SelectedArticle?.FeedId,
-                    imageHost = block.ImageUri?.Host,
-                    imageExtension = block.ImageUri is null
-                        ? null
-                        : Path.GetExtension(block.ImageUri.AbsolutePath),
-                    e.ErrorMessage
-                });
-        }
-    }
-
     private static void SetFeedIconFallbackVisibility(object sender, bool isImageLoaded)
     {
         if (sender is not Image image)
@@ -156,6 +132,207 @@ public sealed partial class MainWindow : Window
                 ? Visibility.Collapsed
                 : Visibility.Visible;
         }
+    }
+
+    private async Task RenderSelectedArticleAsync()
+    {
+        var article = ViewModel.SelectedArticle;
+        var renderVersion = ++_articleRenderVersion;
+        if (article is null)
+        {
+            return;
+        }
+
+        ArticleWebView.Visibility = Visibility.Collapsed;
+
+        try
+        {
+            await EnsureArticleWebViewInitializedAsync();
+            if (renderVersion != _articleRenderVersion)
+            {
+                return;
+            }
+
+            var document = ArticleHtmlDocumentBuilder.Create(
+                article.DisplayContent,
+                article.ContentBaseUri,
+                RootGrid.ActualTheme == ElementTheme.Dark);
+            var navigation = new ArticleNavigationRequest(
+                renderVersion,
+                article.Id,
+                article.FeedId);
+            _pendingArticleNavigations.Enqueue(navigation);
+            var encodedDocument = Convert.ToBase64String(Encoding.UTF8.GetBytes(document));
+            var articleUri = $"data:text/html;base64,{encodedDocument}";
+            ArticleWebView.Visibility = Visibility.Visible;
+            ArticleWebView.CoreWebView2.Navigate(articleUri);
+        }
+        catch (Exception exception)
+        {
+            if (renderVersion != _articleRenderVersion)
+            {
+                return;
+            }
+
+            DiagnosticLog.Error(
+                "article.html_render_failed",
+                exception,
+                new
+                {
+                    articleId = article.Id,
+                    feedId = article.FeedId,
+                    appBaseDirectory = AppContext.BaseDirectory,
+                    webView2LoaderExists = File.Exists(
+                        Path.Combine(AppContext.BaseDirectory, "WebView2Loader.dll"))
+                });
+            _pendingArticleNavigations.Clear();
+            ArticleWebView.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private Task EnsureArticleWebViewInitializedAsync() =>
+        _articleWebViewInitializationTask ??= InitializeArticleWebViewAsync();
+
+    private async Task InitializeArticleWebViewAsync()
+    {
+        var environment = await GetArticleWebViewEnvironmentAsync();
+        await ArticleWebView.EnsureCoreWebView2Async(environment);
+        ConfigureArticleWebView();
+    }
+
+    private Task<CoreWebView2Environment> GetArticleWebViewEnvironmentAsync() =>
+        _articleWebViewEnvironmentTask ??= CreateArticleWebViewEnvironmentAsync();
+
+    private static async Task<CoreWebView2Environment> CreateArticleWebViewEnvironmentAsync()
+    {
+        var userDataFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "FluxReader",
+            "WebView2");
+        Directory.CreateDirectory(userDataFolder);
+        return await CoreWebView2Environment.CreateWithOptionsAsync(
+            browserExecutableFolder: null,
+            userDataFolder,
+            new CoreWebView2EnvironmentOptions());
+    }
+
+    private void ConfigureArticleWebView()
+    {
+        if (_articleWebViewConfigured || ArticleWebView.CoreWebView2 is not { } coreWebView)
+        {
+            return;
+        }
+
+        var settings = coreWebView.Settings;
+        settings.IsScriptEnabled = false;
+        settings.AreDefaultScriptDialogsEnabled = false;
+        settings.AreDevToolsEnabled = false;
+        settings.AreHostObjectsAllowed = false;
+        settings.IsWebMessageEnabled = false;
+        settings.IsStatusBarEnabled = false;
+
+        coreWebView.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.Script);
+        coreWebView.WebResourceRequested += ArticleWebView_WebResourceRequested;
+        ArticleWebView.NavigationStarting += ArticleWebView_NavigationStarting;
+        ArticleWebView.NavigationCompleted += ArticleWebView_NavigationCompleted;
+        coreWebView.NewWindowRequested += ArticleWebView_NewWindowRequested;
+        _articleWebViewConfigured = true;
+    }
+
+    private static void ArticleWebView_WebResourceRequested(
+        CoreWebView2 sender,
+        CoreWebView2WebResourceRequestedEventArgs args)
+    {
+        if (args.ResourceContext == CoreWebView2WebResourceContext.Script)
+        {
+            args.Response = sender.Environment.CreateWebResourceResponse(
+                new InMemoryRandomAccessStream(),
+                403,
+                "Blocked",
+                "Content-Type: text/plain");
+        }
+    }
+
+    private async void ArticleWebView_NavigationStarting(
+        WebView2 sender,
+        CoreWebView2NavigationStartingEventArgs args)
+    {
+        if (args.Uri.StartsWith("data:text/html;base64,", StringComparison.OrdinalIgnoreCase) &&
+            _pendingArticleNavigations.TryDequeue(out var navigation))
+        {
+            _articleNavigations[args.NavigationId] = navigation;
+            return;
+        }
+
+        // WebView2 initializes itself with an empty document before the first
+        // article navigation.
+        if (args.Uri.Equals("about:blank", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        args.Cancel = true;
+        if (TryCreateExternalArticleUri(args.Uri, out var uri))
+        {
+            await Windows.System.Launcher.LaunchUriAsync(uri);
+        }
+    }
+
+    private void ArticleWebView_NavigationCompleted(
+        WebView2 sender,
+        CoreWebView2NavigationCompletedEventArgs args)
+    {
+        if (!_articleNavigations.Remove(args.NavigationId, out var navigation) ||
+            navigation.RenderVersion != _articleRenderVersion)
+        {
+            return;
+        }
+
+        if (args.IsSuccess)
+        {
+            ArticleWebView.Visibility = Visibility.Visible;
+            return;
+        }
+
+        ArticleWebView.Visibility = Visibility.Collapsed;
+        DiagnosticLog.Warning(
+            "article.html_navigation_failed",
+            new
+            {
+                articleId = navigation.ArticleId,
+                feedId = navigation.FeedId,
+                webErrorStatus = args.WebErrorStatus.ToString()
+            });
+    }
+
+    private async void ArticleWebView_NewWindowRequested(
+        CoreWebView2 sender,
+        CoreWebView2NewWindowRequestedEventArgs args)
+    {
+        args.Handled = true;
+        if (TryCreateExternalArticleUri(args.Uri, out var uri))
+        {
+            await Windows.System.Launcher.LaunchUriAsync(uri);
+        }
+    }
+
+    private static bool TryCreateExternalArticleUri(string? value, out Uri uri)
+    {
+        uri = null!;
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var resolvedUri) || resolvedUri is null)
+        {
+            return false;
+        }
+
+        if (!resolvedUri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
+            !resolvedUri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) &&
+            !resolvedUri.Scheme.Equals(Uri.UriSchemeMailto, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        uri = resolvedUri;
+        return true;
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
@@ -180,7 +357,17 @@ public sealed partial class MainWindow : Window
         ApplyRefreshInterval(_settings.RefreshIntervalMinutes);
         ResetSettingsFrame();
         _settingsLoaded = true;
+        var articleWebViewInitialization = EnsureArticleWebViewInitializedAsync();
         await ViewModel.InitializeAsync(_lifetime.Token);
+        try
+        {
+            await articleWebViewInitialization;
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Error("article.webview_initialization_failed", exception);
+        }
+
         if (ViewModel.Feeds.Count > 0 && ViewModel.RefreshCommand.CanExecute(null))
         {
             await ViewModel.RefreshCommand.ExecuteAsync(null);
@@ -328,7 +515,7 @@ public sealed partial class MainWindow : Window
             !item.IsGroup || _areFeedGroupSelectionIndicatorsEnabled);
     }
 
-    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private async void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainViewModel.SelectedFeedIds))
         {
@@ -355,8 +542,9 @@ public sealed partial class MainWindow : Window
                     articleId = article?.Id,
                     feedId = article?.FeedId,
                     contentCharacterCount = article?.DisplayContent.Length,
-                    contentMaterialized = article?.HasMaterializedContentBlocks ?? false
+                    containsHtml = ArticleContentParser.ContainsHtmlMarkup(article?.DisplayContent)
                 });
+            await RenderSelectedArticleAsync();
         }
     }
 
@@ -596,9 +784,9 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        await ViewModel.SelectArticleAsync(article, _lifetime.Token);
         ArticleEmptyView.Visibility = Visibility.Collapsed;
         ArticleReaderView.Visibility = Visibility.Visible;
+        await ViewModel.SelectArticleAsync(article, _lifetime.Token);
     }
 
     private async void AllArticles_Click(object sender, RoutedEventArgs e)
@@ -1074,8 +1262,11 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void RootGrid_ActualThemeChanged(FrameworkElement sender, object args) =>
+    private async void RootGrid_ActualThemeChanged(FrameworkElement sender, object args)
+    {
         UpdateTitleBarButtonColors();
+        await RenderSelectedArticleAsync();
+    }
 
     private void UpdateTitleBarButtonColors()
     {
@@ -1443,6 +1634,14 @@ public sealed partial class MainWindow : Window
         RootGrid.ActualThemeChanged -= RootGrid_ActualThemeChanged;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.StatusNotificationRequested -= ViewModel_StatusNotificationRequested;
+        if (_articleWebViewConfigured && ArticleWebView.CoreWebView2 is { } coreWebView)
+        {
+            coreWebView.WebResourceRequested -= ArticleWebView_WebResourceRequested;
+            coreWebView.NewWindowRequested -= ArticleWebView_NewWindowRequested;
+        }
+
+        ArticleWebView.NavigationStarting -= ArticleWebView_NavigationStarting;
+        ArticleWebView.NavigationCompleted -= ArticleWebView_NavigationCompleted;
         StatusInfoBar.UnregisterPropertyChangedCallback(
             InfoBar.IsOpenProperty,
             _statusInfoBarIsOpenCallbackToken);
@@ -1478,7 +1677,7 @@ public sealed partial class MainWindow : Window
                 articleCount = ViewModel.Articles.Count,
                 selectedArticleId = article?.Id,
                 selectedFeedId = article?.FeedId,
-                selectedContentMaterialized = article?.HasMaterializedContentBlocks ?? false
+                selectedContentContainsHtml = ArticleContentParser.ContainsHtmlMarkup(article?.DisplayContent)
             });
     }
 }

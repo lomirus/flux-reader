@@ -64,4 +64,22 @@ public sealed class ArticleSearchMatcherTests
         Assert.AreEqual(ArticleSearchMatcher.TitleMatchRank, matchingRank);
         Assert.AreEqual(ArticleSearchMatcher.NoMatchRank, nonMatchingRank);
     }
+
+    [TestMethod]
+    public void GetMatchRank_SearchesRenderedTextInsteadOfHtmlTags()
+    {
+        var textRank = ArticleSearchMatcher.GetMatchRank(
+            "title",
+            "summary",
+            "<section><p>Rendered content</p></section>",
+            "rendered");
+        var tagRank = ArticleSearchMatcher.GetMatchRank(
+            "title",
+            "summary",
+            "<section><p>Rendered content</p></section>",
+            "section");
+
+        Assert.AreEqual(ArticleSearchMatcher.BodyMatchRank, textRank);
+        Assert.AreEqual(ArticleSearchMatcher.NoMatchRank, tagRank);
+    }
 }

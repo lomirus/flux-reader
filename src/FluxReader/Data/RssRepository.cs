@@ -81,6 +81,7 @@ public sealed class RssRepository
                     ON feeds(group_id, title COLLATE NOCASE);
                 """;
             await command.ExecuteNonQueryAsync(cancellationToken);
+            await MigrateArticleContentToHtmlAsync(connection, cancellationToken);
         }
         finally
         {
@@ -709,10 +710,60 @@ public sealed class RssRepository
             if (await command.ExecuteScalarAsync(cancellationToken) is not null)
             {
                 insertedArticles.Add(article);
+                continue;
             }
+
+            await using var updateCommand = connection.CreateCommand();
+            updateCommand.Transaction = transaction;
+            updateCommand.CommandText = """
+                UPDATE articles SET
+                    title = $title,
+                    link = $link,
+                    author = $author,
+                    published_utc = $published,
+                    summary = $summary,
+                    content = $content
+                WHERE feed_id = $feed_id AND external_id = $external_id;
+                """;
+            updateCommand.Parameters.AddWithValue("$feed_id", feedId);
+            updateCommand.Parameters.AddWithValue("$external_id", article.ExternalId);
+            updateCommand.Parameters.AddWithValue("$title", article.Title);
+            updateCommand.Parameters.AddWithValue("$link", article.Link?.AbsoluteUri ?? string.Empty);
+            updateCommand.Parameters.AddWithValue("$author", article.Author);
+            updateCommand.Parameters.AddWithValue("$published", FormatNullableDate(article.PublishedAt));
+            updateCommand.Parameters.AddWithValue("$summary", article.Summary);
+            updateCommand.Parameters.AddWithValue("$content", article.Content);
+            await updateCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
         return insertedArticles;
+    }
+
+    private static async Task MigrateArticleContentToHtmlAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await using var versionCommand = connection.CreateCommand();
+        versionCommand.CommandText = "PRAGMA user_version;";
+        var version = Convert.ToInt32(
+            await versionCommand.ExecuteScalarAsync(cancellationToken),
+            CultureInfo.InvariantCulture);
+        if (version >= 1)
+        {
+            return;
+        }
+
+        await using var migrationCommand = connection.CreateCommand();
+        migrationCommand.CommandText = """
+            UPDATE feeds SET
+                etag = NULL,
+                last_modified_utc = NULL
+            WHERE EXISTS (
+                SELECT 1 FROM articles WHERE articles.feed_id = feeds.id
+            );
+            PRAGMA user_version = 1;
+            """;
+        await migrationCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken)

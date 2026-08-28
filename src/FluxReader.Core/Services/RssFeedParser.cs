@@ -89,10 +89,10 @@ public sealed class RssFeedParser
         var title = CleanTitle(Value(item, "title"), _getString(RssParserString.UntitledArticle));
         var author = FirstValue(item, "creator", "author");
         var publishedAt = ParseDate(FirstValue(item, "pubDate", "date", "published", "updated"));
-        var summaryMarkup = FirstValue(item, "description", "summary");
-        var contentMarkup = FirstValue(item, "encoded", "content");
+        var summaryMarkup = FirstMarkupValue(item, "description", "summary");
+        var contentMarkup = FirstMarkupValue(item, "encoded", "content");
         var summary = HtmlTextConverter.ToPlainText(summaryMarkup, 2_000);
-        var content = ArticleContentParser.Normalize(
+        var content = ArticleContentParser.PrepareHtml(
             string.IsNullOrWhiteSpace(contentMarkup) ? summaryMarkup : contentMarkup,
             link ?? sourceUri);
         var externalId = FirstValue(item, "guid", "id");
@@ -127,10 +127,10 @@ public sealed class RssFeedParser
         var authorElement = Child(entry, "author");
         var author = authorElement is null ? string.Empty : FirstValue(authorElement, "name", "email");
         var publishedAt = ParseDate(FirstValue(entry, "published", "updated", "issued", "modified"));
-        var summaryMarkup = Value(entry, "summary");
-        var contentMarkup = Value(entry, "content");
+        var summaryMarkup = MarkupValue(entry, "summary");
+        var contentMarkup = MarkupValue(entry, "content");
         var summary = HtmlTextConverter.ToPlainText(summaryMarkup, 2_000);
-        var content = ArticleContentParser.Normalize(
+        var content = ArticleContentParser.PrepareHtml(
             string.IsNullOrWhiteSpace(contentMarkup) ? summaryMarkup : contentMarkup,
             link ?? sourceUri);
 
@@ -229,6 +229,39 @@ public sealed class RssFeedParser
         foreach (var localName in localNames)
         {
             var value = Value(parent, localName);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static string MarkupValue(XContainer parent, string localName)
+    {
+        var element = Child(parent, localName);
+        if (element is null)
+        {
+            return string.Empty;
+        }
+
+        if (!element.HasElements)
+        {
+            return element.Value.Trim();
+        }
+
+        return string.Concat(element.Nodes().Select(node =>
+            node is XCData cdata
+                ? cdata.Value
+                : node.ToString(SaveOptions.DisableFormatting))).Trim();
+    }
+
+    private static string FirstMarkupValue(XContainer parent, params string[] localNames)
+    {
+        foreach (var localName in localNames)
+        {
+            var value = MarkupValue(parent, localName);
             if (!string.IsNullOrWhiteSpace(value))
             {
                 return value;

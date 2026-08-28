@@ -36,44 +36,6 @@
                 </StackPanel>
             </DataTemplate>
 
-            <DataTemplate x:Key="ArticleBodyTextTemplate" x:DataType="models:ArticleBodyBlock">
-                <TextBlock
-                    Margin="0,0,0,14"
-                    FontFamily="{ThemeResource ContentControlThemeFontFamily}"
-                    FontSize="16"
-                    IsTextSelectionEnabled="True"
-                    LineHeight="26"
-                    Text="{x:Bind Text}"
-                    TextWrapping="Wrap" />
-            </DataTemplate>
-
-            <DataTemplate x:Key="ArticleBodyImageTemplate" x:DataType="models:ArticleBodyBlock">
-                <StackPanel Margin="0,2,0,16" Spacing="6">
-                    <Image
-                        AutomationProperties.Name="{x:Bind AccessibleName}"
-                        HorizontalAlignment="Stretch"
-                        ImageFailed="ArticleBodyImage_ImageFailed"
-                        ImageOpened="ArticleBodyImage_ImageOpened"
-                        MaxHeight="720"
-                        Source="{x:Bind ImageSource}"
-                        Stretch="Uniform"
-                        Tag="{x:Bind}"
-                        Visibility="{x:Bind ImageVisibility, Mode=OneWay}" />
-                    <TextBlock
-                        FontStyle="Italic"
-                        IsTextSelectionEnabled="True"
-                        Opacity="0.65"
-                        Text="{x:Bind FallbackText}"
-                        TextWrapping="Wrap"
-                        Visibility="{x:Bind FallbackVisibility, Mode=OneWay}" />
-                </StackPanel>
-            </DataTemplate>
-
-            <controls:ArticleBodyTemplateSelector
-                x:Key="ArticleBodyTemplateSelector"
-                ImageTemplate="{StaticResource ArticleBodyImageTemplate}"
-                TextTemplate="{StaticResource ArticleBodyTextTemplate}" />
-
             <DataTemplate
                 x:Key="FeedNavigationItemContentTemplate"
                 x:DataType="models:FeedNavigationItem">
@@ -592,12 +554,10 @@
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl
-                            HorizontalContentAlignment="Stretch"
-                            ItemTemplateSelector="{StaticResource ArticleBodyTemplateSelector}"
-                            ItemsSource="{Binding SelectedArticle.ContentBlocks}" />
-                    </ScrollViewer>
+                    <WebView2
+                        x:Name="ArticleWebView"
+                        Grid.Row="3"
+                        Visibility="Collapsed" />
                 </Grid>
             </Grid>
         </Grid>
