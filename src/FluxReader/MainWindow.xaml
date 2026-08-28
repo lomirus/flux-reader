@@ -413,12 +413,13 @@
                                         FontSize="12"
                                         Opacity="0.65"
                                         Text="{x:Bind FeedTitle}"
-                                        TextTrimming="CharacterEllipsis" />
+                                        TextTrimming="CharacterEllipsis"
+                                        Visibility="{x:Bind FeedTitleVisibility}" />
                                     <TextBlock
                                         FontSize="12"
                                         MaxLines="2"
                                         Opacity="0.6"
-                                        Text="{x:Bind Summary}"
+                                        Text="{x:Bind ListPreview}"
                                         TextTrimming="CharacterEllipsis"
                                         TextWrapping="Wrap" />
                                 </StackPanel>

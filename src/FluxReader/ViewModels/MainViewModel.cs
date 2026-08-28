@@ -773,8 +773,12 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         Articles.Clear();
+        var feedTitleVisibility = SelectedFeedCount == 1
+            ? Microsoft.UI.Xaml.Visibility.Collapsed
+            : Microsoft.UI.Xaml.Visibility.Visible;
         foreach (var article in articles)
         {
+            article.FeedTitleVisibility = feedTitleVisibility;
             Articles.Add(article);
         }
 

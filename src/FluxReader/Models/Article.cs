@@ -1,10 +1,13 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml;
 
 namespace FluxReader.Models;
 
 public sealed partial class Article : ObservableObject
 {
+    private const int MaximumListPreviewLength = 256;
+
     public long Id { get; init; }
 
     public long FeedId { get; init; }
@@ -25,6 +28,8 @@ public sealed partial class Article : ObservableObject
 
     public required string Content { get; init; }
 
+    public Visibility FeedTitleVisibility { get; set; } = Visibility.Visible;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(UnreadGlyph))]
     public partial bool IsRead { get; set; }
@@ -42,6 +47,17 @@ public sealed partial class Article : ObservableObject
     }
 
     public string DisplayContent => string.IsNullOrWhiteSpace(Content) ? Summary : Content;
+
+    public string ListPreview
+    {
+        get
+        {
+            var preview = string.IsNullOrWhiteSpace(Summary) ? Content : Summary;
+            return preview.Length <= MaximumListPreviewLength
+                ? preview
+                : string.Concat(preview.AsSpan(0, MaximumListPreviewLength), "…");
+        }
+    }
 
     public string UnreadGlyph => IsRead ? string.Empty : "●";
 
