@@ -11,4 +11,3 @@ description: Apply FluxReader project conventions and coding style when planning
 - If the intended architecture fails, diagnose and explain the likely causes and options first, then let the user decide whether to adopt an alternative.
 - Do not optimize prematurely.
 - Prefer official WinUI 3 controls, styles, theme resources, behaviors, and supported APIs when they satisfy the requirement, and ensure UI work follows Fluent Design principles and Windows platform conventions. Do not replace them with custom colors, control templates, workarounds, or compatibility patches unless the official option is demonstrably insufficient; when customization is necessary, keep it minimal and document why.
-- The project is unreleased; backward compatibility is not required.
