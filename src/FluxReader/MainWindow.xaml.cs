@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Xml;
 using CommunityToolkit.WinUI.Behaviors;
 using FluxReader.Core.Services;
@@ -40,6 +41,10 @@ public sealed partial class MainWindow : Window
     {
         Interval = TimeSpan.FromMinutes(DefaultRefreshIntervalMinutes)
     };
+    private readonly DispatcherTimer _diagnosticTimer = new()
+    {
+        Interval = TimeSpan.FromSeconds(30)
+    };
     private readonly Storyboard _refreshIconSpinStoryboard = new();
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
     private long _statusInfoBarIsOpenCallbackToken;
@@ -72,6 +77,7 @@ public sealed partial class MainWindow : Window
         ApplyLocalization();
         RootGrid.Loaded += RootGrid_Loaded;
         _refreshTimer.Tick += RefreshTimer_Tick;
+        _diagnosticTimer.Tick += DiagnosticTimer_Tick;
         Closed += MainWindow_Closed;
     }
 
@@ -101,6 +107,17 @@ public sealed partial class MainWindow : Window
         if (sender is Image { Tag: ArticleBodyBlock block })
         {
             block.HasImageFailed = false;
+            DiagnosticLog.MemorySnapshot(
+                "article.image_opened",
+                new
+                {
+                    articleId = ViewModel.SelectedArticle?.Id,
+                    feedId = ViewModel.SelectedArticle?.FeedId,
+                    imageHost = block.ImageUri?.Host,
+                    imageExtension = block.ImageUri is null
+                        ? null
+                        : Path.GetExtension(block.ImageUri.AbsolutePath)
+                });
         }
     }
 
@@ -109,6 +126,18 @@ public sealed partial class MainWindow : Window
         if (sender is Image { Tag: ArticleBodyBlock block })
         {
             block.HasImageFailed = true;
+            DiagnosticLog.Warning(
+                "article.image_failed",
+                new
+                {
+                    articleId = ViewModel.SelectedArticle?.Id,
+                    feedId = ViewModel.SelectedArticle?.FeedId,
+                    imageHost = block.ImageUri?.Host,
+                    imageExtension = block.ImageUri is null
+                        ? null
+                        : Path.GetExtension(block.ImageUri.AbsolutePath),
+                    e.ErrorMessage
+                });
         }
     }
 
@@ -130,6 +159,7 @@ public sealed partial class MainWindow : Window
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         RootGrid.Loaded -= RootGrid_Loaded;
+        DiagnosticLog.Information("window.loading");
         _settings = await App.Current.Settings.LoadAsync(_lifetime.Token);
         AppLanguage? languagePreference = _settings.Language is { } savedLanguage && Enum.IsDefined(savedLanguage)
             ? savedLanguage
@@ -155,6 +185,14 @@ public sealed partial class MainWindow : Window
         }
 
         _refreshTimer.Start();
+        _diagnosticTimer.Start();
+        DiagnosticLog.MemorySnapshot(
+            "window.loaded",
+            new
+            {
+                feedCount = ViewModel.Feeds.Count,
+                articleCount = ViewModel.Articles.Count
+            });
     }
 
     private async void AddFeed_Click(object sender, RoutedEventArgs e)
@@ -303,6 +341,20 @@ public sealed partial class MainWindow : Window
         if (e.PropertyName == nameof(MainViewModel.IsBusy))
         {
             UpdateRefreshButtonVisualState();
+        }
+
+        if (e.PropertyName == nameof(MainViewModel.SelectedArticle))
+        {
+            var article = ViewModel.SelectedArticle;
+            DiagnosticLog.MemorySnapshot(
+                "article.selection_changed",
+                new
+                {
+                    articleId = article?.Id,
+                    feedId = article?.FeedId,
+                    contentCharacterCount = article?.DisplayContent.Length,
+                    contentMaterialized = article?.HasMaterializedContentBlocks ?? false
+                });
         }
     }
 
@@ -658,6 +710,7 @@ public sealed partial class MainWindow : Window
         var localization = App.Current.Localization;
         if (ViewModel.IsBusy)
         {
+            DiagnosticLog.Warning("opml.import_rejected", new { reason = "view_model_busy" });
             settingsPage.ShowSubscriptionStatus(
                 localization.GetString("SubscriptionOperationBusy"),
                 isError: true);
@@ -665,6 +718,7 @@ public sealed partial class MainWindow : Window
         }
 
         settingsPage.SetSubscriptionActionsEnabled(false);
+        var importStartedAt = Stopwatch.GetTimestamp();
         try
         {
             var picker = new FileOpenPicker
@@ -678,11 +732,21 @@ public sealed partial class MainWindow : Window
             var file = await picker.PickSingleFileAsync();
             if (file is null)
             {
+                DiagnosticLog.Information("opml.file_picker_cancelled");
                 return;
             }
 
             var content = await FileIO.ReadTextAsync(file);
             var document = OpmlSubscriptionSerializer.Parse(content);
+            DiagnosticLog.Information(
+                "opml.file_parsed",
+                new
+                {
+                    fileName = file.Name,
+                    contentCharacterCount = content.Length,
+                    subscriptionCount = document.Subscriptions.Count,
+                    document.SkippedOutlineCount
+                });
             if (document.Subscriptions.Count == 0)
             {
                 settingsPage.ShowSubscriptionStatus(
@@ -692,6 +756,15 @@ public sealed partial class MainWindow : Window
             }
 
             var result = await ViewModel.ImportSubscriptionsAsync(document, _lifetime.Token);
+            DiagnosticLog.MemorySnapshot(
+                "opml.import_ui_completed",
+                new
+                {
+                    result.ImportedCount,
+                    result.SkippedCount,
+                    result.FailedCount,
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(importStartedAt).TotalMilliseconds
+                });
             settingsPage.ShowSubscriptionStatus(
                 localization.Format(
                     "SubscriptionImportComplete",
@@ -705,15 +778,18 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception exception) when (exception is XmlException or FormatException or ArgumentException)
         {
+            DiagnosticLog.Error("opml.parse_failed", exception);
             settingsPage.ShowSubscriptionStatus(
                 localization.GetString("InvalidSubscriptionFile"),
                 isError: true);
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
+            DiagnosticLog.Information("opml.import_cancelled", new { reason = "window_closing" });
         }
         catch (Exception exception)
         {
+            DiagnosticLog.Error("opml.import_ui_failed", exception);
             settingsPage.ShowSubscriptionStatus(
                 localization.Format("SubscriptionImportFailed", exception.Message),
                 isError: true);
@@ -1283,6 +1359,8 @@ public sealed partial class MainWindow : Window
             _statusInfoBarIsOpenCallbackToken);
         _refreshTimer.Stop();
         _refreshTimer.Tick -= RefreshTimer_Tick;
+        _diagnosticTimer.Stop();
+        _diagnosticTimer.Tick -= DiagnosticTimer_Tick;
         _lifetime.Cancel();
         _lifetime.Dispose();
     }
@@ -1291,7 +1369,26 @@ public sealed partial class MainWindow : Window
     {
         if (!ViewModel.IsBusy && ViewModel.Feeds.Count > 0 && ViewModel.RefreshCommand.CanExecute(null))
         {
+            DiagnosticLog.Information(
+                "refresh.timer_triggered",
+                new { feedCount = ViewModel.Feeds.Count });
             ViewModel.RefreshCommand.Execute(null);
         }
+    }
+
+    private void DiagnosticTimer_Tick(object? sender, object e)
+    {
+        var article = ViewModel.SelectedArticle;
+        DiagnosticLog.MemorySnapshot(
+            "app.heartbeat",
+            new
+            {
+                ViewModel.IsBusy,
+                feedCount = ViewModel.Feeds.Count,
+                articleCount = ViewModel.Articles.Count,
+                selectedArticleId = article?.Id,
+                selectedFeedId = article?.FeedId,
+                selectedContentMaterialized = article?.HasMaterializedContentBlocks ?? false
+            });
     }
 }

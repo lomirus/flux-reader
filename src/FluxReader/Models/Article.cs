@@ -1,6 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using FluxReader.Core.Services;
+using FluxReader.Services;
 using Microsoft.UI.Xaml;
 
 namespace FluxReader.Models;
@@ -50,10 +51,33 @@ public sealed partial class Article : ObservableObject
 
     public string DisplayContent => string.IsNullOrWhiteSpace(Content) ? Summary : Content;
 
-    public IReadOnlyList<ArticleBodyBlock> ContentBlocks => _contentBlocks ??=
-        ArticleContentParser.Parse(DisplayContent, TryCreateArticleUri())
-            .Select(ArticleBodyBlock.From)
-            .ToArray();
+    public IReadOnlyList<ArticleBodyBlock> ContentBlocks
+    {
+        get
+        {
+            if (_contentBlocks is not null)
+            {
+                return _contentBlocks;
+            }
+
+            _contentBlocks = ArticleContentParser.Parse(DisplayContent, TryCreateArticleUri())
+                .Select(ArticleBodyBlock.From)
+                .ToArray();
+            DiagnosticLog.MemorySnapshot(
+                "article.content_materialized",
+                new
+                {
+                    articleId = Id,
+                    feedId = FeedId,
+                    contentCharacterCount = DisplayContent.Length,
+                    blockCount = _contentBlocks.Count,
+                    imageBlockCount = _contentBlocks.Count(block => block.ImageUri is not null)
+                });
+            return _contentBlocks;
+        }
+    }
+
+    public bool HasMaterializedContentBlocks => _contentBlocks is not null;
 
     public string ListPreview
     {

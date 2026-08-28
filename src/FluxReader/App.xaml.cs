@@ -15,11 +15,17 @@ public partial class App : Application
 
     public App()
     {
-        InitializeComponent();
-
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "FluxReader");
+        DiagnosticLog.Initialize(dataDirectory);
+        UnhandledException += App_UnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+        DiagnosticLog.Information("app.constructing");
+
+        InitializeComponent();
+
         Localization = new LocalizationService();
         Repository = new RssRepository(Path.Combine(dataDirectory, "reader.db"), Localization);
         Settings = new SettingsService(Path.Combine(dataDirectory, "settings.json"));
@@ -44,6 +50,7 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        DiagnosticLog.Information("app.launching", new { arguments = args.Arguments });
         var window = new MainWindow();
         _window = window;
         window.AppWindow.Closing += Window_Closing;
@@ -54,7 +61,44 @@ public partial class App : Application
         _systemTrayIcon.OpenRequested += SystemTrayIcon_OpenRequested;
         _systemTrayIcon.ExitRequested += SystemTrayIcon_ExitRequested;
         window.Activate();
+        DiagnosticLog.MemorySnapshot("app.launched");
     }
+
+    private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs args) =>
+        DiagnosticLog.Error(
+            "exception.xaml_unhandled",
+            args.Exception,
+            new { args.Handled });
+
+    private static void CurrentDomain_UnhandledException(
+        object sender,
+        System.UnhandledExceptionEventArgs args)
+    {
+        if (args.ExceptionObject is Exception exception)
+        {
+            DiagnosticLog.Error(
+                "exception.app_domain_unhandled",
+                exception,
+                new { args.IsTerminating });
+            return;
+        }
+
+        DiagnosticLog.Warning(
+            "exception.app_domain_unhandled_non_exception",
+            new
+            {
+                args.IsTerminating,
+                exceptionObject = args.ExceptionObject?.ToString()
+            });
+    }
+
+    private static void TaskScheduler_UnobservedTaskException(
+        object? sender,
+        UnobservedTaskExceptionEventArgs args) =>
+        DiagnosticLog.Error(
+            "exception.unobserved_task",
+            args.Exception,
+            new { args.Observed });
 
     private void NotificationService_Activated(object? sender, EventArgs e)
     {
@@ -65,9 +109,11 @@ public partial class App : Application
     {
         if (_exitRequested)
         {
+            DiagnosticLog.Information("window.closing", new { exitRequested = true });
             return;
         }
 
+        DiagnosticLog.Information("window.close_intercepted", new { action = "hide_to_tray" });
         args.Cancel = true;
         sender.Hide();
     }
@@ -84,6 +130,7 @@ public partial class App : Application
 
     private void ExitApplication()
     {
+        DiagnosticLog.Information("app.exit_requested", new { source = "system_tray" });
         _exitRequested = true;
         DisposeSystemTrayIcon();
         _window?.Close();
@@ -120,5 +167,6 @@ public partial class App : Application
         _notificationService.Dispose();
         RefreshService.Dispose();
         _window = null;
+        DiagnosticLog.CompleteSession(_exitRequested ? "requested_exit" : "window_closed");
     }
 }

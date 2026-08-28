@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluxReader.Core.Models;
@@ -122,6 +123,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
+        var startedAt = Stopwatch.GetTimestamp();
+        DiagnosticLog.Information("view_model.initialize_started");
         try
         {
             await _repository.InitializeAsync(cancellationToken);
@@ -133,9 +136,19 @@ public sealed partial class MainViewModel : ObservableObject
                     _localization.GetString("NotificationUnavailable"),
                     StatusNotificationSeverity.Warning);
             }
+
+            DiagnosticLog.MemorySnapshot(
+                "view_model.initialize_completed",
+                new
+                {
+                    feedCount = Feeds.Count,
+                    articleCount = Articles.Count,
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                });
         }
         catch (Exception exception)
         {
+            DiagnosticLog.Error("view_model.initialize_failed", exception);
             ShowStatus(
                 _localization.Format("InitializationFailed", exception.Message),
                 StatusNotificationSeverity.Error);
@@ -212,10 +225,19 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
+        var startedAt = Stopwatch.GetTimestamp();
         var importedCount = 0;
         var skippedCount = document.SkippedOutlineCount;
         var failedCount = 0;
         var importedFeedIds = new List<long>();
+        DiagnosticLog.Information(
+            "opml.import_started",
+            new
+            {
+                subscriptionCount = document.Subscriptions.Count,
+                document.SkippedOutlineCount,
+                existingFeedCount = Feeds.Count
+            });
         try
         {
             var existingFeedUris = new HashSet<string>(
@@ -260,9 +282,17 @@ public sealed partial class MainViewModel : ObservableObject
                 {
                     throw;
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
                     failedCount++;
+                    DiagnosticLog.Error(
+                        "opml.subscription_import_failed",
+                        exception,
+                        new
+                        {
+                            feedHost = subscription.FeedUri.Host,
+                            subscription.Group
+                        });
                 }
             }
 
@@ -270,11 +300,36 @@ public sealed partial class MainViewModel : ObservableObject
             var selectedGroupId = SelectedGroup?.Id;
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
+            DiagnosticLog.MemorySnapshot(
+                "opml.import_completed",
+                new
+                {
+                    importedCount,
+                    skippedCount,
+                    failedCount,
+                    feedCount = Feeds.Count,
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                });
             return new SubscriptionImportResult(
                 importedCount,
                 skippedCount,
                 failedCount,
                 importedFeedIds);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            DiagnosticLog.Information(
+                "opml.import_cancelled",
+                new { elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds });
+            throw;
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Error(
+                "opml.import_failed",
+                exception,
+                new { elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds });
+            throw;
         }
         finally
         {
@@ -393,6 +448,10 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
+        var startedAt = Stopwatch.GetTimestamp();
+        DiagnosticLog.Information(
+            "refresh.started",
+            new { feedCount = feeds.Count });
         try
         {
             var tasks = feeds.Select(feed => RefreshFeedCoreAsync(feed, cancellationToken));
@@ -451,6 +510,39 @@ public sealed partial class MainViewModel : ObservableObject
                         : _localization.GetString("ViewDetails"),
                     failures);
             }
+
+            DiagnosticLog.MemorySnapshot(
+                "refresh.completed",
+                new
+                {
+                    feedCount = feeds.Count,
+                    newArticleCount = newTitles.Length,
+                    failureCount = failures.Length,
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            DiagnosticLog.Information(
+                "refresh.cancelled",
+                new
+                {
+                    feedCount = feeds.Count,
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                });
+            throw;
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Error(
+                "refresh.failed",
+                exception,
+                new
+                {
+                    feedCount = feeds.Count,
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                });
+            throw;
         }
         finally
         {
@@ -890,6 +982,13 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (feedIds.Count > 0)
         {
+            DiagnosticLog.Information(
+                "opml.background_refresh_scheduled",
+                new
+                {
+                    importedFeedCount = feedIds.Count,
+                    IsBusy
+                });
             _ = RefreshImportedFeedsCoreAsync(feedIds, cancellationToken);
         }
     }
@@ -898,6 +997,7 @@ public sealed partial class MainViewModel : ObservableObject
         IReadOnlyList<long> feedIds,
         CancellationToken cancellationToken)
     {
+        var startedAt = Stopwatch.GetTimestamp();
         try
         {
             var importedFeedIds = feedIds.ToHashSet();
@@ -908,6 +1008,13 @@ public sealed partial class MainViewModel : ObservableObject
                 importedFeeds.Select(feed => RefreshFeedCoreAsync(feed, cancellationToken)));
             if (cancellationToken.IsCancellationRequested)
             {
+                DiagnosticLog.Information(
+                    "opml.background_refresh_cancelled",
+                    new
+                    {
+                        importedFeedCount = feedIds.Count,
+                        elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                    });
                 return;
             }
 
@@ -916,12 +1023,39 @@ public sealed partial class MainViewModel : ObservableObject
             var selectedGroupId = SelectedGroup?.Id;
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
+            DiagnosticLog.MemorySnapshot(
+                "opml.background_refresh_completed",
+                new
+                {
+                    requestedFeedCount = feedIds.Count,
+                    refreshedFeedCount = importedFeeds.Length,
+                    failureCount = outcomes.Count(outcome => outcome.Error is not null),
+                    newArticleCount = outcomes
+                        .Where(outcome => outcome.Result is not null)
+                        .Sum(outcome => outcome.Result!.NewArticleTitles.Count),
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                });
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            DiagnosticLog.Information(
+                "opml.background_refresh_cancelled",
+                new
+                {
+                    importedFeedCount = feedIds.Count,
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                });
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            DiagnosticLog.Error(
+                "opml.background_refresh_failed",
+                exception,
+                new
+                {
+                    importedFeedCount = feedIds.Count,
+                    elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
+                });
         }
     }
 
@@ -974,6 +1108,14 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception exception)
         {
+            DiagnosticLog.Error(
+                "refresh.feed_failed",
+                exception,
+                new
+                {
+                    feedId = feed.Id,
+                    feedHost = TryCreateHttpUri(feed.Url)?.Host
+                });
             return new FeedRefreshOutcome(feed, null, exception);
         }
     }
