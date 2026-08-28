@@ -31,11 +31,6 @@ FluxReader stores its data in `%LOCALAPPDATA%\FluxReader` and does not use a clo
 
 The interface is available in Simplified Chinese, Traditional Chinese, English, French, German, Italian, Spanish (Spain and Latin America), Portuguese (Brazil), Polish, Russian, Japanese, and Korean. FluxReader matches the system language on first launch and falls back to English when the language is unsupported.
 
-### Good to know
-
-- Closing the main window hides FluxReader in the system tray, where automatic refresh continues. Choose **Exit** from the tray to stop the app.
-- Website feed discovery, nested in-app groups, and cross-device synchronization are not included.
-
 ## Project links
 
 - [Development, testing, installer builds, and releases](docs/development.md)
