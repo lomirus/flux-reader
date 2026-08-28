@@ -36,6 +36,13 @@ public sealed partial class MainWindow : Window
     private const double MinimumReaderPaneWidth = 360;
     private const double SplitterWidth = 8;
     private const int DefaultRefreshIntervalMinutes = 15;
+    private static readonly string[] FeedSelectionIndicatorBrushResourceKeys =
+    [
+        "ListViewItemSelectionIndicatorBrush",
+        "ListViewItemSelectionIndicatorPointerOverBrush",
+        "ListViewItemSelectionIndicatorPressedBrush",
+        "ListViewItemSelectionIndicatorDisabledBrush"
+    ];
     private static readonly TimeSpan DefaultStatusNotificationDuration = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan WarningStatusNotificationDuration = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan ArticleSearchDebounceDelay = TimeSpan.FromMilliseconds(300);
@@ -53,8 +60,9 @@ public sealed partial class MainWindow : Window
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
     private readonly Queue<ArticleNavigationRequest> _pendingArticleNavigations = new();
     private readonly Dictionary<ulong, ArticleNavigationRequest> _articleNavigations = new();
+    private readonly SolidColorBrush _transparentFeedSelectionIndicatorBrush = new(Colors.Transparent);
     private long _statusInfoBarIsOpenCallbackToken;
-    private bool _areFeedGroupSelectionIndicatorsEnabled = true;
+    private bool _areFeedGroupSelectionIndicatorsVisible = true;
     private bool _articleWebViewConfigured;
     private Task<CoreWebView2Environment>? _articleWebViewEnvironmentTask;
     private Task? _articleWebViewInitializationTask;
@@ -457,7 +465,7 @@ public sealed partial class MainWindow : Window
             selectedItems
                 .Where(item => item.Group is not null)
                 .Select(item => item.Group!.Id));
-        SetFeedGroupSelectionIndicatorsEnabled(selection.FeedIds.Count == 0);
+        SetFeedGroupSelectionIndicatorsVisible(selection.FeedIds.Count == 0);
         NormalizeFeedListSelection(selectedItems, selection);
 
         if (selection.GroupId is { } groupId)
@@ -510,9 +518,9 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        SetFeedSelectionIndicatorEnabled(
+        SetFeedSelectionIndicatorVisible(
             container,
-            !item.IsGroup || _areFeedGroupSelectionIndicatorsEnabled);
+            !item.IsGroup || _areFeedGroupSelectionIndicatorsVisible);
     }
 
     private async void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -643,7 +651,7 @@ public sealed partial class MainWindow : Window
     private void SynchronizeFeedListSelection()
     {
         var selectedFeedIds = ViewModel.SelectedFeedIds;
-        SetFeedGroupSelectionIndicatorsEnabled(selectedFeedIds.Count == 0);
+        SetFeedGroupSelectionIndicatorsVisible(selectedFeedIds.Count == 0);
         var desiredItems = ViewModel.SelectedGroup is { } selectedGroup
             ? ViewModel.FeedNavigationRows
                 .Where(item => item.Group?.Id == selectedGroup.Id)
@@ -654,35 +662,42 @@ public sealed partial class MainWindow : Window
         ApplyFeedListSelection(desiredItems);
     }
 
-    private void SetFeedGroupSelectionIndicatorsEnabled(bool value)
+    private void SetFeedGroupSelectionIndicatorsVisible(bool value)
     {
-        if (_areFeedGroupSelectionIndicatorsEnabled == value)
+        if (_areFeedGroupSelectionIndicatorsVisible == value)
         {
             return;
         }
 
         // Extended range selection briefly selects intervening group rows before
-        // SelectionChanged removes them. Keep their native indicator dormant while
-        // feeds are selected so that transient state cannot animate onto the screen.
-        _areFeedGroupSelectionIndicatorsEnabled = value;
+        // SelectionChanged removes them. Keep their native indicator visually hidden
+        // while feeds are selected so that transient state cannot animate onscreen.
+        _areFeedGroupSelectionIndicatorsVisible = value;
         foreach (var item in ViewModel.FeedNavigationRows.Where(item => item.IsGroup))
         {
             if (FeedList.ContainerFromItem(item) is ListViewItem container)
             {
-                SetFeedSelectionIndicatorEnabled(container, value);
+                SetFeedSelectionIndicatorVisible(container, value);
             }
         }
     }
 
-    private static void SetFeedSelectionIndicatorEnabled(
+    private void SetFeedSelectionIndicatorVisible(
         ListViewItem container,
-        bool value)
+        bool isVisible)
     {
-        container.ApplyTemplate();
-        if (VisualTreeHelper.GetChildrenCount(container) > 0 &&
-            VisualTreeHelper.GetChild(container, 0) is ListViewItemPresenter presenter)
+        // Keep the native indicator element alive. WinUI pointer visual states can
+        // still update its background after SelectionIndicatorVisualEnabled is disabled.
+        foreach (var resourceKey in FeedSelectionIndicatorBrushResourceKeys)
         {
-            presenter.SelectionIndicatorVisualEnabled = value;
+            if (isVisible)
+            {
+                container.Resources.Remove(resourceKey);
+            }
+            else
+            {
+                container.Resources[resourceKey] = _transparentFeedSelectionIndicatorBrush;
+            }
         }
     }
 
