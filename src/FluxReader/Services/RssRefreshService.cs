@@ -43,7 +43,8 @@ public sealed class RssRefreshService : IDisposable
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
-        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("FluxReader/1.0 (+Windows 11 RSS Reader)");
+        var applicationVersion = typeof(RssRefreshService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd($"FluxReader/{applicationVersion} (+Windows 11 RSS Reader)");
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/atom+xml"));
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/rss+xml"));
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml", 0.9));
