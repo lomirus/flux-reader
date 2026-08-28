@@ -43,6 +43,7 @@ public sealed partial class MainWindow : Window
     private readonly Storyboard _refreshIconSpinStoryboard = new();
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
     private long _statusInfoBarIsOpenCallbackToken;
+    private bool _areFeedGroupSelectionIndicatorsEnabled = true;
     private bool _isSynchronizingFeedListSelection;
     private AppSettings _settings = new();
     private bool _settingsLoaded;
@@ -213,6 +214,7 @@ public sealed partial class MainWindow : Window
             selectedItems
                 .Where(item => item.Group is not null)
                 .Select(item => item.Group!.Id));
+        SetFeedGroupSelectionIndicatorsEnabled(selection.FeedIds.Count == 0);
         NormalizeFeedListSelection(selectedItems, selection);
 
         if (selection.GroupId is { } groupId)
@@ -252,6 +254,22 @@ public sealed partial class MainWindow : Window
         {
             ViewModel.ToggleFeedNavigationGroup(item);
         }
+    }
+
+    private void FeedList_ContainerContentChanging(
+        ListViewBase sender,
+        ContainerContentChangingEventArgs args)
+    {
+        if (args.InRecycleQueue ||
+            args.ItemContainer is not ListViewItem container ||
+            args.Item is not FeedNavigationItem item)
+        {
+            return;
+        }
+
+        SetFeedSelectionIndicatorEnabled(
+            container,
+            !item.IsGroup || _areFeedGroupSelectionIndicatorsEnabled);
     }
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -367,6 +385,7 @@ public sealed partial class MainWindow : Window
     private void SynchronizeFeedListSelection()
     {
         var selectedFeedIds = ViewModel.SelectedFeedIds;
+        SetFeedGroupSelectionIndicatorsEnabled(selectedFeedIds.Count == 0);
         var desiredItems = ViewModel.SelectedGroup is { } selectedGroup
             ? ViewModel.FeedNavigationRows
                 .Where(item => item.Group?.Id == selectedGroup.Id)
@@ -375,6 +394,38 @@ public sealed partial class MainWindow : Window
                 .Where(item => item.Feed is not null && selectedFeedIds.Contains(item.Feed.Id))
                 .ToHashSet();
         ApplyFeedListSelection(desiredItems);
+    }
+
+    private void SetFeedGroupSelectionIndicatorsEnabled(bool value)
+    {
+        if (_areFeedGroupSelectionIndicatorsEnabled == value)
+        {
+            return;
+        }
+
+        // Extended range selection briefly selects intervening group rows before
+        // SelectionChanged removes them. Keep their native indicator dormant while
+        // feeds are selected so that transient state cannot animate onto the screen.
+        _areFeedGroupSelectionIndicatorsEnabled = value;
+        foreach (var item in ViewModel.FeedNavigationRows.Where(item => item.IsGroup))
+        {
+            if (FeedList.ContainerFromItem(item) is ListViewItem container)
+            {
+                SetFeedSelectionIndicatorEnabled(container, value);
+            }
+        }
+    }
+
+    private static void SetFeedSelectionIndicatorEnabled(
+        ListViewItem container,
+        bool value)
+    {
+        container.ApplyTemplate();
+        if (VisualTreeHelper.GetChildrenCount(container) > 0 &&
+            VisualTreeHelper.GetChild(container, 0) is ListViewItemPresenter presenter)
+        {
+            presenter.SelectionIndicatorVisualEnabled = value;
+        }
     }
 
     private void ApplyFeedListSelection(IReadOnlySet<FeedNavigationItem> desiredItems)

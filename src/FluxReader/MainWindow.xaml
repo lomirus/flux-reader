@@ -218,6 +218,7 @@
                 <ListView
                     x:Name="FeedList"
                     Grid.Row="3"
+                    ContainerContentChanging="FeedList_ContainerContentChanging"
                     IsMultiSelectCheckBoxEnabled="False"
                     ItemContainerStyle="{StaticResource FeedNavigationListItemStyle}"
                     ItemsSource="{Binding FeedNavigationRows}"
