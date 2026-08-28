@@ -60,9 +60,6 @@ public sealed class LocalizationService
     public string FormatRefreshComplete(int newArticleCount) =>
         Format(newArticleCount == 1 ? "RefreshCompleteOne" : "RefreshCompleteOther", newArticleCount);
 
-    public string FormatNewArticleNotification(int newArticleCount) =>
-        Format(newArticleCount == 1 ? "NotificationNewArticleOne" : "NotificationNewArticleOther", newArticleCount);
-
     internal static AppLanguage DetectSystemLanguage(string languageTag)
     {
         var subtags = languageTag.Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries);

@@ -25,8 +25,7 @@ public partial class App : Application
         Settings = new SettingsService(Path.Combine(dataDirectory, "settings.json"));
         RefreshService = new RssRefreshService(Repository, Localization);
         _notificationService = new NotificationService(
-            Path.Combine(dataDirectory, "notifications.log"),
-            Localization);
+            Path.Combine(dataDirectory, "notifications.log"));
         _notificationService.Activated += NotificationService_Activated;
         _notificationService.Register();
     }

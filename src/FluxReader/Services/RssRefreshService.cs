@@ -80,7 +80,11 @@ public sealed class RssRefreshService : IDisposable
         if (download.NotModified)
         {
             await _repository.TouchFeedAsync(feed.Id, cancellationToken);
-            return new FeedRefreshResult(feed, Array.Empty<string>(), true);
+            return new FeedRefreshResult(
+                feed.Title,
+                feed.IconUrl,
+                Array.Empty<string>(),
+                true);
         }
 
         var parsedFeed = download.ParsedFeed
@@ -92,7 +96,11 @@ public sealed class RssRefreshService : IDisposable
             download.LastModifiedAt,
             cancellationToken);
 
-        return new FeedRefreshResult(feed, insertedTitles, false);
+        return new FeedRefreshResult(
+            parsedFeed.Title,
+            parsedFeed.IconUri?.AbsoluteUri ?? string.Empty,
+            insertedTitles,
+            false);
     }
 
     public void Dispose() => _httpClient.Dispose();
@@ -217,6 +225,7 @@ public sealed class RssRefreshService : IDisposable
 }
 
 public sealed record FeedRefreshResult(
-    Feed Feed,
+    string FeedTitle,
+    string FeedIconUrl,
     IReadOnlyList<string> NewArticleTitles,
     bool NotModified);

@@ -409,9 +409,17 @@ public sealed partial class MainViewModel : ObservableObject
             await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
             await ReloadArticlesAsync(cancellationToken);
 
-            if (newTitles.Length > 0)
+            foreach (var result in outcomes
+                         .Select(outcome => outcome.Result)
+                         .OfType<FeedRefreshResult>())
             {
-                _notifications.ShowNewArticles(newTitles.Length, newTitles[0]);
+                foreach (var articleTitle in result.NewArticleTitles)
+                {
+                    _notifications.ShowNewArticle(
+                        result.FeedTitle,
+                        articleTitle,
+                        result.FeedIconUrl);
+                }
             }
 
             if (feeds.Count == 1 && failures.Length == 1)

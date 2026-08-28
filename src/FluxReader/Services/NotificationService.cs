@@ -5,17 +5,15 @@ namespace FluxReader.Services;
 
 public sealed class NotificationService : IDisposable
 {
-    private readonly LocalizationService _localization;
     private readonly string _logPath;
     private readonly object _logSync = new();
     private AppNotificationManager? _manager;
     private bool _registered;
 
-    public NotificationService(string logPath, LocalizationService localization)
+    public NotificationService(string logPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(logPath);
         _logPath = logPath;
-        _localization = localization;
     }
 
     public event EventHandler? Activated;
@@ -61,10 +59,10 @@ public sealed class NotificationService : IDisposable
         }
     }
 
-    public void ShowNewArticles(int count, string? latestTitle)
+    public void ShowNewArticle(string feedTitle, string articleTitle, string? feedIconUrl)
     {
         var manager = _manager;
-        if (!_registered || manager is null || count <= 0)
+        if (!_registered || manager is null)
         {
             return;
         }
@@ -73,10 +71,13 @@ public sealed class NotificationService : IDisposable
         {
             var builder = new AppNotificationBuilder()
                 .AddArgument("action", "open")
-                .AddText(_localization.FormatNewArticleNotification(count))
-                .AddText(string.IsNullOrWhiteSpace(latestTitle)
-                    ? _localization.GetString("NotificationOpenFluxReader")
-                    : latestTitle);
+                .AddText(feedTitle)
+                .AddText(articleTitle);
+            if (TryCreateIconUri(feedIconUrl) is { } iconUri)
+            {
+                builder.SetAppLogoOverride(iconUri);
+            }
+
             var notification = builder.BuildNotification();
             notification.Expiration = DateTimeOffset.Now.AddHours(8);
             manager.Show(notification);
@@ -113,6 +114,12 @@ public sealed class NotificationService : IDisposable
 
     private void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args) =>
         Activated?.Invoke(this, EventArgs.Empty);
+
+    private static Uri? TryCreateIconUri(string? value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+            ? uri
+            : null;
 
     private void LogFailure(string operation, Exception exception)
     {
