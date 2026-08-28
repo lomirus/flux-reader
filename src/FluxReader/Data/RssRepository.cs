@@ -454,13 +454,17 @@ public sealed class RssRepository
         }
     }
 
-    public async Task TouchFeedAsync(long feedId, CancellationToken cancellationToken = default)
+    public async Task TouchFeedAsync(
+        long feedId,
+        string iconUrl,
+        CancellationToken cancellationToken = default)
     {
         await ExecuteAsync(
-            "UPDATE feeds SET last_refreshed_utc = $now WHERE id = $id;",
+            "UPDATE feeds SET icon_url = $icon_url, last_refreshed_utc = $now WHERE id = $id;",
             command =>
             {
                 command.Parameters.AddWithValue("$id", feedId);
+                command.Parameters.AddWithValue("$icon_url", iconUrl);
                 command.Parameters.AddWithValue("$now", FormatDate(DateTimeOffset.UtcNow));
             },
             cancellationToken);

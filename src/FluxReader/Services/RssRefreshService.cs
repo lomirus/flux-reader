@@ -12,11 +12,15 @@ public sealed class RssRefreshService : IDisposable
 {
     private const int MaximumWebsiteHtmlCharacters = 1_000_000;
     private readonly HttpClient _httpClient;
+    private readonly FeedIconCache _iconCache;
     private readonly LocalizationService _localization;
     private readonly RssFeedParser _parser;
     private readonly RssRepository _repository;
 
-    public RssRefreshService(RssRepository repository, LocalizationService localization)
+    public RssRefreshService(
+        RssRepository repository,
+        LocalizationService localization,
+        string iconCacheDirectory)
     {
         _repository = repository;
         _localization = localization;
@@ -44,6 +48,7 @@ public sealed class RssRefreshService : IDisposable
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/rss+xml"));
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml", 0.9));
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/xml", 0.8));
+        _iconCache = new FeedIconCache(_httpClient, iconCacheDirectory);
     }
 
     public async Task<Feed> AddFeedAsync(
@@ -52,7 +57,7 @@ public sealed class RssRefreshService : IDisposable
         CancellationToken cancellationToken = default)
     {
         EnsureSupportedUri(feedUri);
-        var download = await DownloadAsync(feedUri, null, null, null, cancellationToken);
+        var download = await DownloadAsync(feedUri, null, null, null, null, cancellationToken);
         if (download.ParsedFeed is null)
         {
             throw new InvalidOperationException(_localization.GetString("EmptyFeedResponse"));
@@ -74,14 +79,16 @@ public sealed class RssRefreshService : IDisposable
             feedUri,
             feed.ETag,
             feed.LastModifiedAt,
-            TryCreateHttpUri(feed.IconUrl),
+            TryCreateIconUri(feed.IconUrl),
+            TryCreateHttpUri(feed.SiteUrl),
             cancellationToken);
 
         if (download.NotModified)
         {
-            await _repository.TouchFeedAsync(feed.Id, cancellationToken);
+            var iconUrl = download.IconUri?.AbsoluteUri ?? string.Empty;
+            await _repository.TouchFeedAsync(feed.Id, iconUrl, cancellationToken);
             return new FeedRefreshResult(
-                feed.IconUrl,
+                iconUrl,
                 Array.Empty<ParsedArticle>(),
                 true);
         }
@@ -108,6 +115,7 @@ public sealed class RssRefreshService : IDisposable
         string? etag,
         DateTimeOffset? lastModifiedAt,
         Uri? existingIconUri,
+        Uri? existingSiteUri,
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -124,27 +132,52 @@ public sealed class RssRefreshService : IDisposable
 
         if (response.StatusCode == HttpStatusCode.NotModified)
         {
-            return new FeedDownload(null, etag, lastModifiedAt, true);
+            var notModifiedIconUri = await ResolveFeedIconAsync(
+                null,
+                existingIconUri,
+                existingSiteUri ?? uri,
+                cancellationToken);
+            return new FeedDownload(null, etag, lastModifiedAt, true, notModifiedIconUri);
         }
 
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         var parsedFeed = await _parser.ParseAsync(stream, response.RequestMessage?.RequestUri ?? uri, cancellationToken);
-        if (parsedFeed.IconUri is null)
-        {
-            var siteUri = parsedFeed.SiteUri ?? response.RequestMessage?.RequestUri ?? uri;
-            var iconUri = existingIconUri ?? await DiscoverWebsiteIconAsync(siteUri, cancellationToken);
-            parsedFeed = parsedFeed with { IconUri = iconUri };
-        }
+        var siteUri = parsedFeed.SiteUri ?? response.RequestMessage?.RequestUri ?? uri;
+        var iconUri = await ResolveFeedIconAsync(
+            parsedFeed.IconUri,
+            existingIconUri,
+            siteUri,
+            cancellationToken);
+        parsedFeed = parsedFeed with { IconUri = iconUri };
 
         return new FeedDownload(
             parsedFeed,
             response.Headers.ETag?.ToString(),
             response.Content.Headers.LastModified,
-            false);
+            false,
+            iconUri);
     }
 
-    private async Task<Uri> DiscoverWebsiteIconAsync(Uri siteUri, CancellationToken cancellationToken)
+    private async Task<Uri?> ResolveFeedIconAsync(
+        Uri? parsedIconUri,
+        Uri? existingIconUri,
+        Uri siteUri,
+        CancellationToken cancellationToken)
+    {
+        foreach (var sourceUri in new[] { parsedIconUri, existingIconUri }.OfType<Uri>().Distinct())
+        {
+            var cachedUri = await TryCacheIconAsync(sourceUri, siteUri, cancellationToken);
+            if (cachedUri is not null)
+            {
+                return cachedUri;
+            }
+        }
+
+        return await DiscoverWebsiteIconAsync(siteUri, cancellationToken);
+    }
+
+    private async Task<Uri?> DiscoverWebsiteIconAsync(Uri siteUri, CancellationToken cancellationToken)
     {
         var defaultIconUri = CreateDefaultIconUri(siteUri);
         try
@@ -158,22 +191,60 @@ public sealed class RssRefreshService : IDisposable
             if (!response.IsSuccessStatusCode ||
                 response.Content.Headers.ContentLength > MaximumWebsiteHtmlCharacters * 4)
             {
-                return defaultIconUri;
+                return await TryCacheIconAsync(defaultIconUri, siteUri, cancellationToken);
             }
 
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
             var html = await ReadLimitedAsync(reader, cancellationToken);
             var finalPageUri = response.RequestMessage?.RequestUri ?? siteUri;
-            return WebsiteIconParser.FindIconUri(html, finalPageUri) ?? CreateDefaultIconUri(finalPageUri);
+            var candidates = WebsiteIconParser.FindIconUris(html, finalPageUri)
+                .Append(CreateDefaultIconUri(finalPageUri))
+                .Distinct();
+            foreach (var candidate in candidates)
+            {
+                var cachedUri = await TryCacheIconAsync(candidate, finalPageUri, cancellationToken);
+                if (cachedUri is not null)
+                {
+                    return cachedUri;
+                }
+            }
+
+            return null;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return defaultIconUri;
         }
         catch (Exception exception) when (exception is HttpRequestException or IOException or InvalidOperationException)
         {
-            return defaultIconUri;
+        }
+
+        return await TryCacheIconAsync(defaultIconUri, siteUri, cancellationToken);
+    }
+
+    private async Task<Uri?> TryCacheIconAsync(
+        Uri sourceUri,
+        Uri siteUri,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _iconCache.GetAsync(sourceUri, siteUri, cancellationToken);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+        catch (Exception exception) when (exception is
+                                           HttpRequestException or
+                                           IOException or
+                                           InvalidDataException or
+                                           InvalidOperationException or
+                                           UnauthorizedAccessException or
+                                           System.Runtime.InteropServices.COMException or
+                                           System.Xml.XmlException)
+        {
+            return null;
         }
     }
 
@@ -207,6 +278,14 @@ public sealed class RssRefreshService : IDisposable
             ? uri
             : null;
 
+    private static Uri? TryCreateIconUri(string value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps ||
+         uri.Scheme == Uri.UriSchemeHttp ||
+         uri.IsFile)
+            ? uri
+            : null;
+
     private void EnsureSupportedUri(Uri uri)
     {
         if (!uri.IsAbsoluteUri || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
@@ -219,7 +298,8 @@ public sealed class RssRefreshService : IDisposable
         ParsedFeed? ParsedFeed,
         string? ETag,
         DateTimeOffset? LastModifiedAt,
-        bool NotModified);
+        bool NotModified,
+        Uri? IconUri);
 }
 
 public sealed record FeedRefreshResult(

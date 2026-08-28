@@ -16,6 +16,9 @@ public static class WebsiteIconParser
         TimeSpan.FromSeconds(1));
 
     public static Uri? FindIconUri(string html, Uri pageUri)
+        => FindIconUris(html, pageUri).FirstOrDefault();
+
+    public static IReadOnlyList<Uri> FindIconUris(string html, Uri pageUri)
     {
         ArgumentNullException.ThrowIfNull(html);
         ArgumentNullException.ThrowIfNull(pageUri);
@@ -54,7 +57,8 @@ public static class WebsiteIconParser
             .ThenByDescending(candidate => candidate.SizeScore)
             .ThenBy(candidate => candidate.Order)
             .Select(candidate => candidate.Uri)
-            .FirstOrDefault();
+            .Distinct()
+            .ToArray();
     }
 
     private static Dictionary<string, string> ParseAttributes(string tag)

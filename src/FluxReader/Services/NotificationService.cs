@@ -8,18 +8,15 @@ namespace FluxReader.Services;
 public sealed class NotificationService : IDisposable
 {
     private const int MaximumArticleDescriptionLength = 256;
-    private readonly NotificationIconCache _iconCache;
     private readonly string _logPath;
     private readonly object _logSync = new();
     private AppNotificationManager? _manager;
     private bool _registered;
 
-    public NotificationService(string logPath, string iconCacheDirectory)
+    public NotificationService(string logPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(logPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(iconCacheDirectory);
         _logPath = logPath;
-        _iconCache = new NotificationIconCache(iconCacheDirectory);
     }
 
     public event EventHandler? Activated;
@@ -65,7 +62,7 @@ public sealed class NotificationService : IDisposable
         }
     }
 
-    public async Task ShowNewArticlesAsync(
+    public Task ShowNewArticlesAsync(
         IReadOnlyList<ParsedArticle> articles,
         string? feedIconUrl,
         CancellationToken cancellationToken = default)
@@ -75,27 +72,16 @@ public sealed class NotificationService : IDisposable
         var manager = _manager;
         if (!_registered || manager is null || articles.Count == 0)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        Uri? iconUri = null;
-        try
-        {
-            iconUri = await _iconCache.GetAsync(feedIconUrl, cancellationToken);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            LogFailure("CacheIcon", exception);
-        }
+        cancellationToken.ThrowIfCancellationRequested();
+        var iconUri = TryCreateIconUri(feedIconUrl);
 
         manager = _manager;
         if (!_registered || manager is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         foreach (var article in articles)
@@ -107,6 +93,8 @@ public sealed class NotificationService : IDisposable
                 MaximumArticleDescriptionLength);
             ShowNewArticle(manager, article.Title, description, iconUri);
         }
+
+        return Task.CompletedTask;
     }
 
     private void ShowNewArticle(
@@ -141,7 +129,6 @@ public sealed class NotificationService : IDisposable
         var manager = _manager;
         if (!_registered || manager is null)
         {
-            _iconCache.Dispose();
             return;
         }
 
@@ -158,12 +145,19 @@ public sealed class NotificationService : IDisposable
         {
             _manager = null;
             _registered = false;
-            _iconCache.Dispose();
         }
     }
 
     private void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args) =>
         Activated?.Invoke(this, EventArgs.Empty);
+
+    private static Uri? TryCreateIconUri(string? value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        uri.IsFile &&
+        File.Exists(uri.LocalPath) &&
+        Path.GetExtension(uri.AbsolutePath).ToLowerInvariant() is ".png" or ".jpg" or ".svg"
+            ? uri
+            : null;
 
     private void LogFailure(string operation, Exception exception)
     {

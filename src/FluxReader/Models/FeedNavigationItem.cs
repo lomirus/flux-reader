@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Storage;
 
 namespace FluxReader.Models;
 
@@ -11,6 +12,8 @@ public sealed partial class FeedNavigationItem : ObservableObject
 {
     private const double ChildIndentWidth = 18;
     private readonly string _refreshFailedText;
+    private ImageSource? _iconSource;
+    private long _iconLoadVersion;
 
     private FeedNavigationItem(Feed feed, ActionLabels labels, bool isChild)
     {
@@ -22,6 +25,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
         RemoveActionText = labels.RemoveFeed;
         _refreshFailedText = labels.RefreshFailed;
         feed.PropertyChanged += Feed_PropertyChanged;
+        _ = LoadIconSourceAsync(feed.IconUrl);
     }
 
     private FeedNavigationItem(FeedGroup group, IEnumerable<Feed> feeds, ActionLabels labels)
@@ -72,7 +76,11 @@ public sealed partial class FeedNavigationItem : ObservableObject
 
     public string Glyph => IsGroup ? "\uE8B7" : "\uE789";
 
-    public ImageSource? IconSource => CreateIconSource(Feed?.IconUrl);
+    public ImageSource? IconSource
+    {
+        get => _iconSource;
+        private set => SetProperty(ref _iconSource, value);
+    }
 
     public string PrimaryActionGlyph => IsGroup ? "\uE70F" : "\uE8B7";
 
@@ -123,7 +131,8 @@ public sealed partial class FeedNavigationItem : ObservableObject
         if (e.PropertyName == nameof(FluxReader.Models.Feed.IconUrl))
         {
             IconFallbackVisibility = Visibility.Visible;
-            OnPropertyChanged(nameof(IconSource));
+            IconSource = null;
+            _ = LoadIconSourceAsync(Feed?.IconUrl);
         }
 
         if (e.PropertyName == nameof(FluxReader.Models.Feed.UnreadCount) ||
@@ -149,16 +158,68 @@ public sealed partial class FeedNavigationItem : ObservableObject
         }
     }
 
-    private static ImageSource? CreateIconSource(string? value)
+    private async Task LoadIconSourceAsync(string? value)
     {
-        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+        var version = Interlocked.Increment(ref _iconLoadVersion);
+        var isLocalFile = Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.IsFile;
+        var source = await CreateIconSourceAsync(value);
+        if (version == Volatile.Read(ref _iconLoadVersion))
+        {
+            IconSource = source;
+            if (isLocalFile)
+            {
+                IconFallbackVisibility = source is null
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+        }
+    }
+
+    private static async Task<ImageSource?> CreateIconSourceAsync(string? value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
         {
             return null;
         }
 
-        return Path.GetExtension(uri.AbsolutePath).Equals(".svg", StringComparison.OrdinalIgnoreCase)
+        if (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+        {
+            return CreateUriIconSource(uri);
+        }
+
+        if (!uri.IsFile || !File.Exists(uri.LocalPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var file = await StorageFile.GetFileFromPathAsync(uri.LocalPath);
+            using var stream = await file.OpenReadAsync();
+            if (Path.GetExtension(uri.LocalPath).Equals(".svg", StringComparison.OrdinalIgnoreCase))
+            {
+                var svgSource = new SvgImageSource();
+                var status = await svgSource.SetSourceAsync(stream);
+                return status == SvgImageSourceLoadStatus.Success ? svgSource : null;
+            }
+
+            var bitmapSource = new BitmapImage();
+            await bitmapSource.SetSourceAsync(stream);
+            return bitmapSource;
+        }
+        catch (Exception exception) when (exception is
+                                           ArgumentException or
+                                           FileNotFoundException or
+                                           IOException or
+                                           UnauthorizedAccessException or
+                                           System.Runtime.InteropServices.COMException)
+        {
+            return null;
+        }
+    }
+
+    private static ImageSource CreateUriIconSource(Uri uri) =>
+        Path.GetExtension(uri.AbsolutePath).Equals(".svg", StringComparison.OrdinalIgnoreCase)
             ? new SvgImageSource { UriSource = uri }
             : new BitmapImage { UriSource = uri };
-    }
 }
