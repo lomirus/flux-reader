@@ -11,7 +11,8 @@ internal sealed class SystemTrayIcon : IDisposable
     private const uint TrayIconId = 1;
     private const uint TrayIconMessage = 0x8001;
     private const uint OpenCommandId = 1;
-    private const uint ExitCommandId = 2;
+    private const uint RefreshCommandId = 2;
+    private const uint ExitCommandId = 3;
 
     private const uint ImageIcon = 1;
     private const uint LoadFromFile = 0x0010;
@@ -77,6 +78,8 @@ internal sealed class SystemTrayIcon : IDisposable
     }
 
     public event EventHandler? OpenRequested;
+
+    public event EventHandler? RefreshRequested;
 
     public event EventHandler? ExitRequested;
 
@@ -174,6 +177,7 @@ internal sealed class SystemTrayIcon : IDisposable
         {
             AppendMenu(menu, MenuString, OpenCommandId, _localization.GetString("TrayOpen"));
             SetMenuDefaultItem(menu, OpenCommandId, false);
+            AppendMenu(menu, MenuString, RefreshCommandId, _localization.GetString("RefreshAllFeeds"));
             AppendMenu(menu, MenuSeparator, 0, null);
             AppendMenu(menu, MenuString, ExitCommandId, _localization.GetString("TrayExit"));
             SetForegroundWindow(_windowHandle);
@@ -191,6 +195,10 @@ internal sealed class SystemTrayIcon : IDisposable
             if (command == OpenCommandId)
             {
                 OpenRequested?.Invoke(this, EventArgs.Empty);
+            }
+            else if (command == RefreshCommandId)
+            {
+                RefreshRequested?.Invoke(this, EventArgs.Empty);
             }
             else if (command == ExitCommandId)
             {

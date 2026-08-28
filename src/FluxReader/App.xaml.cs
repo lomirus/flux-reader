@@ -60,6 +60,7 @@ public partial class App : Application
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "fluxreader-icon.ico");
         _systemTrayIcon = new SystemTrayIcon(window, Localization, iconPath);
         _systemTrayIcon.OpenRequested += SystemTrayIcon_OpenRequested;
+        _systemTrayIcon.RefreshRequested += SystemTrayIcon_RefreshRequested;
         _systemTrayIcon.ExitRequested += SystemTrayIcon_ExitRequested;
         window.Activate();
         DiagnosticLog.MemorySnapshot("app.launched");
@@ -124,6 +125,23 @@ public partial class App : Application
         _window?.DispatcherQueue.TryEnqueue(ShowMainWindow);
     }
 
+    private void SystemTrayIcon_RefreshRequested(object? sender, EventArgs e)
+    {
+        _window?.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (_window is not MainWindow window ||
+                !window.ViewModel.RefreshCommand.CanExecute(null))
+            {
+                return;
+            }
+
+            DiagnosticLog.Information(
+                "refresh.tray_triggered",
+                new { feedCount = window.ViewModel.Feeds.Count });
+            window.ViewModel.RefreshCommand.Execute(null);
+        });
+    }
+
     private void SystemTrayIcon_ExitRequested(object? sender, EventArgs e)
     {
         _window?.DispatcherQueue.TryEnqueue(ExitApplication);
@@ -150,6 +168,7 @@ public partial class App : Application
         }
 
         _systemTrayIcon.OpenRequested -= SystemTrayIcon_OpenRequested;
+        _systemTrayIcon.RefreshRequested -= SystemTrayIcon_RefreshRequested;
         _systemTrayIcon.ExitRequested -= SystemTrayIcon_ExitRequested;
         _systemTrayIcon.Dispose();
         _systemTrayIcon = null;
