@@ -101,7 +101,7 @@
                                 ImageFailed="FeedIcon_ImageFailed"
                                 ImageOpened="FeedIcon_ImageOpened"
                                 Source="{x:Bind IconSource, Mode=OneWay}"
-                                Stretch="UniformToFill"
+                                Stretch="Uniform"
                                 Tag="{x:Bind}" />
                         </Border>
                     </Grid>
@@ -388,7 +388,7 @@
                                     ImageFailed="FeedIcon_ImageFailed"
                                     ImageOpened="FeedIcon_ImageOpened"
                                     Source="{Binding SelectedNavigationItem.IconSource, FallbackValue={x:Null}, TargetNullValue={x:Null}}"
-                                    Stretch="UniformToFill"
+                                    Stretch="Uniform"
                                     Tag="{Binding SelectedNavigationItem}" />
                             </Border>
                         </Grid>
@@ -545,7 +545,7 @@
                                     ImageFailed="FeedIcon_ImageFailed"
                                     ImageOpened="FeedIcon_ImageOpened"
                                     Source="{Binding SelectedArticleNavigationItem.IconSource, FallbackValue={x:Null}, TargetNullValue={x:Null}}"
-                                    Stretch="UniformToFill"
+                                    Stretch="Uniform"
                                     Tag="{Binding SelectedArticleNavigationItem}" />
                             </Border>
                         </Grid>

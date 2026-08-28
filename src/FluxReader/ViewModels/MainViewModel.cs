@@ -477,13 +477,11 @@ public sealed partial class MainViewModel : ObservableObject
                          .Select(outcome => outcome.Result)
                          .OfType<FeedRefreshResult>())
             {
-                foreach (var articleTitle in result.NewArticleTitles)
-                {
-                    _notifications.ShowNewArticle(
-                        result.FeedTitle,
-                        articleTitle,
-                        result.FeedIconUrl);
-                }
+                await _notifications.ShowNewArticlesAsync(
+                    result.FeedTitle,
+                    result.NewArticleTitles,
+                    result.FeedIconUrl,
+                    cancellationToken);
             }
 
             if (feeds.Count == 1 && failures.Length == 1)
