@@ -476,12 +476,40 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock
-                        FontSize="30"
-                        FontWeight="SemiBold"
-                        MaxLines="4"
-                        Text="{Binding SelectedArticle.Title}"
-                        TextWrapping="Wrap" />
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid
+                            Width="40"
+                            Height="40"
+                            Margin="0,2,0,0"
+                            VerticalAlignment="Top">
+                            <FontIcon
+                                VerticalAlignment="Center"
+                                FontSize="30"
+                                Glyph="{Binding SelectedArticleNavigationItem.Glyph}"
+                                Visibility="{Binding SelectedArticleNavigationItem.IconFallbackVisibility, Mode=OneWay, TargetNullValue=Visible}" />
+                            <Border CornerRadius="6">
+                                <Image
+                                    Width="40"
+                                    Height="40"
+                                    ImageFailed="FeedIcon_ImageFailed"
+                                    ImageOpened="FeedIcon_ImageOpened"
+                                    Source="{Binding SelectedArticleNavigationItem.IconSource, FallbackValue={x:Null}, TargetNullValue={x:Null}}"
+                                    Stretch="UniformToFill"
+                                    Tag="{Binding SelectedArticleNavigationItem}" />
+                            </Border>
+                        </Grid>
+                        <TextBlock
+                            Grid.Column="1"
+                            FontSize="30"
+                            FontWeight="SemiBold"
+                            MaxLines="4"
+                            Text="{Binding SelectedArticle.Title}"
+                            TextWrapping="Wrap" />
+                    </Grid>
                     <TextBlock
                         Grid.Row="1"
                         Margin="0,10,0,0"

@@ -33,6 +33,7 @@ public sealed partial class MainViewModel : ObservableObject
     public partial FeedNavigationItem? SelectedNavigationItem { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedArticleNavigationItem))]
     public partial Article? SelectedArticle { get; set; }
 
     [ObservableProperty]
@@ -96,6 +97,10 @@ public sealed partial class MainViewModel : ObservableObject
     public string ArticleListGlyph => SelectedFeedCount > 1
         ? "\uE762"
         : SelectedNavigationItem?.Glyph ?? "\uE8F1";
+
+    public FeedNavigationItem? SelectedArticleNavigationItem => SelectedArticle is null
+        ? null
+        : FindFeedNavigationItem(SelectedArticle.FeedId);
 
     public void ApplyLocalization()
     {
@@ -833,6 +838,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         ApplyNavigationSelection(selectedFeedIds, selectedGroupId);
+        OnPropertyChanged(nameof(SelectedArticleNavigationItem));
     }
 
     private void ApplyNavigationSelection(
