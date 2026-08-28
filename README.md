@@ -17,19 +17,21 @@ FluxReader requires Windows 11 and is available for x64 and ARM64 PCs.
 
 Setup installs missing Microsoft runtimes when required, so installation may need an internet connection. Current builds are unsigned; Windows may display an **Unknown publisher** warning for files downloaded from the internet.
 
-## Your feeds stay portable
+## About FluxReader
+
+### Your feeds stay portable
 
 Import subscriptions from another reader with OPML, or export them whenever you want to move elsewhere. FluxReader preserves single-level groups; nested OPML folders are flattened into single-level group paths during import.
 
-## Local by default
+### Local by default
 
 FluxReader stores its data in `%LOCALAPPDATA%\FluxReader` and does not use a cloud account. Article HTML is sanitized, scripts are disabled, and links open in your system browser.
 
-## Languages
+### Languages
 
 The interface is available in Simplified Chinese, Traditional Chinese, English, French, German, Italian, Spanish (Spain and Latin America), Portuguese (Brazil), Polish, Russian, Japanese, and Korean. FluxReader matches the system language on first launch and falls back to English when the language is unsupported.
 
-## Good to know
+### Good to know
 
 - Closing the main window hides FluxReader in the system tray, where automatic refresh continues. Choose **Exit** from the tray to stop the app.
 - Website feed discovery, nested in-app groups, and cross-device synchronization are not included.
