@@ -20,7 +20,8 @@ public sealed class RssRefreshService : IDisposable
     public RssRefreshService(
         RssRepository repository,
         LocalizationService localization,
-        string iconCacheDirectory)
+        string iconCacheDirectory,
+        IWebProxy proxy)
     {
         _repository = repository;
         _localization = localization;
@@ -38,7 +39,9 @@ public sealed class RssRefreshService : IDisposable
             AutomaticDecompression = DecompressionMethods.All,
             AllowAutoRedirect = true,
             MaxAutomaticRedirections = 8,
-            ConnectTimeout = TimeSpan.FromSeconds(15)
+            ConnectTimeout = TimeSpan.FromSeconds(15),
+            Proxy = proxy,
+            UseProxy = true
         })
         {
             Timeout = TimeSpan.FromSeconds(30)

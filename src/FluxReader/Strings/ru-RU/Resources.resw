@@ -74,6 +74,15 @@
   <data name="FeedsGroupChanged" xml:space="preserve"><value>Группа для {0} лент изменена.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Не удалось обновить группы лент: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Network" xml:space="preserve"><value>Сеть</value></data>
+  <data name="Proxy" xml:space="preserve"><value>Прокси</value></data>
+  <data name="ProxyDescription" xml:space="preserve"><value>Выберите способ подключения FluxReader при обновлении лент и загрузке сетевых ресурсов.</value></data>
+  <data name="ProxyDisabled" xml:space="preserve"><value>Не использовать прокси</value></data>
+  <data name="ProxySystem" xml:space="preserve"><value>Использовать системный прокси</value></data>
+  <data name="ProxyCustom" xml:space="preserve"><value>Использовать пользовательский прокси</value></data>
+  <data name="CustomProxyAddress" xml:space="preserve"><value>Прокси-сервер</value></data>
+  <data name="CustomProxyAddressPlaceholder" xml:space="preserve"><value>например, http://127.0.0.1:7890</value></data>
+  <data name="InvalidProxyAddress" xml:space="preserve"><value>Введите допустимый адрес прокси HTTP(S) или SOCKS без пути.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Внешний вид</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>Интервал обновления</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>Автоматически обновлять все ленты с этим интервалом.</value></data>

@@ -65,7 +65,7 @@ public sealed partial class MainWindow : Window
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
     private readonly Queue<ArticleNavigationRequest> _pendingArticleNavigations = new();
     private readonly Dictionary<ulong, ArticleNavigationRequest> _articleNavigations = new();
-    private readonly ArticleStylesheetService _articleStylesheetService = new();
+    private readonly ArticleStylesheetService _articleStylesheetService;
     private readonly SolidColorBrush _transparentFeedSelectionIndicatorBrush = new(Colors.Transparent);
     private long _statusInfoBarIsOpenCallbackToken;
     private bool _areFeedGroupSelectionIndicatorsVisible = true;
@@ -108,6 +108,7 @@ public sealed partial class MainWindow : Window
         ArticleWebView.DefaultBackgroundColor = Colors.Transparent;
 
         var app = App.Current;
+        _articleStylesheetService = new ArticleStylesheetService(app.Proxy);
         ViewModel = new MainViewModel(
             app.Repository,
             app.RefreshService,
@@ -457,11 +458,27 @@ public sealed partial class MainWindow : Window
         AppLanguage? languagePreference = _settings.Language is { } savedLanguage && Enum.IsDefined(savedLanguage)
             ? savedLanguage
             : null;
+        var proxyMode = Enum.IsDefined(_settings.ProxyMode)
+            ? _settings.ProxyMode
+            : ProxyMode.System;
+        var customProxyAddress = ConfigurableWebProxy.TryNormalizeAddress(
+            _settings.CustomProxyAddress,
+            out var normalizedProxyAddress)
+                ? normalizedProxyAddress
+                : string.Empty;
+        if (proxyMode == ProxyMode.Custom && string.IsNullOrEmpty(customProxyAddress))
+        {
+            proxyMode = ProxyMode.System;
+        }
+
         _settings = _settings with
         {
             Language = languagePreference,
-            RefreshIntervalMinutes = NormalizeRefreshInterval(_settings.RefreshIntervalMinutes)
+            RefreshIntervalMinutes = NormalizeRefreshInterval(_settings.RefreshIntervalMinutes),
+            ProxyMode = proxyMode,
+            CustomProxyAddress = customProxyAddress
         };
+        App.Current.Proxy.Configure(proxyMode, customProxyAddress);
         App.Current.Localization.SetLanguage(
             App.Current.Localization.ResolveLanguage(languagePreference));
         ApplyLocalization();
@@ -1314,12 +1331,15 @@ public sealed partial class MainWindow : Window
             _settings.Theme,
             App.Current.Localization.CurrentLanguage,
             _settings.RefreshIntervalMinutes,
-            _settings.LoadExternalArticleStylesheets);
+            _settings.LoadExternalArticleStylesheets,
+            _settings.ProxyMode,
+            _settings.CustomProxyAddress);
         settingsPage.BackRequested += SettingsPage_BackRequested;
         settingsPage.ThemeChanged += SettingsPage_ThemeChanged;
         settingsPage.LanguageChanged += SettingsPage_LanguageChanged;
         settingsPage.RefreshIntervalChanged += SettingsPage_RefreshIntervalChanged;
         settingsPage.ExternalStylesheetsChanged += SettingsPage_ExternalStylesheetsChanged;
+        settingsPage.ProxyChanged += SettingsPage_ProxyChanged;
         settingsPage.ImportSubscriptionsRequested += SettingsPage_ImportSubscriptionsRequested;
         settingsPage.ExportSubscriptionsRequested += SettingsPage_ExportSubscriptionsRequested;
     }
@@ -1401,6 +1421,23 @@ public sealed partial class MainWindow : Window
         };
         await SaveSettingsAsync();
         await RenderSelectedArticleAsync();
+    }
+
+    private async void SettingsPage_ProxyChanged(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage ||
+            !settingsPage.TryGetProxyConfiguration(out var proxyMode, out var customProxyAddress))
+        {
+            return;
+        }
+
+        App.Current.Proxy.Configure(proxyMode, customProxyAddress);
+        _settings = _settings with
+        {
+            ProxyMode = proxyMode,
+            CustomProxyAddress = customProxyAddress
+        };
+        await SaveSettingsAsync();
     }
 
     private async void SettingsPage_ImportSubscriptionsRequested(object? sender, EventArgs e)
@@ -1578,6 +1615,7 @@ public sealed partial class MainWindow : Window
             settingsPage.LanguageChanged -= SettingsPage_LanguageChanged;
             settingsPage.RefreshIntervalChanged -= SettingsPage_RefreshIntervalChanged;
             settingsPage.ExternalStylesheetsChanged -= SettingsPage_ExternalStylesheetsChanged;
+            settingsPage.ProxyChanged -= SettingsPage_ProxyChanged;
             settingsPage.ImportSubscriptionsRequested -= SettingsPage_ImportSubscriptionsRequested;
             settingsPage.ExportSubscriptionsRequested -= SettingsPage_ExportSubscriptionsRequested;
         }

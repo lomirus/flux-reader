@@ -1,16 +1,21 @@
 using FluxReader.Models;
 using FluxReader.Services;
+using FluxReader.Interop;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Input;
 using Windows.Globalization.NumberFormatting;
+using Windows.System;
 
 namespace FluxReader;
 
 public sealed partial class SettingsPage : Page
 {
     private bool _initialized;
+    private string _customProxyAddress = string.Empty;
     private int _refreshIntervalMinutes;
+    private bool _showProxyValidationError;
 
     public SettingsPage()
     {
@@ -33,6 +38,8 @@ public sealed partial class SettingsPage : Page
 
     public event EventHandler? ExternalStylesheetsChanged;
 
+    public event EventHandler? ProxyChanged;
+
     public event EventHandler? ImportSubscriptionsRequested;
 
     public event EventHandler? ExportSubscriptionsRequested;
@@ -45,19 +52,64 @@ public sealed partial class SettingsPage : Page
 
     public bool LoadExternalArticleStylesheets => ExternalStylesheetsToggleSwitch.IsOn;
 
+    public ProxyMode SelectedProxyMode => ProxyModeSelector.SelectedIndex switch
+    {
+        0 => ProxyMode.Disabled,
+        2 => ProxyMode.Custom,
+        _ => ProxyMode.System
+    };
+
     public void Initialize(
         AppTheme theme,
         AppLanguage language,
         int refreshIntervalMinutes,
-        bool loadExternalArticleStylesheets)
+        bool loadExternalArticleStylesheets,
+        ProxyMode proxyMode,
+        string customProxyAddress)
     {
         ThemeSelector.SelectedIndex = (int)theme;
         LanguageSelector.SelectedIndex = (int)language;
         _refreshIntervalMinutes = refreshIntervalMinutes;
         RefreshIntervalNumberBox.Value = refreshIntervalMinutes;
         ExternalStylesheetsToggleSwitch.IsOn = loadExternalArticleStylesheets;
+        _customProxyAddress = ConfigurableWebProxy.TryNormalizeAddress(
+            customProxyAddress,
+            out var normalizedAddress)
+                ? normalizedAddress
+                : string.Empty;
+        CustomProxyAddressTextBox.Text = _customProxyAddress;
+        ProxyModeSelector.SelectedIndex = proxyMode switch
+        {
+            ProxyMode.Disabled => 0,
+            ProxyMode.Custom => 2,
+            _ => 1
+        };
+        _showProxyValidationError = false;
         _initialized = true;
+        UpdateCustomProxyState();
         ApplyLocalization();
+    }
+
+    public bool TryGetProxyConfiguration(
+        out ProxyMode proxyMode,
+        out string customProxyAddress)
+    {
+        proxyMode = SelectedProxyMode;
+        customProxyAddress = _customProxyAddress;
+        if (proxyMode != ProxyMode.Custom)
+        {
+            return true;
+        }
+
+        if (!ConfigurableWebProxy.TryNormalizeAddress(
+                CustomProxyAddressTextBox.Text,
+                out customProxyAddress))
+        {
+            return false;
+        }
+
+        _customProxyAddress = customProxyAddress;
+        return true;
     }
 
     public void ApplyLocalization()
@@ -81,6 +133,20 @@ public sealed partial class SettingsPage : Page
         AutomationProperties.SetName(
             ExternalStylesheetsToggleSwitch,
             localization.GetString("LoadExternalStylesheets"));
+        NetworkHeaderText.Text = localization.GetString("Network");
+        ProxyTitleText.Text = localization.GetString("Proxy");
+        ProxyDescriptionText.Text = localization.GetString("ProxyDescription");
+        AutomationProperties.SetName(ProxyModeSelector, localization.GetString("Proxy"));
+        DisabledProxyItem.Content = localization.GetString("ProxyDisabled");
+        SystemProxyItem.Content = localization.GetString("ProxySystem");
+        CustomProxyItem.Content = localization.GetString("ProxyCustom");
+        RefreshProxySelectionBox();
+        CustomProxyAddressTitleText.Text = localization.GetString("CustomProxyAddress");
+        CustomProxyAddressTextBox.PlaceholderText = localization.GetString("CustomProxyAddressPlaceholder");
+        InvalidProxyAddressText.Text = localization.GetString("InvalidProxyAddress");
+        AutomationProperties.SetName(
+            CustomProxyAddressTextBox,
+            localization.GetString("CustomProxyAddress"));
         FeedsHeaderText.Text = localization.GetString("Feeds");
         RefreshIntervalTitleText.Text = localization.GetString("RefreshInterval");
         RefreshIntervalDescriptionText.Text = localization.GetString("RefreshIntervalDescription");
@@ -151,8 +217,33 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    private void BackButton_Click(object sender, RoutedEventArgs e) =>
+    private void RefreshProxySelectionBox()
+    {
+        var selectedIndex = ProxyModeSelector.SelectedIndex;
+        if (selectedIndex < 0)
+        {
+            return;
+        }
+
+        var wasInitialized = _initialized;
+        _initialized = false;
+
+        try
+        {
+            ProxyModeSelector.SelectedIndex = -1;
+            ProxyModeSelector.SelectedIndex = selectedIndex;
+        }
+        finally
+        {
+            _initialized = wasInitialized;
+        }
+    }
+
+    private void BackButton_Click(object sender, RoutedEventArgs e)
+    {
+        CommitProxyConfiguration();
         BackRequested?.Invoke(this, EventArgs.Empty);
+    }
 
     private void ImportSubscriptionsButton_Click(object sender, RoutedEventArgs e) =>
         ImportSubscriptionsRequested?.Invoke(this, EventArgs.Empty);
@@ -185,6 +276,95 @@ public sealed partial class SettingsPage : Page
         {
             ExternalStylesheetsChanged?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    private void ComboBox_DropDownOpened(object sender, object e)
+    {
+        // TODO(winui): Remove this workaround after
+        // https://github.com/microsoft/microsoft-ui-xaml/issues/9542 is fixed.
+        // Windowed popups can retain the resize cursor from the pane splitters.
+        NativeCursor.SetArrow();
+        DispatcherQueue.TryEnqueue(
+            Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+            NativeCursor.SetArrow);
+    }
+
+    private void ProxyModeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _showProxyValidationError = false;
+        UpdateCustomProxyState();
+        if (_initialized &&
+            SelectedProxyMode == ProxyMode.Custom &&
+            !TryGetProxyConfiguration(out _, out _))
+        {
+            DispatcherQueue.TryEnqueue(() =>
+                CustomProxyAddressTextBox.Focus(FocusState.Programmatic));
+            return;
+        }
+
+        CommitProxyConfiguration();
+    }
+
+    private void CustomProxyAddressTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is TextBox textBox &&
+            ConfigurableWebProxy.TryNormalizeAddress(textBox.Text, out _))
+        {
+            _showProxyValidationError = false;
+        }
+
+        UpdateCustomProxyState();
+    }
+
+    private void CustomProxyAddressTextBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        _showProxyValidationError = true;
+        CommitProxyConfiguration();
+    }
+
+    private void CustomProxyAddressTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == VirtualKey.Enter)
+        {
+            _showProxyValidationError = true;
+            CommitProxyConfiguration();
+        }
+    }
+
+    private void UpdateCustomProxyState()
+    {
+        var isCustom = ProxyModeSelector.SelectedIndex == 2;
+        CustomProxyPanel.Visibility = isCustom
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        var isValid = ConfigurableWebProxy.TryNormalizeAddress(
+            CustomProxyAddressTextBox.Text,
+            out _);
+        InvalidProxyAddressText.Visibility = _initialized &&
+                                             _showProxyValidationError &&
+                                             isCustom &&
+                                             !isValid
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void CommitProxyConfiguration()
+    {
+        if (!_initialized || ProxyModeSelector.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        if (!TryGetProxyConfiguration(out _, out _))
+        {
+            _showProxyValidationError = true;
+            UpdateCustomProxyState();
+            return;
+        }
+
+        _showProxyValidationError = false;
+        InvalidProxyAddressText.Visibility = Visibility.Collapsed;
+        ProxyChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void RefreshIntervalNumberBox_ValueChanged(

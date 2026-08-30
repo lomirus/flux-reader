@@ -74,6 +74,15 @@
   <data name="FeedsGroupChanged" xml:space="preserve"><value>{0} 件のフィードのグループを変更しました。</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>フィードグループを更新できませんでした: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>戻る</value></data>
+  <data name="Network" xml:space="preserve"><value>ネットワーク</value></data>
+  <data name="Proxy" xml:space="preserve"><value>プロキシ</value></data>
+  <data name="ProxyDescription" xml:space="preserve"><value>フィードの更新やネットワークリソースの読み込み時に FluxReader が使用する接続方法を選択します。</value></data>
+  <data name="ProxyDisabled" xml:space="preserve"><value>プロキシを使用しない</value></data>
+  <data name="ProxySystem" xml:space="preserve"><value>システム プロキシを使用</value></data>
+  <data name="ProxyCustom" xml:space="preserve"><value>カスタム プロキシを使用</value></data>
+  <data name="CustomProxyAddress" xml:space="preserve"><value>プロキシ サーバー</value></data>
+  <data name="CustomProxyAddressPlaceholder" xml:space="preserve"><value>例: http://127.0.0.1:7890</value></data>
+  <data name="InvalidProxyAddress" xml:space="preserve"><value>パスを含まない有効な HTTP(S) または SOCKS プロキシ アドレスを入力してください。</value></data>
   <data name="Appearance" xml:space="preserve"><value>外観</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>更新間隔</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>この間隔ですべてのフィードを自動的に更新します。</value></data>

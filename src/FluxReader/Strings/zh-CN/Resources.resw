@@ -74,6 +74,15 @@
   <data name="FeedsGroupChanged" xml:space="preserve"><value>已更改 {0} 个订阅的分组。</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>更新订阅分组失败：{0}</value></data>
   <data name="Back" xml:space="preserve"><value>返回</value></data>
+  <data name="Network" xml:space="preserve"><value>网络</value></data>
+  <data name="Proxy" xml:space="preserve"><value>代理</value></data>
+  <data name="ProxyDescription" xml:space="preserve"><value>选择 FluxReader 更新订阅和加载网络资源时的连接方式。</value></data>
+  <data name="ProxyDisabled" xml:space="preserve"><value>不使用代理</value></data>
+  <data name="ProxySystem" xml:space="preserve"><value>使用系统代理</value></data>
+  <data name="ProxyCustom" xml:space="preserve"><value>使用自定义代理</value></data>
+  <data name="CustomProxyAddress" xml:space="preserve"><value>代理服务器</value></data>
+  <data name="CustomProxyAddressPlaceholder" xml:space="preserve"><value>例如 http://127.0.0.1:7890</value></data>
+  <data name="InvalidProxyAddress" xml:space="preserve"><value>请输入有效的 HTTP(S) 或 SOCKS 代理地址。</value></data>
   <data name="Appearance" xml:space="preserve"><value>外观</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>刷新间隔</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>按此时间间隔自动刷新所有订阅。</value></data>

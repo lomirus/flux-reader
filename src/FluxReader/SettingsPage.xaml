@@ -98,6 +98,7 @@
                             Grid.Column="1"
                             MinWidth="128"
                             VerticalAlignment="Center"
+                            DropDownOpened="ComboBox_DropDownOpened"
                             SelectionChanged="ThemeSelector_SelectionChanged">
                             <ComboBoxItem x:Name="SystemThemeItem" />
                             <ComboBoxItem x:Name="LightThemeItem" />
@@ -133,6 +134,86 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
                             Toggled="ExternalStylesheetsToggleSwitch_Toggled" />
+                    </Grid>
+                </Border>
+
+                <TextBlock
+                    x:Name="NetworkHeaderText"
+                    Margin="0,12,0,0"
+                    FontSize="14"
+                    FontWeight="SemiBold" />
+
+                <Border
+                    Padding="0"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid Padding="20" ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Spacing="4">
+                                <TextBlock x:Name="ProxyTitleText" FontWeight="SemiBold" />
+                                <TextBlock
+                                    x:Name="ProxyDescriptionText"
+                                    HorizontalAlignment="Left"
+                                    MaxWidth="430"
+                                    Opacity="0.65"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ComboBox
+                                x:Name="ProxyModeSelector"
+                                Grid.Column="1"
+                                Width="240"
+                                VerticalAlignment="Center"
+                                DropDownOpened="ComboBox_DropDownOpened"
+                                SelectionChanged="ProxyModeSelector_SelectionChanged">
+                                <ComboBoxItem x:Name="DisabledProxyItem" />
+                                <ComboBoxItem x:Name="SystemProxyItem" />
+                                <ComboBoxItem x:Name="CustomProxyItem" />
+                            </ComboBox>
+                        </Grid>
+                        <Border
+                            x:Name="CustomProxyPanel"
+                            Grid.Row="1"
+                            Padding="20"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="0,1,0,0"
+                            Visibility="Collapsed">
+                            <Grid ColumnSpacing="24">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    x:Name="CustomProxyAddressTitleText"
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold" />
+                                <StackPanel
+                                    Grid.Column="1"
+                                    Width="360"
+                                    Spacing="4">
+                                    <TextBox
+                                        x:Name="CustomProxyAddressTextBox"
+                                        HorizontalAlignment="Stretch"
+                                        KeyDown="CustomProxyAddressTextBox_KeyDown"
+                                        LostFocus="CustomProxyAddressTextBox_LostFocus"
+                                        TextChanged="CustomProxyAddressTextBox_TextChanged" />
+                                    <TextBlock
+                                        x:Name="InvalidProxyAddressText"
+                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                        TextWrapping="Wrap"
+                                        Visibility="Collapsed" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </Border>
 
@@ -267,6 +348,7 @@
                             Grid.Column="1"
                             MinWidth="220"
                             VerticalAlignment="Center"
+                            DropDownOpened="ComboBox_DropDownOpened"
                             SelectionChanged="LanguageSelector_SelectionChanged">
                             <ComboBoxItem Content="简体中文" />
                             <ComboBoxItem Content="繁體中文" />

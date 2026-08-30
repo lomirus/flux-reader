@@ -74,6 +74,15 @@
   <data name="FeedsGroupChanged" xml:space="preserve"><value>Zmieniono grupę wybranych kanałów: {0}.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Nie udało się zaktualizować grup kanałów: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Wstecz</value></data>
+  <data name="Network" xml:space="preserve"><value>Sieć</value></data>
+  <data name="Proxy" xml:space="preserve"><value>Serwer proxy</value></data>
+  <data name="ProxyDescription" xml:space="preserve"><value>Wybierz sposób łączenia FluxReader podczas odświeżania kanałów i ładowania zasobów sieciowych.</value></data>
+  <data name="ProxyDisabled" xml:space="preserve"><value>Nie używaj serwera proxy</value></data>
+  <data name="ProxySystem" xml:space="preserve"><value>Użyj systemowego serwera proxy</value></data>
+  <data name="ProxyCustom" xml:space="preserve"><value>Użyj niestandardowego serwera proxy</value></data>
+  <data name="CustomProxyAddress" xml:space="preserve"><value>Adres serwera proxy</value></data>
+  <data name="CustomProxyAddressPlaceholder" xml:space="preserve"><value>np. http://127.0.0.1:7890</value></data>
+  <data name="InvalidProxyAddress" xml:space="preserve"><value>Wprowadź prawidłowy adres proxy HTTP(S) lub SOCKS bez ścieżki.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Wygląd</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>Interwał odświeżania</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>Automatycznie odświeżaj wszystkie kanały w tym interwale.</value></data>

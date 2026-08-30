@@ -13,14 +13,16 @@ public sealed class ArticleStylesheetService : IDisposable
     private readonly Lock _cacheLock = new();
     private readonly HttpClient _httpClient;
 
-    public ArticleStylesheetService()
+    public ArticleStylesheetService(IWebProxy proxy)
     {
         _httpClient = new HttpClient(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
             AllowAutoRedirect = true,
             MaxAutomaticRedirections = 8,
-            ConnectTimeout = TimeSpan.FromSeconds(15)
+            ConnectTimeout = TimeSpan.FromSeconds(15),
+            Proxy = proxy,
+            UseProxy = true
         })
         {
             Timeout = TimeSpan.FromSeconds(30)

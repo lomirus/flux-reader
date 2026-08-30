@@ -31,11 +31,13 @@ public partial class App : Application
         Localization = new LocalizationService();
         Repository = new RssRepository(Path.Combine(dataDirectory, "reader.db"), Localization);
         Settings = new SettingsService(Path.Combine(dataDirectory, "settings.json"));
+        Proxy = new ConfigurableWebProxy();
         const string iconCacheFolderName = "feed-icons";
         RefreshService = new RssRefreshService(
             Repository,
             Localization,
-            Path.Combine(dataDirectory, iconCacheFolderName));
+            Path.Combine(dataDirectory, iconCacheFolderName),
+            Proxy);
         _notificationService = new NotificationService(
             Path.Combine(dataDirectory, "notifications.log"));
         _notificationService.Activated += NotificationService_Activated;
@@ -51,6 +53,8 @@ public partial class App : Application
     public RssRefreshService RefreshService { get; }
 
     public SettingsService Settings { get; }
+
+    internal ConfigurableWebProxy Proxy { get; }
 
     public NotificationService Notifications => _notificationService;
 

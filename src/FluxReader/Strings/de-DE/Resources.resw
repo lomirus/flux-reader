@@ -74,6 +74,15 @@
   <data name="FeedsGroupChanged" xml:space="preserve"><value>Die Gruppe für {0} Feeds wurde geändert.</value></data>
   <data name="GroupOperationFailed" xml:space="preserve"><value>Feedgruppen konnten nicht aktualisiert werden: {0}</value></data>
   <data name="Back" xml:space="preserve"><value>Zurück</value></data>
+  <data name="Network" xml:space="preserve"><value>Netzwerk</value></data>
+  <data name="Proxy" xml:space="preserve"><value>Proxy</value></data>
+  <data name="ProxyDescription" xml:space="preserve"><value>Wählen Sie aus, wie FluxReader beim Aktualisieren von Feeds und Laden von Netzwerkressourcen eine Verbindung herstellt.</value></data>
+  <data name="ProxyDisabled" xml:space="preserve"><value>Keinen Proxy verwenden</value></data>
+  <data name="ProxySystem" xml:space="preserve"><value>Systemproxy verwenden</value></data>
+  <data name="ProxyCustom" xml:space="preserve"><value>Benutzerdefinierten Proxy verwenden</value></data>
+  <data name="CustomProxyAddress" xml:space="preserve"><value>Proxyserver</value></data>
+  <data name="CustomProxyAddressPlaceholder" xml:space="preserve"><value>z. B. http://127.0.0.1:7890</value></data>
+  <data name="InvalidProxyAddress" xml:space="preserve"><value>Geben Sie eine gültige HTTP(S)- oder SOCKS-Proxyadresse ohne Pfad ein.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Darstellung</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>Aktualisierungsintervall</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>Alle Feeds in diesem Intervall automatisch aktualisieren.</value></data>

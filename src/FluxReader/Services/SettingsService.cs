@@ -64,4 +64,6 @@ public sealed record AppSettings(
     double ArticleListPaneWidth = 420,
     AppLanguage? Language = null,
     int RefreshIntervalMinutes = 15,
-    bool LoadExternalArticleStylesheets = false);
+    bool LoadExternalArticleStylesheets = false,
+    ProxyMode ProxyMode = ProxyMode.System,
+    string CustomProxyAddress = "");
