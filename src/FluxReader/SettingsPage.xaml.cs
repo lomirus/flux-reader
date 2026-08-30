@@ -14,18 +14,21 @@ public sealed partial class SettingsPage : Page
 {
     private bool _initialized;
     private string _customProxyAddress = string.Empty;
+    private int _refreshConcurrencyLimit;
     private int _refreshIntervalMinutes;
     private bool _showProxyValidationError;
 
     public SettingsPage()
     {
         InitializeComponent();
-        RefreshIntervalNumberBox.NumberFormatter = new DecimalFormatter
+        var integerFormatter = new DecimalFormatter
         {
             FractionDigits = 0,
             IntegerDigits = 1,
             IsGrouped = false
         };
+        RefreshIntervalNumberBox.NumberFormatter = integerFormatter;
+        RefreshConcurrencyLimitNumberBox.NumberFormatter = integerFormatter;
     }
 
     public event EventHandler? BackRequested;
@@ -35,6 +38,8 @@ public sealed partial class SettingsPage : Page
     public event EventHandler? LanguageChanged;
 
     public event EventHandler? RefreshIntervalChanged;
+
+    public event EventHandler? RefreshConcurrencyLimitChanged;
 
     public event EventHandler? ExternalStylesheetsChanged;
 
@@ -50,6 +55,8 @@ public sealed partial class SettingsPage : Page
 
     public int RefreshIntervalMinutes => _refreshIntervalMinutes;
 
+    public int RefreshConcurrencyLimit => _refreshConcurrencyLimit;
+
     public bool LoadExternalArticleStylesheets => ExternalStylesheetsToggleSwitch.IsOn;
 
     public ProxyMode SelectedProxyMode => ProxyModeSelector.SelectedIndex switch
@@ -63,6 +70,7 @@ public sealed partial class SettingsPage : Page
         AppTheme theme,
         AppLanguage language,
         int refreshIntervalMinutes,
+        int refreshConcurrencyLimit,
         bool loadExternalArticleStylesheets,
         ProxyMode proxyMode,
         string customProxyAddress)
@@ -71,6 +79,8 @@ public sealed partial class SettingsPage : Page
         LanguageSelector.SelectedIndex = (int)language;
         _refreshIntervalMinutes = refreshIntervalMinutes;
         RefreshIntervalNumberBox.Value = refreshIntervalMinutes;
+        _refreshConcurrencyLimit = refreshConcurrencyLimit;
+        RefreshConcurrencyLimitNumberBox.Value = refreshConcurrencyLimit;
         ExternalStylesheetsToggleSwitch.IsOn = loadExternalArticleStylesheets;
         _customProxyAddress = ConfigurableWebProxy.TryNormalizeAddress(
             customProxyAddress,
@@ -154,6 +164,11 @@ public sealed partial class SettingsPage : Page
         AutomationProperties.SetName(
             RefreshIntervalNumberBox,
             localization.GetString("RefreshInterval"));
+        RefreshConcurrencyLimitTitleText.Text = localization.GetString("RefreshConcurrencyLimit");
+        RefreshConcurrencyLimitDescriptionText.Text = localization.GetString("RefreshConcurrencyLimitDescription");
+        AutomationProperties.SetName(
+            RefreshConcurrencyLimitNumberBox,
+            localization.GetString("RefreshConcurrencyLimit"));
         SubscriptionManagementTitleText.Text = localization.GetString("SubscriptionManagement");
         SubscriptionManagementDescriptionText.Text = localization.GetString("SubscriptionManagementDescription");
         ImportSubscriptionsButton.Content = localization.GetString("ImportSubscriptions");
@@ -376,10 +391,7 @@ public sealed partial class SettingsPage : Page
             return;
         }
 
-        if (!double.IsFinite(args.NewValue) ||
-            args.NewValue < 1 ||
-            args.NewValue > int.MaxValue ||
-            args.NewValue != Math.Truncate(args.NewValue))
+        if (!TryGetInteger(args.NewValue, minimum: 1, out var refreshIntervalMinutes))
         {
             _initialized = false;
             sender.Value = _refreshIntervalMinutes;
@@ -387,7 +399,6 @@ public sealed partial class SettingsPage : Page
             return;
         }
 
-        var refreshIntervalMinutes = (int)args.NewValue;
         if (refreshIntervalMinutes == _refreshIntervalMinutes)
         {
             return;
@@ -395,5 +406,46 @@ public sealed partial class SettingsPage : Page
 
         _refreshIntervalMinutes = refreshIntervalMinutes;
         RefreshIntervalChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RefreshConcurrencyLimitNumberBox_ValueChanged(
+        NumberBox sender,
+        NumberBoxValueChangedEventArgs args)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        if (!TryGetInteger(args.NewValue, minimum: 0, out var refreshConcurrencyLimit))
+        {
+            _initialized = false;
+            sender.Value = _refreshConcurrencyLimit;
+            _initialized = true;
+            return;
+        }
+
+        if (refreshConcurrencyLimit == _refreshConcurrencyLimit)
+        {
+            return;
+        }
+
+        _refreshConcurrencyLimit = refreshConcurrencyLimit;
+        RefreshConcurrencyLimitChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static bool TryGetInteger(double value, int minimum, out int result)
+    {
+        result = 0;
+        if (!double.IsFinite(value) ||
+            value < minimum ||
+            value > int.MaxValue ||
+            value != Math.Truncate(value))
+        {
+            return false;
+        }
+
+        result = (int)value;
+        return true;
     }
 }

@@ -86,6 +86,8 @@
   <data name="Appearance" xml:space="preserve"><value>Aspetto</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>Intervallo di aggiornamento</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>Aggiorna automaticamente tutti i feed a questo intervallo.</value></data>
+  <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>Limite aggiornamenti simultanei</value></data>
+  <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>Limita il numero di feed aggiornati contemporaneamente. Immetti 0 per non applicare limiti.</value></data>
   <data name="Minutes" xml:space="preserve"><value>minuti</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Tema dell’app</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Scegli la modalità colore usata da FluxReader. L’impostazione di sistema segue automaticamente Windows.</value></data>

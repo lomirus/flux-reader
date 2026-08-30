@@ -475,6 +475,7 @@ public sealed partial class MainWindow : Window
         {
             Language = languagePreference,
             RefreshIntervalMinutes = NormalizeRefreshInterval(_settings.RefreshIntervalMinutes),
+            RefreshConcurrencyLimit = NormalizeRefreshConcurrencyLimit(_settings.RefreshConcurrencyLimit),
             ProxyMode = proxyMode,
             CustomProxyAddress = customProxyAddress
         };
@@ -486,6 +487,7 @@ public sealed partial class MainWindow : Window
         ApplyTheme(_settings.Theme);
         ApplySavedPaneWidths();
         ApplyRefreshInterval(_settings.RefreshIntervalMinutes);
+        ViewModel.RefreshConcurrencyLimit = _settings.RefreshConcurrencyLimit;
         ResetSettingsFrame();
         _settingsLoaded = true;
         var articleWebViewInitialization = EnsureArticleWebViewInitializedAsync();
@@ -1331,6 +1333,7 @@ public sealed partial class MainWindow : Window
             _settings.Theme,
             App.Current.Localization.CurrentLanguage,
             _settings.RefreshIntervalMinutes,
+            _settings.RefreshConcurrencyLimit,
             _settings.LoadExternalArticleStylesheets,
             _settings.ProxyMode,
             _settings.CustomProxyAddress);
@@ -1338,6 +1341,7 @@ public sealed partial class MainWindow : Window
         settingsPage.ThemeChanged += SettingsPage_ThemeChanged;
         settingsPage.LanguageChanged += SettingsPage_LanguageChanged;
         settingsPage.RefreshIntervalChanged += SettingsPage_RefreshIntervalChanged;
+        settingsPage.RefreshConcurrencyLimitChanged += SettingsPage_RefreshConcurrencyLimitChanged;
         settingsPage.ExternalStylesheetsChanged += SettingsPage_ExternalStylesheetsChanged;
         settingsPage.ProxyChanged += SettingsPage_ProxyChanged;
         settingsPage.ImportSubscriptionsRequested += SettingsPage_ImportSubscriptionsRequested;
@@ -1405,6 +1409,20 @@ public sealed partial class MainWindow : Window
         var refreshIntervalMinutes = NormalizeRefreshInterval(settingsPage.RefreshIntervalMinutes);
         ApplyRefreshInterval(refreshIntervalMinutes);
         _settings = _settings with { RefreshIntervalMinutes = refreshIntervalMinutes };
+        await SaveSettingsAsync();
+    }
+
+    private async void SettingsPage_RefreshConcurrencyLimitChanged(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        var refreshConcurrencyLimit = NormalizeRefreshConcurrencyLimit(
+            settingsPage.RefreshConcurrencyLimit);
+        ViewModel.RefreshConcurrencyLimit = refreshConcurrencyLimit;
+        _settings = _settings with { RefreshConcurrencyLimit = refreshConcurrencyLimit };
         await SaveSettingsAsync();
     }
 
@@ -1614,6 +1632,7 @@ public sealed partial class MainWindow : Window
             settingsPage.ThemeChanged -= SettingsPage_ThemeChanged;
             settingsPage.LanguageChanged -= SettingsPage_LanguageChanged;
             settingsPage.RefreshIntervalChanged -= SettingsPage_RefreshIntervalChanged;
+            settingsPage.RefreshConcurrencyLimitChanged -= SettingsPage_RefreshConcurrencyLimitChanged;
             settingsPage.ExternalStylesheetsChanged -= SettingsPage_ExternalStylesheetsChanged;
             settingsPage.ProxyChanged -= SettingsPage_ProxyChanged;
             settingsPage.ImportSubscriptionsRequested -= SettingsPage_ImportSubscriptionsRequested;
@@ -2161,6 +2180,11 @@ public sealed partial class MainWindow : Window
 
     private static int NormalizeRefreshInterval(int refreshIntervalMinutes) =>
         refreshIntervalMinutes > 0 ? refreshIntervalMinutes : DefaultRefreshIntervalMinutes;
+
+    private static int NormalizeRefreshConcurrencyLimit(int refreshConcurrencyLimit) =>
+        refreshConcurrencyLimit >= 0
+            ? refreshConcurrencyLimit
+            : SettingsService.DefaultRefreshConcurrencyLimit;
 
     private static bool TryGetKeyboardResizeDelta(KeyRoutedEventArgs e, out double delta)
     {

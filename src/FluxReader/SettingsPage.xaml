@@ -271,6 +271,41 @@
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="8">
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="4">
+                            <TextBlock x:Name="RefreshConcurrencyLimitTitleText" FontWeight="SemiBold" />
+                            <TextBlock
+                                x:Name="RefreshConcurrencyLimitDescriptionText"
+                                HorizontalAlignment="Left"
+                                MaxWidth="460"
+                                Opacity="0.65"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <NumberBox
+                            x:Name="RefreshConcurrencyLimitNumberBox"
+                            Grid.Column="1"
+                            Width="104"
+                            VerticalAlignment="Center"
+                            AcceptsExpression="False"
+                            Maximum="2147483647"
+                            Minimum="0"
+                            SmallChange="1"
+                            SpinButtonPlacementMode="Compact"
+                            ValidationMode="InvalidInputOverwritten"
+                            ValueChanged="RefreshConcurrencyLimitNumberBox_ValueChanged" />
+                    </Grid>
+                </Border>
+
+                <Border
+                    Padding="20"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
                     <StackPanel Spacing="16">
                         <Grid ColumnSpacing="24">
                             <Grid.ColumnDefinitions>

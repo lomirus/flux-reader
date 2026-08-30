@@ -86,6 +86,8 @@
   <data name="Appearance" xml:space="preserve"><value>Apparence</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>Intervalle d’actualisation</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>Actualiser automatiquement tous les flux selon cet intervalle.</value></data>
+  <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>Limite d’actualisations simultanées</value></data>
+  <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>Limitez le nombre de flux actualisés simultanément. Saisissez 0 pour ne pas appliquer de limite.</value></data>
   <data name="Minutes" xml:space="preserve"><value>minutes</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Thème de l’application</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Choisissez le mode de couleurs utilisé par FluxReader. L’option système suit automatiquement Windows.</value></data>

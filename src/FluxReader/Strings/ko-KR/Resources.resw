@@ -86,6 +86,8 @@
   <data name="Appearance" xml:space="preserve"><value>모양</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>새로 고침 간격</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>이 간격으로 모든 피드를 자동으로 새로 고칩니다.</value></data>
+  <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>동시 새로 고침 한도</value></data>
+  <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>동시에 새로 고칠 피드 수를 제한합니다. 제한하지 않으려면 0을 입력하세요.</value></data>
   <data name="Minutes" xml:space="preserve"><value>분</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>앱 테마</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>FluxReader에서 사용할 색상 모드를 선택하세요. 시스템 설정은 Windows 설정을 자동으로 따릅니다.</value></data>

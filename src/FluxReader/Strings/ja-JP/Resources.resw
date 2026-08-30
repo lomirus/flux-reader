@@ -86,6 +86,8 @@
   <data name="Appearance" xml:space="preserve"><value>外観</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>更新間隔</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>この間隔ですべてのフィードを自動的に更新します。</value></data>
+  <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>同時更新数の上限</value></data>
+  <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>同時に更新するフィード数を制限します。制限しない場合は 0 を入力します。</value></data>
   <data name="Minutes" xml:space="preserve"><value>分</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>アプリのテーマ</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>FluxReader で使用するカラーモードを選択します。システム設定を使用すると、Windows の設定に自動的に従います。</value></data>

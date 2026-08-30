@@ -5,6 +5,8 @@ namespace FluxReader.Services;
 
 public sealed class SettingsService
 {
+    public const int DefaultRefreshConcurrencyLimit = 8;
+
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true
@@ -64,6 +66,7 @@ public sealed record AppSettings(
     double ArticleListPaneWidth = 420,
     AppLanguage? Language = null,
     int RefreshIntervalMinutes = 15,
+    int RefreshConcurrencyLimit = SettingsService.DefaultRefreshConcurrencyLimit,
     bool LoadExternalArticleStylesheets = false,
     ProxyMode ProxyMode = ProxyMode.System,
     string CustomProxyAddress = "");

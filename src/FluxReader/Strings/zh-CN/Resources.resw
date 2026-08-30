@@ -86,6 +86,8 @@
   <data name="Appearance" xml:space="preserve"><value>外观</value></data>
   <data name="RefreshInterval" xml:space="preserve"><value>刷新间隔</value></data>
   <data name="RefreshIntervalDescription" xml:space="preserve"><value>按此时间间隔自动刷新所有订阅。</value></data>
+  <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>并发刷新上限</value></data>
+  <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>限制同时刷新的订阅数量。输入 0 表示不限制。</value></data>
   <data name="Minutes" xml:space="preserve"><value>分钟</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>应用主题</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>选择 FluxReader 使用的颜色模式。跟随系统会随 Windows 设置自动切换。</value></data>

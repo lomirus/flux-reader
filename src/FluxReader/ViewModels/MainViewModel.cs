@@ -3,6 +3,7 @@ using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluxReader.Core.Models;
+using FluxReader.Core.Services;
 using FluxReader.Data;
 using FluxReader.Models;
 using FluxReader.Services;
@@ -81,6 +82,8 @@ public sealed partial class MainViewModel : ObservableObject
     public IReadOnlySet<long> SelectedFeedIds => _selectedFeedIds;
 
     public int SelectedFeedCount => _selectedFeedIds.Count;
+
+    public int RefreshConcurrencyLimit { get; set; } = SettingsService.DefaultRefreshConcurrencyLimit;
 
     public DateTimeOffset? LastRefreshedAt => Feeds
         .Select(feed => feed.LastRefreshedAt)
@@ -491,11 +494,18 @@ public sealed partial class MainViewModel : ObservableObject
         var startedAt = Stopwatch.GetTimestamp();
         DiagnosticLog.Information(
             "refresh.started",
-            new { feedCount = feeds.Count });
+            new
+            {
+                feedCount = feeds.Count,
+                RefreshConcurrencyLimit
+            });
         try
         {
-            var tasks = feeds.Select(feed => RefreshFeedCoreAsync(feed, cancellationToken));
-            var outcomes = await Task.WhenAll(tasks);
+            var outcomes = await TaskConcurrency.WhenAllAsync(
+                feeds,
+                RefreshConcurrencyLimit,
+                RefreshFeedCoreAsync,
+                cancellationToken);
             var newArticleCount = outcomes
                 .Where(outcome => outcome.Result is not null)
                 .Sum(outcome => outcome.Result!.NewArticles.Count);
@@ -1360,8 +1370,11 @@ public sealed partial class MainViewModel : ObservableObject
             var importedFeeds = Feeds
                 .Where(feed => importedFeedIds.Contains(feed.Id))
                 .ToArray();
-            var outcomes = await Task.WhenAll(
-                importedFeeds.Select(feed => RefreshFeedCoreAsync(feed, cancellationToken)));
+            var outcomes = await TaskConcurrency.WhenAllAsync(
+                importedFeeds,
+                RefreshConcurrencyLimit,
+                RefreshFeedCoreAsync,
+                cancellationToken);
             if (cancellationToken.IsCancellationRequested)
             {
                 DiagnosticLog.Information(
