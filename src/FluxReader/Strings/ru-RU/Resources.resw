@@ -83,6 +83,8 @@
   <data name="ThemeSystem" xml:space="preserve"><value>Использовать системную настройку</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Светлая</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>Тёмная</value></data>
+  <data name="LoadExternalStylesheets" xml:space="preserve"><value>Загружать внешние стили</value></data>
+  <data name="LoadExternalStylesheetsDescription" xml:space="preserve"><value>Загружает CSS с исходных сайтов статей, чтобы сохранить их оформление. При чтении статьи приложение может подключаться к её сайту.</value></data>
   <data name="Language" xml:space="preserve"><value>Язык</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>Язык приложения</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>Выберите язык интерфейса FluxReader. Изменения применяются сразу.</value></data>

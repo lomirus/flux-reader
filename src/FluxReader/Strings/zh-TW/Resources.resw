@@ -83,6 +83,8 @@
   <data name="ThemeSystem" xml:space="preserve"><value>跟隨系統</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>淺色</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>深色</value></data>
+  <data name="LoadExternalStylesheets" xml:space="preserve"><value>載入外部樣式</value></data>
+  <data name="LoadExternalStylesheetsDescription" xml:space="preserve"><value>從文章原始網站載入 CSS 以保留其版面配置。閱讀文章時可能會連線至該網站。</value></data>
   <data name="Language" xml:space="preserve"><value>語言</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>應用程式語言</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>選擇 FluxReader 的顯示語言。變更會立即生效。</value></data>

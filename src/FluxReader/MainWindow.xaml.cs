@@ -59,6 +59,7 @@ public sealed partial class MainWindow : Window
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
     private readonly Queue<ArticleNavigationRequest> _pendingArticleNavigations = new();
     private readonly Dictionary<ulong, ArticleNavigationRequest> _articleNavigations = new();
+    private readonly ArticleStylesheetService _articleStylesheetService = new();
     private readonly SolidColorBrush _transparentFeedSelectionIndicatorBrush = new(Colors.Transparent);
     private long _statusInfoBarIsOpenCallbackToken;
     private bool _areFeedGroupSelectionIndicatorsVisible = true;
@@ -178,10 +179,23 @@ public sealed partial class MainWindow : Window
                 return;
             }
 
+            IReadOnlyList<WebsiteStylesheetReference> externalStylesheets = [];
+            if (_settings.LoadExternalArticleStylesheets && article.ContentBaseUri is { } pageUri)
+            {
+                externalStylesheets = await _articleStylesheetService.GetStylesheetsAsync(
+                    pageUri,
+                    _lifetime.Token);
+                if (renderVersion != _articleRenderVersion)
+                {
+                    return;
+                }
+            }
+
             var document = ArticleHtmlDocumentBuilder.Create(
                 article.DisplayContent,
                 article.ContentBaseUri,
-                RootGrid.ActualTheme == ElementTheme.Dark);
+                RootGrid.ActualTheme == ElementTheme.Dark,
+                externalStylesheets);
             var navigation = new ArticleNavigationRequest(
                 renderVersion,
                 article.Id,
@@ -1033,11 +1047,13 @@ public sealed partial class MainWindow : Window
         settingsPage.Initialize(
             _settings.Theme,
             App.Current.Localization.CurrentLanguage,
-            _settings.RefreshIntervalMinutes);
+            _settings.RefreshIntervalMinutes,
+            _settings.LoadExternalArticleStylesheets);
         settingsPage.BackRequested += SettingsPage_BackRequested;
         settingsPage.ThemeChanged += SettingsPage_ThemeChanged;
         settingsPage.LanguageChanged += SettingsPage_LanguageChanged;
         settingsPage.RefreshIntervalChanged += SettingsPage_RefreshIntervalChanged;
+        settingsPage.ExternalStylesheetsChanged += SettingsPage_ExternalStylesheetsChanged;
         settingsPage.ImportSubscriptionsRequested += SettingsPage_ImportSubscriptionsRequested;
         settingsPage.ExportSubscriptionsRequested += SettingsPage_ExportSubscriptionsRequested;
     }
@@ -1104,6 +1120,21 @@ public sealed partial class MainWindow : Window
         ApplyRefreshInterval(refreshIntervalMinutes);
         _settings = _settings with { RefreshIntervalMinutes = refreshIntervalMinutes };
         await SaveSettingsAsync();
+    }
+
+    private async void SettingsPage_ExternalStylesheetsChanged(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        _settings = _settings with
+        {
+            LoadExternalArticleStylesheets = settingsPage.LoadExternalArticleStylesheets
+        };
+        await SaveSettingsAsync();
+        await RenderSelectedArticleAsync();
     }
 
     private async void SettingsPage_ImportSubscriptionsRequested(object? sender, EventArgs e)
@@ -1280,6 +1311,7 @@ public sealed partial class MainWindow : Window
             settingsPage.ThemeChanged -= SettingsPage_ThemeChanged;
             settingsPage.LanguageChanged -= SettingsPage_LanguageChanged;
             settingsPage.RefreshIntervalChanged -= SettingsPage_RefreshIntervalChanged;
+            settingsPage.ExternalStylesheetsChanged -= SettingsPage_ExternalStylesheetsChanged;
             settingsPage.ImportSubscriptionsRequested -= SettingsPage_ImportSubscriptionsRequested;
             settingsPage.ExportSubscriptionsRequested -= SettingsPage_ExportSubscriptionsRequested;
         }
@@ -1862,6 +1894,7 @@ public sealed partial class MainWindow : Window
         _diagnosticTimer.Tick -= DiagnosticTimer_Tick;
         _articleSearchDebounce?.Cancel();
         _lifetime.Cancel();
+        _articleStylesheetService.Dispose();
         _lifetime.Dispose();
     }
 

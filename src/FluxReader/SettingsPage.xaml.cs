@@ -31,6 +31,8 @@ public sealed partial class SettingsPage : Page
 
     public event EventHandler? RefreshIntervalChanged;
 
+    public event EventHandler? ExternalStylesheetsChanged;
+
     public event EventHandler? ImportSubscriptionsRequested;
 
     public event EventHandler? ExportSubscriptionsRequested;
@@ -41,12 +43,19 @@ public sealed partial class SettingsPage : Page
 
     public int RefreshIntervalMinutes => _refreshIntervalMinutes;
 
-    public void Initialize(AppTheme theme, AppLanguage language, int refreshIntervalMinutes)
+    public bool LoadExternalArticleStylesheets => ExternalStylesheetsToggleSwitch.IsOn;
+
+    public void Initialize(
+        AppTheme theme,
+        AppLanguage language,
+        int refreshIntervalMinutes,
+        bool loadExternalArticleStylesheets)
     {
         ThemeSelector.SelectedIndex = (int)theme;
         LanguageSelector.SelectedIndex = (int)language;
         _refreshIntervalMinutes = refreshIntervalMinutes;
         RefreshIntervalNumberBox.Value = refreshIntervalMinutes;
+        ExternalStylesheetsToggleSwitch.IsOn = loadExternalArticleStylesheets;
         _initialized = true;
         ApplyLocalization();
     }
@@ -67,6 +76,11 @@ public sealed partial class SettingsPage : Page
         LightThemeItem.Content = localization.GetString("ThemeLight");
         DarkThemeItem.Content = localization.GetString("ThemeDark");
         RefreshThemeSelectionBox();
+        ExternalStylesheetsTitleText.Text = localization.GetString("LoadExternalStylesheets");
+        ExternalStylesheetsDescriptionText.Text = localization.GetString("LoadExternalStylesheetsDescription");
+        AutomationProperties.SetName(
+            ExternalStylesheetsToggleSwitch,
+            localization.GetString("LoadExternalStylesheets"));
         FeedsHeaderText.Text = localization.GetString("Feeds");
         RefreshIntervalTitleText.Text = localization.GetString("RefreshInterval");
         RefreshIntervalDescriptionText.Text = localization.GetString("RefreshIntervalDescription");
@@ -162,6 +176,14 @@ public sealed partial class SettingsPage : Page
         if (_initialized && LanguageSelector.SelectedIndex >= 0)
         {
             LanguageChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void ExternalStylesheetsToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_initialized)
+        {
+            ExternalStylesheetsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 

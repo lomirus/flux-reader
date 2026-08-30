@@ -83,6 +83,8 @@
   <data name="ThemeSystem" xml:space="preserve"><value>システム設定を使用</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>ライト</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>ダーク</value></data>
+  <data name="LoadExternalStylesheets" xml:space="preserve"><value>外部スタイルを読み込む</value></data>
+  <data name="LoadExternalStylesheetsDescription" xml:space="preserve"><value>元の記事サイトから CSS を読み込み、書式を維持します。記事を読む際にそのサイトへ接続することがあります。</value></data>
   <data name="Language" xml:space="preserve"><value>言語</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>アプリの言語</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>FluxReader の表示言語を選択します。変更はすぐに反映されます。</value></data>

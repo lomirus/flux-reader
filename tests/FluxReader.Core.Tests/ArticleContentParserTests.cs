@@ -131,4 +131,29 @@ public sealed class ArticleContentParserTests
         StringAssert.Contains(document, "font-family: \"Cascadia Mono\"");
         StringAssert.Contains(document, "<pre><code>message = client.messages.create()</code></pre>");
     }
+
+    [TestMethod]
+    public void CreateHtmlDocument_LoadsExternalStylesheetsOnlyWhenProvided()
+    {
+        var withoutStylesheets = ArticleHtmlDocumentBuilder.Create(
+            "<p>Article</p>",
+            new Uri("https://example.com/articles/entry"),
+            useDarkTheme: false);
+        var withStylesheets = ArticleHtmlDocumentBuilder.Create(
+            "<p>Article</p>",
+            new Uri("https://example.com/articles/entry"),
+            useDarkTheme: false,
+            [
+                new WebsiteStylesheetReference(
+                    new Uri("https://cdn.example.com/site.css?theme=reader&v=2"),
+                    "screen and (min-width: 40em)")
+            ]);
+
+        Assert.IsFalse(withoutStylesheets.Contains("style-src 'unsafe-inline' https: http:"));
+        Assert.IsFalse(withoutStylesheets.Contains("rel=\"stylesheet\""));
+        StringAssert.Contains(withStylesheets, "style-src 'unsafe-inline' https: http:");
+        StringAssert.Contains(
+            withStylesheets,
+            "<link rel=\"stylesheet\" href=\"https://cdn.example.com/site.css?theme=reader&amp;v=2\" media=\"screen and (min-width: 40em)\">");
+    }
 }

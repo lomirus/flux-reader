@@ -7,7 +7,8 @@ public static class ArticleHtmlDocumentBuilder
     public static string Create(
         string? content,
         Uri? baseUri,
-        bool useDarkTheme)
+        bool useDarkTheme,
+        IReadOnlyList<WebsiteStylesheetReference>? externalStylesheets = null)
     {
         var fragment = ArticleContentParser.PrepareHtml(content, baseUri);
         if (!ArticleContentParser.ContainsHtmlMarkup(fragment))
@@ -15,6 +16,8 @@ public static class ArticleHtmlDocumentBuilder
             fragment = $"<div class=\"plain-text\">{WebUtility.HtmlEncode(fragment)}</div>";
         }
 
+        var stylesheetLinks = CreateStylesheetLinks(externalStylesheets);
+        var externalStyleSources = stylesheetLinks.Length == 0 ? string.Empty : " https: http:";
         var colorScheme = useDarkTheme ? "dark" : "light";
         return $$"""
             <!doctype html>
@@ -22,8 +25,9 @@ public static class ArticleHtmlDocumentBuilder
             <head>
               <meta charset="utf-8">
               <meta http-equiv="Content-Security-Policy"
-                    content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:; font-src 'none'; connect-src 'none'; frame-src 'none'; child-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none'">
+                    content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'{{externalStyleSources}}; img-src https: http: data:; media-src https: http:; font-src 'none'; connect-src 'none'; frame-src 'none'; child-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none'">
               <meta name="viewport" content="width=device-width, initial-scale=1">
+              {{stylesheetLinks}}
               <style>
                 :root {
                   color-scheme: {{colorScheme}};
@@ -151,5 +155,29 @@ public static class ArticleHtmlDocumentBuilder
             <body>{{fragment}}</body>
             </html>
             """;
+    }
+
+    private static string CreateStylesheetLinks(
+        IReadOnlyList<WebsiteStylesheetReference>? externalStylesheets)
+    {
+        if (externalStylesheets is null || externalStylesheets.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var links = externalStylesheets
+            .Where(stylesheet =>
+                stylesheet.Uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+                stylesheet.Uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+            .Distinct()
+            .Select(stylesheet =>
+            {
+                var href = WebUtility.HtmlEncode(stylesheet.Uri.AbsoluteUri);
+                var media = string.IsNullOrWhiteSpace(stylesheet.Media)
+                    ? string.Empty
+                    : $" media=\"{WebUtility.HtmlEncode(stylesheet.Media)}\"";
+                return $"<link rel=\"stylesheet\" href=\"{href}\"{media}>";
+            });
+        return string.Join(Environment.NewLine, links);
     }
 }

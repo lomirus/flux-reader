@@ -63,4 +63,5 @@ public sealed record AppSettings(
     double FeedPaneWidth = 248,
     double ArticleListPaneWidth = 420,
     AppLanguage? Language = null,
-    int RefreshIntervalMinutes = 15);
+    int RefreshIntervalMinutes = 15,
+    bool LoadExternalArticleStylesheets = false);

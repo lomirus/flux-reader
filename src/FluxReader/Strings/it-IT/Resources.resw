@@ -83,6 +83,8 @@
   <data name="ThemeSystem" xml:space="preserve"><value>Usa impostazione di sistema</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Chiaro</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>Scuro</value></data>
+  <data name="LoadExternalStylesheets" xml:space="preserve"><value>Carica stili esterni</value></data>
+  <data name="LoadExternalStylesheetsDescription" xml:space="preserve"><value>Carica il CSS dai siti originali degli articoli per conservarne la formattazione. La lettura di un articolo può contattare il relativo sito web.</value></data>
   <data name="Language" xml:space="preserve"><value>Lingua</value></data>
   <data name="ApplicationLanguage" xml:space="preserve"><value>Lingua dell’app</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>Scegli la lingua di visualizzazione di FluxReader. Le modifiche hanno effetto immediato.</value></data>

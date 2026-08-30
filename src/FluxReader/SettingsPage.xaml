@@ -106,6 +106,36 @@
                     </Grid>
                 </Border>
 
+                <Border
+                    Padding="20"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="4">
+                            <TextBlock x:Name="ExternalStylesheetsTitleText" FontWeight="SemiBold" />
+                            <TextBlock
+                                x:Name="ExternalStylesheetsDescriptionText"
+                                HorizontalAlignment="Left"
+                                MaxWidth="460"
+                                Opacity="0.65"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ToggleSwitch
+                            x:Name="ExternalStylesheetsToggleSwitch"
+                            Grid.Column="1"
+                            MinWidth="0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Toggled="ExternalStylesheetsToggleSwitch_Toggled" />
+                    </Grid>
+                </Border>
+
                 <TextBlock
                     x:Name="FeedsHeaderText"
                     Margin="0,12,0,0"
