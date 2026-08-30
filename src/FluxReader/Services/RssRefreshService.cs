@@ -16,6 +16,7 @@ public sealed class RssRefreshService : IDisposable
     private readonly LocalizationService _localization;
     private readonly RssFeedParser _parser;
     private readonly RssRepository _repository;
+    private readonly RequestTimeoutHandler _timeoutHandler;
 
     public RssRefreshService(
         RssRepository repository,
@@ -34,17 +35,17 @@ public sealed class RssRefreshService : IDisposable
             RssParserString.UntitledArticle => "UntitledArticle",
             _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
         }));
-        _httpClient = new HttpClient(new SocketsHttpHandler
+        _timeoutHandler = new RequestTimeoutHandler(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
             AllowAutoRedirect = true,
             MaxAutomaticRedirections = 8,
-            ConnectTimeout = TimeSpan.FromSeconds(15),
             Proxy = proxy,
             UseProxy = true
-        })
+        }, SettingsService.DefaultRequestTimeoutSeconds);
+        _httpClient = new HttpClient(_timeoutHandler)
         {
-            Timeout = TimeSpan.FromSeconds(30)
+            Timeout = Timeout.InfiniteTimeSpan
         };
         var applicationVersion = typeof(RssRefreshService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
         _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd($"FluxReader/{applicationVersion} (+Windows 11 RSS Reader)");
@@ -53,6 +54,12 @@ public sealed class RssRefreshService : IDisposable
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml", 0.9));
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/xml", 0.8));
         _iconCache = new FeedIconCache(_httpClient, iconCacheDirectory);
+    }
+
+    public int RequestTimeoutSeconds
+    {
+        get => _timeoutHandler.TimeoutSeconds;
+        set => _timeoutHandler.TimeoutSeconds = value;
     }
 
     public async Task<Feed> AddFeedAsync(

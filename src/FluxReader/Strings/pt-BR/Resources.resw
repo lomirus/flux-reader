@@ -77,6 +77,8 @@
   <data name="Network" xml:space="preserve"><value>Rede</value></data>
   <data name="Proxy" xml:space="preserve"><value>Proxy</value></data>
   <data name="ProxyDescription" xml:space="preserve"><value>Escolha como o FluxReader se conecta ao atualizar feeds e carregar recursos de rede.</value></data>
+  <data name="RequestTimeout" xml:space="preserve"><value>Tempo limite da solicitação</value></data>
+  <data name="RequestTimeoutDescription" xml:space="preserve"><value>Define o limite de tempo para solicitações de rede. Digite 0 para não limitar o tempo.</value></data>
   <data name="ProxyDisabled" xml:space="preserve"><value>Não usar proxy</value></data>
   <data name="ProxySystem" xml:space="preserve"><value>Usar proxy do sistema</value></data>
   <data name="ProxyCustom" xml:space="preserve"><value>Usar proxy personalizado</value></data>
@@ -89,6 +91,7 @@
   <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>Limite de atualizações simultâneas</value></data>
   <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>Limita o número de feeds atualizados ao mesmo tempo. Digite 0 para não limitar.</value></data>
   <data name="Minutes" xml:space="preserve"><value>minutos</value></data>
+  <data name="Seconds" xml:space="preserve"><value>segundos</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Tema do aplicativo</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Escolha o modo de cores usado pelo FluxReader. A configuração do sistema acompanha o Windows automaticamente.</value></data>
   <data name="ThemeSystem" xml:space="preserve"><value>Usar configuração do sistema</value></data>

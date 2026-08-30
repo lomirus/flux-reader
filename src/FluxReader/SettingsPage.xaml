@@ -306,6 +306,47 @@
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="8">
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="4">
+                            <TextBlock x:Name="RequestTimeoutTitleText" FontWeight="SemiBold" />
+                            <TextBlock
+                                x:Name="RequestTimeoutDescriptionText"
+                                HorizontalAlignment="Left"
+                                MaxWidth="460"
+                                Opacity="0.65"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <NumberBox
+                                x:Name="RequestTimeoutNumberBox"
+                                Width="104"
+                                AcceptsExpression="False"
+                                Minimum="0"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Compact"
+                                ValidationMode="InvalidInputOverwritten"
+                                ValueChanged="RequestTimeoutNumberBox_ValueChanged" />
+                            <TextBlock
+                                x:Name="RequestTimeoutUnitText"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border
+                    Padding="20"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
                     <StackPanel Spacing="16">
                         <Grid ColumnSpacing="24">
                             <Grid.ColumnDefinitions>

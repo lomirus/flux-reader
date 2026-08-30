@@ -12,20 +12,21 @@ public sealed class ArticleStylesheetService : IDisposable
     private readonly Dictionary<Uri, IReadOnlyList<WebsiteStylesheetReference>> _cache = [];
     private readonly Lock _cacheLock = new();
     private readonly HttpClient _httpClient;
+    private readonly RequestTimeoutHandler _timeoutHandler;
 
     public ArticleStylesheetService(IWebProxy proxy)
     {
-        _httpClient = new HttpClient(new SocketsHttpHandler
+        _timeoutHandler = new RequestTimeoutHandler(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
             AllowAutoRedirect = true,
             MaxAutomaticRedirections = 8,
-            ConnectTimeout = TimeSpan.FromSeconds(15),
             Proxy = proxy,
             UseProxy = true
-        })
+        }, SettingsService.DefaultRequestTimeoutSeconds);
+        _httpClient = new HttpClient(_timeoutHandler)
         {
-            Timeout = TimeSpan.FromSeconds(30)
+            Timeout = Timeout.InfiniteTimeSpan
         };
         var applicationVersion = typeof(ArticleStylesheetService).Assembly.GetName().Version?.ToString(3)
                                  ?? "0.0.0";
@@ -33,6 +34,12 @@ public sealed class ArticleStylesheetService : IDisposable
             $"FluxReader/{applicationVersion} (+Windows 11 RSS Reader)");
         _httpClient.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("text/html"));
+    }
+
+    public int RequestTimeoutSeconds
+    {
+        get => _timeoutHandler.TimeoutSeconds;
+        set => _timeoutHandler.TimeoutSeconds = value;
     }
 
     public async Task<IReadOnlyList<WebsiteStylesheetReference>> GetStylesheetsAsync(

@@ -77,6 +77,8 @@
   <data name="Network" xml:space="preserve"><value>網路</value></data>
   <data name="Proxy" xml:space="preserve"><value>代理</value></data>
   <data name="ProxyDescription" xml:space="preserve"><value>選擇 FluxReader 更新訂閱和載入網路資源時的連線方式。</value></data>
+  <data name="RequestTimeout" xml:space="preserve"><value>要求逾時</value></data>
+  <data name="RequestTimeoutDescription" xml:space="preserve"><value>設定網路要求的逾時時間。輸入 0 表示不設逾時限制。</value></data>
   <data name="ProxyDisabled" xml:space="preserve"><value>不使用代理</value></data>
   <data name="ProxySystem" xml:space="preserve"><value>使用系統代理</value></data>
   <data name="ProxyCustom" xml:space="preserve"><value>使用自訂代理</value></data>
@@ -89,6 +91,7 @@
   <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>同時重新整理上限</value></data>
   <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>限制同時重新整理的訂閱數量。輸入 0 表示不限制。</value></data>
   <data name="Minutes" xml:space="preserve"><value>分鐘</value></data>
+  <data name="Seconds" xml:space="preserve"><value>秒</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>應用程式主題</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>選擇 FluxReader 使用的色彩模式。跟隨系統會隨 Windows 設定自動切換。</value></data>
   <data name="ThemeSystem" xml:space="preserve"><value>跟隨系統</value></data>

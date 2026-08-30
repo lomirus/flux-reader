@@ -476,6 +476,7 @@ public sealed partial class MainWindow : Window
             Language = languagePreference,
             RefreshIntervalMinutes = NormalizeRefreshInterval(_settings.RefreshIntervalMinutes),
             RefreshConcurrencyLimit = NormalizeRefreshConcurrencyLimit(_settings.RefreshConcurrencyLimit),
+            RequestTimeoutSeconds = NormalizeRequestTimeout(_settings.RequestTimeoutSeconds),
             ProxyMode = proxyMode,
             CustomProxyAddress = customProxyAddress
         };
@@ -488,6 +489,7 @@ public sealed partial class MainWindow : Window
         ApplySavedPaneWidths();
         ApplyRefreshInterval(_settings.RefreshIntervalMinutes);
         ViewModel.RefreshConcurrencyLimit = _settings.RefreshConcurrencyLimit;
+        ApplyRequestTimeout(_settings.RequestTimeoutSeconds);
         ResetSettingsFrame();
         _settingsLoaded = true;
         var articleWebViewInitialization = EnsureArticleWebViewInitializedAsync();
@@ -1334,6 +1336,7 @@ public sealed partial class MainWindow : Window
             App.Current.Localization.CurrentLanguage,
             _settings.RefreshIntervalMinutes,
             _settings.RefreshConcurrencyLimit,
+            _settings.RequestTimeoutSeconds,
             _settings.LoadExternalArticleStylesheets,
             _settings.ProxyMode,
             _settings.CustomProxyAddress);
@@ -1342,6 +1345,7 @@ public sealed partial class MainWindow : Window
         settingsPage.LanguageChanged += SettingsPage_LanguageChanged;
         settingsPage.RefreshIntervalChanged += SettingsPage_RefreshIntervalChanged;
         settingsPage.RefreshConcurrencyLimitChanged += SettingsPage_RefreshConcurrencyLimitChanged;
+        settingsPage.RequestTimeoutChanged += SettingsPage_RequestTimeoutChanged;
         settingsPage.ExternalStylesheetsChanged += SettingsPage_ExternalStylesheetsChanged;
         settingsPage.ProxyChanged += SettingsPage_ProxyChanged;
         settingsPage.ImportSubscriptionsRequested += SettingsPage_ImportSubscriptionsRequested;
@@ -1423,6 +1427,19 @@ public sealed partial class MainWindow : Window
             settingsPage.RefreshConcurrencyLimit);
         ViewModel.RefreshConcurrencyLimit = refreshConcurrencyLimit;
         _settings = _settings with { RefreshConcurrencyLimit = refreshConcurrencyLimit };
+        await SaveSettingsAsync();
+    }
+
+    private async void SettingsPage_RequestTimeoutChanged(object? sender, EventArgs e)
+    {
+        if (sender is not SettingsPage settingsPage)
+        {
+            return;
+        }
+
+        var requestTimeoutSeconds = NormalizeRequestTimeout(settingsPage.RequestTimeoutSeconds);
+        ApplyRequestTimeout(requestTimeoutSeconds);
+        _settings = _settings with { RequestTimeoutSeconds = requestTimeoutSeconds };
         await SaveSettingsAsync();
     }
 
@@ -1633,6 +1650,7 @@ public sealed partial class MainWindow : Window
             settingsPage.LanguageChanged -= SettingsPage_LanguageChanged;
             settingsPage.RefreshIntervalChanged -= SettingsPage_RefreshIntervalChanged;
             settingsPage.RefreshConcurrencyLimitChanged -= SettingsPage_RefreshConcurrencyLimitChanged;
+            settingsPage.RequestTimeoutChanged -= SettingsPage_RequestTimeoutChanged;
             settingsPage.ExternalStylesheetsChanged -= SettingsPage_ExternalStylesheetsChanged;
             settingsPage.ProxyChanged -= SettingsPage_ProxyChanged;
             settingsPage.ImportSubscriptionsRequested -= SettingsPage_ImportSubscriptionsRequested;
@@ -1679,6 +1697,12 @@ public sealed partial class MainWindow : Window
         {
             _refreshTimer.Start();
         }
+    }
+
+    private void ApplyRequestTimeout(int requestTimeoutSeconds)
+    {
+        App.Current.RefreshService.RequestTimeoutSeconds = requestTimeoutSeconds;
+        _articleStylesheetService.RequestTimeoutSeconds = requestTimeoutSeconds;
     }
 
     private void ApplyLocalization()
@@ -2185,6 +2209,11 @@ public sealed partial class MainWindow : Window
         refreshConcurrencyLimit >= 0
             ? refreshConcurrencyLimit
             : SettingsService.DefaultRefreshConcurrencyLimit;
+
+    private static int NormalizeRequestTimeout(int requestTimeoutSeconds) =>
+        requestTimeoutSeconds is >= 0 and <= RequestTimeoutHandler.MaximumTimeoutSeconds
+            ? requestTimeoutSeconds
+            : SettingsService.DefaultRequestTimeoutSeconds;
 
     private static bool TryGetKeyboardResizeDelta(KeyRoutedEventArgs e, out double delta)
     {

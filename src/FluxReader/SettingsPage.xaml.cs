@@ -1,6 +1,7 @@
+using FluxReader.Core.Services;
+using FluxReader.Interop;
 using FluxReader.Models;
 using FluxReader.Services;
-using FluxReader.Interop;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
@@ -16,6 +17,7 @@ public sealed partial class SettingsPage : Page
     private string _customProxyAddress = string.Empty;
     private int _refreshConcurrencyLimit;
     private int _refreshIntervalMinutes;
+    private int _requestTimeoutSeconds;
     private bool _showProxyValidationError;
 
     public SettingsPage()
@@ -27,6 +29,8 @@ public sealed partial class SettingsPage : Page
             IntegerDigits = 1,
             IsGrouped = false
         };
+        RequestTimeoutNumberBox.Maximum = RequestTimeoutHandler.MaximumTimeoutSeconds;
+        RequestTimeoutNumberBox.NumberFormatter = integerFormatter;
         RefreshIntervalNumberBox.NumberFormatter = integerFormatter;
         RefreshConcurrencyLimitNumberBox.NumberFormatter = integerFormatter;
     }
@@ -40,6 +44,8 @@ public sealed partial class SettingsPage : Page
     public event EventHandler? RefreshIntervalChanged;
 
     public event EventHandler? RefreshConcurrencyLimitChanged;
+
+    public event EventHandler? RequestTimeoutChanged;
 
     public event EventHandler? ExternalStylesheetsChanged;
 
@@ -57,6 +63,8 @@ public sealed partial class SettingsPage : Page
 
     public int RefreshConcurrencyLimit => _refreshConcurrencyLimit;
 
+    public int RequestTimeoutSeconds => _requestTimeoutSeconds;
+
     public bool LoadExternalArticleStylesheets => ExternalStylesheetsToggleSwitch.IsOn;
 
     public ProxyMode SelectedProxyMode => ProxyModeSelector.SelectedIndex switch
@@ -71,6 +79,7 @@ public sealed partial class SettingsPage : Page
         AppLanguage language,
         int refreshIntervalMinutes,
         int refreshConcurrencyLimit,
+        int requestTimeoutSeconds,
         bool loadExternalArticleStylesheets,
         ProxyMode proxyMode,
         string customProxyAddress)
@@ -81,6 +90,8 @@ public sealed partial class SettingsPage : Page
         RefreshIntervalNumberBox.Value = refreshIntervalMinutes;
         _refreshConcurrencyLimit = refreshConcurrencyLimit;
         RefreshConcurrencyLimitNumberBox.Value = refreshConcurrencyLimit;
+        _requestTimeoutSeconds = requestTimeoutSeconds;
+        RequestTimeoutNumberBox.Value = requestTimeoutSeconds;
         ExternalStylesheetsToggleSwitch.IsOn = loadExternalArticleStylesheets;
         _customProxyAddress = ConfigurableWebProxy.TryNormalizeAddress(
             customProxyAddress,
@@ -157,6 +168,12 @@ public sealed partial class SettingsPage : Page
         AutomationProperties.SetName(
             CustomProxyAddressTextBox,
             localization.GetString("CustomProxyAddress"));
+        RequestTimeoutTitleText.Text = localization.GetString("RequestTimeout");
+        RequestTimeoutDescriptionText.Text = localization.GetString("RequestTimeoutDescription");
+        RequestTimeoutUnitText.Text = localization.GetString("Seconds");
+        AutomationProperties.SetName(
+            RequestTimeoutNumberBox,
+            localization.GetString("RequestTimeout"));
         FeedsHeaderText.Text = localization.GetString("Feeds");
         RefreshIntervalTitleText.Text = localization.GetString("RefreshInterval");
         RefreshIntervalDescriptionText.Text = localization.GetString("RefreshIntervalDescription");
@@ -432,6 +449,33 @@ public sealed partial class SettingsPage : Page
 
         _refreshConcurrencyLimit = refreshConcurrencyLimit;
         RefreshConcurrencyLimitChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RequestTimeoutNumberBox_ValueChanged(
+        NumberBox sender,
+        NumberBoxValueChangedEventArgs args)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        if (!TryGetInteger(args.NewValue, minimum: 0, out var requestTimeoutSeconds) ||
+            requestTimeoutSeconds > RequestTimeoutHandler.MaximumTimeoutSeconds)
+        {
+            _initialized = false;
+            sender.Value = _requestTimeoutSeconds;
+            _initialized = true;
+            return;
+        }
+
+        if (requestTimeoutSeconds == _requestTimeoutSeconds)
+        {
+            return;
+        }
+
+        _requestTimeoutSeconds = requestTimeoutSeconds;
+        RequestTimeoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private static bool TryGetInteger(double value, int minimum, out int result)

@@ -77,6 +77,8 @@
   <data name="Network" xml:space="preserve"><value>Сеть</value></data>
   <data name="Proxy" xml:space="preserve"><value>Прокси</value></data>
   <data name="ProxyDescription" xml:space="preserve"><value>Выберите способ подключения FluxReader при обновлении лент и загрузке сетевых ресурсов.</value></data>
+  <data name="RequestTimeout" xml:space="preserve"><value>Тайм-аут запроса</value></data>
+  <data name="RequestTimeoutDescription" xml:space="preserve"><value>Задаёт ограничение времени для сетевых запросов. Введите 0, чтобы отключить ограничение.</value></data>
   <data name="ProxyDisabled" xml:space="preserve"><value>Не использовать прокси</value></data>
   <data name="ProxySystem" xml:space="preserve"><value>Использовать системный прокси</value></data>
   <data name="ProxyCustom" xml:space="preserve"><value>Использовать пользовательский прокси</value></data>
@@ -89,6 +91,7 @@
   <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>Ограничение одновременного обновления</value></data>
   <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>Ограничивает число одновременно обновляемых лент. Введите 0, чтобы снять ограничение.</value></data>
   <data name="Minutes" xml:space="preserve"><value>минут</value></data>
+  <data name="Seconds" xml:space="preserve"><value>секунд</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Тема приложения</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Выберите цветовой режим FluxReader. Системная настройка автоматически соответствует настройке Windows.</value></data>
   <data name="ThemeSystem" xml:space="preserve"><value>Использовать системную настройку</value></data>

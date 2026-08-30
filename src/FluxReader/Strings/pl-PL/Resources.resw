@@ -77,6 +77,8 @@
   <data name="Network" xml:space="preserve"><value>Sieć</value></data>
   <data name="Proxy" xml:space="preserve"><value>Serwer proxy</value></data>
   <data name="ProxyDescription" xml:space="preserve"><value>Wybierz sposób łączenia FluxReader podczas odświeżania kanałów i ładowania zasobów sieciowych.</value></data>
+  <data name="RequestTimeout" xml:space="preserve"><value>Limit czasu żądania</value></data>
+  <data name="RequestTimeoutDescription" xml:space="preserve"><value>Ustawia limit czasu żądań sieciowych. Wpisz 0, aby wyłączyć limit czasu.</value></data>
   <data name="ProxyDisabled" xml:space="preserve"><value>Nie używaj serwera proxy</value></data>
   <data name="ProxySystem" xml:space="preserve"><value>Użyj systemowego serwera proxy</value></data>
   <data name="ProxyCustom" xml:space="preserve"><value>Użyj niestandardowego serwera proxy</value></data>
@@ -89,6 +91,7 @@
   <data name="RefreshConcurrencyLimit" xml:space="preserve"><value>Limit jednoczesnego odświeżania</value></data>
   <data name="RefreshConcurrencyLimitDescription" xml:space="preserve"><value>Ogranicza liczbę kanałów odświeżanych jednocześnie. Wpisz 0, aby wyłączyć limit.</value></data>
   <data name="Minutes" xml:space="preserve"><value>minuty</value></data>
+  <data name="Seconds" xml:space="preserve"><value>sekundy</value></data>
   <data name="ApplicationTheme" xml:space="preserve"><value>Motyw aplikacji</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Wybierz tryb kolorów używany przez FluxReader. Ustawienie systemowe automatycznie dostosowuje się do systemu Windows.</value></data>
   <data name="ThemeSystem" xml:space="preserve"><value>Użyj ustawienia systemowego</value></data>
