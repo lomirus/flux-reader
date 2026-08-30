@@ -17,9 +17,11 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.Web.WebView2.Core;
+using Windows.Foundation;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
+using Windows.UI.ViewManagement;
 using WinRT.Interop;
 
 namespace FluxReader;
@@ -45,8 +47,12 @@ public sealed partial class MainWindow : Window
     private static readonly TimeSpan DefaultStatusNotificationDuration = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan WarningStatusNotificationDuration = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan ArticleSearchDebounceDelay = TimeSpan.FromMilliseconds(300);
+    private static readonly TimeSpan FeedGroupExitAnimationDuration = TimeSpan.FromMilliseconds(100);
+    private static readonly TimeSpan FeedGroupRepositionAnimationDuration = TimeSpan.FromMilliseconds(167);
+    private const double FeedGroupAnimationVerticalOffset = 8;
 
     private readonly CancellationTokenSource _lifetime = new();
+    private readonly SemaphoreSlim _feedGroupAnimationLock = new(1, 1);
     private readonly DispatcherTimer _refreshTimer = new()
     {
         Interval = TimeSpan.FromMinutes(DefaultRefreshIntervalMinutes)
@@ -79,6 +85,15 @@ public sealed partial class MainWindow : Window
         long RenderVersion,
         long ArticleId,
         long FeedId);
+
+    private sealed record FeedContainerAnimationState(
+        ListViewItem Container,
+        Transform? RenderTransform,
+        double Opacity);
+
+    private sealed record FeedContainerAnimationBatch(
+        Storyboard Storyboard,
+        IReadOnlyList<FeedContainerAnimationState> States);
 
     public MainWindow()
     {
@@ -593,11 +608,262 @@ public sealed partial class MainWindow : Window
         HideArticleReader();
     }
 
-    private void FeedGroupChevron_Click(object sender, RoutedEventArgs e)
+    private async void FeedGroupChevron_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { Tag: FeedNavigationItem item })
+        if (sender is not FrameworkElement { Tag: FeedNavigationItem item })
         {
+            return;
+        }
+
+        await _feedGroupAnimationLock.WaitAsync();
+        try
+        {
+            if (!ViewModel.FeedNavigationRows.Contains(item))
+            {
+                return;
+            }
+
+            if (item.Children.Count == 0 || !new UISettings().AnimationsEnabled)
+            {
+                ViewModel.ToggleFeedNavigationGroup(item);
+                return;
+            }
+
+            await ToggleFeedNavigationGroupAnimatedAsync(item);
+        }
+        finally
+        {
+            _feedGroupAnimationLock.Release();
+        }
+    }
+
+    private async Task ToggleFeedNavigationGroupAnimatedAsync(FeedNavigationItem item)
+    {
+        var originalTransitions = FeedList.ItemContainerTransitions;
+        FeedList.ItemContainerTransitions = new TransitionCollection();
+
+        try
+        {
+            if (item.IsExpanded)
+            {
+                var exitAnimation = CreateFeedGroupExitAnimation(item);
+                await RunStoryboardAsync(exitAnimation.Storyboard);
+
+                var previousPositions = CaptureFeedContainerPositions();
+                ViewModel.ToggleFeedNavigationGroup(item);
+                RestoreFeedContainerAnimationStates(exitAnimation.States);
+                FeedList.UpdateLayout();
+
+                var repositionAnimation = CreateFeedRepositionAnimation(
+                    previousPositions,
+                    FeedGroupAnimationVerticalOffset);
+                try
+                {
+                    await RunStoryboardAsync(repositionAnimation.Storyboard);
+                }
+                finally
+                {
+                    RestoreFeedContainerAnimationStates(repositionAnimation.States);
+                }
+
+                return;
+            }
+
+            var positions = CaptureFeedContainerPositions();
             ViewModel.ToggleFeedNavigationGroup(item);
+            FeedList.UpdateLayout();
+
+            var expansionAnimation = CreateFeedRepositionAnimation(
+                positions,
+                -FeedGroupAnimationVerticalOffset);
+            try
+            {
+                await RunStoryboardAsync(expansionAnimation.Storyboard);
+            }
+            finally
+            {
+                RestoreFeedContainerAnimationStates(expansionAnimation.States);
+            }
+        }
+        finally
+        {
+            FeedList.ItemContainerTransitions = originalTransitions;
+        }
+    }
+
+    private Dictionary<FeedNavigationItem, double> CaptureFeedContainerPositions()
+    {
+        var positions = new Dictionary<FeedNavigationItem, double>();
+        foreach (var item in ViewModel.FeedNavigationRows)
+        {
+            if (FeedList.ContainerFromItem(item) is ListViewItem container)
+            {
+                positions[item] = GetFeedContainerVerticalPosition(container);
+            }
+        }
+
+        return positions;
+    }
+
+    private FeedContainerAnimationBatch CreateFeedGroupExitAnimation(FeedNavigationItem item)
+    {
+        var storyboard = new Storyboard();
+        var states = new List<FeedContainerAnimationState>();
+        foreach (var child in item.Children)
+        {
+            if (FeedList.ContainerFromItem(child) is not ListViewItem container)
+            {
+                continue;
+            }
+
+            var transform = new TranslateTransform();
+            states.Add(new FeedContainerAnimationState(
+                container,
+                container.RenderTransform,
+                container.Opacity));
+            container.RenderTransform = transform;
+
+            AddFeedContainerTranslationAnimation(
+                storyboard,
+                transform,
+                -FeedGroupAnimationVerticalOffset,
+                FeedGroupExitAnimationDuration,
+                EasingMode.EaseIn);
+            AddFeedContainerOpacityAnimation(
+                storyboard,
+                container,
+                0,
+                FeedGroupExitAnimationDuration,
+                EasingMode.EaseIn);
+        }
+
+        return new FeedContainerAnimationBatch(storyboard, states);
+    }
+
+    private FeedContainerAnimationBatch CreateFeedRepositionAnimation(
+        IReadOnlyDictionary<FeedNavigationItem, double> previousPositions,
+        double newContainerOffset)
+    {
+        var storyboard = new Storyboard();
+        var states = new List<FeedContainerAnimationState>();
+        foreach (var item in ViewModel.FeedNavigationRows)
+        {
+            if (FeedList.ContainerFromItem(item) is not ListViewItem container)
+            {
+                continue;
+            }
+
+            var isNewlyRealized = !previousPositions.TryGetValue(item, out var previousPosition);
+            var offset = isNewlyRealized
+                ? newContainerOffset
+                : previousPosition - GetFeedContainerVerticalPosition(container);
+            if (Math.Abs(offset) < 0.5 && !isNewlyRealized)
+            {
+                continue;
+            }
+
+            var transform = new TranslateTransform
+            {
+                Y = offset
+            };
+            states.Add(new FeedContainerAnimationState(
+                container,
+                container.RenderTransform,
+                container.Opacity));
+            container.RenderTransform = transform;
+            AddFeedContainerTranslationAnimation(
+                storyboard,
+                transform,
+                0,
+                FeedGroupRepositionAnimationDuration,
+                EasingMode.EaseOut);
+
+            if (isNewlyRealized)
+            {
+                container.Opacity = 0;
+                AddFeedContainerOpacityAnimation(
+                    storyboard,
+                    container,
+                    1,
+                    FeedGroupRepositionAnimationDuration,
+                    EasingMode.EaseOut);
+            }
+        }
+
+        return new FeedContainerAnimationBatch(storyboard, states);
+    }
+
+    private double GetFeedContainerVerticalPosition(ListViewItem container) =>
+        container.TransformToVisual(FeedList).TransformPoint(new Point()).Y;
+
+    private static void AddFeedContainerTranslationAnimation(
+        Storyboard storyboard,
+        TranslateTransform target,
+        double to,
+        TimeSpan duration,
+        EasingMode easingMode)
+    {
+        var animation = new DoubleAnimation
+        {
+            To = to,
+            Duration = new Duration(duration),
+            EasingFunction = new CubicEase
+            {
+                EasingMode = easingMode
+            }
+        };
+        Storyboard.SetTarget(animation, target);
+        Storyboard.SetTargetProperty(animation, nameof(TranslateTransform.Y));
+        storyboard.Children.Add(animation);
+    }
+
+    private static void AddFeedContainerOpacityAnimation(
+        Storyboard storyboard,
+        ListViewItem target,
+        double to,
+        TimeSpan duration,
+        EasingMode easingMode)
+    {
+        var animation = new DoubleAnimation
+        {
+            To = to,
+            Duration = new Duration(duration),
+            EasingFunction = new CubicEase
+            {
+                EasingMode = easingMode
+            }
+        };
+        Storyboard.SetTarget(animation, target);
+        Storyboard.SetTargetProperty(animation, nameof(UIElement.Opacity));
+        storyboard.Children.Add(animation);
+    }
+
+    private static Task RunStoryboardAsync(Storyboard storyboard)
+    {
+        if (storyboard.Children.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        var completion = new TaskCompletionSource();
+        void Storyboard_Completed(object? sender, object e)
+        {
+            storyboard.Completed -= Storyboard_Completed;
+            completion.TrySetResult();
+        }
+
+        storyboard.Completed += Storyboard_Completed;
+        storyboard.Begin();
+        return completion.Task;
+    }
+
+    private static void RestoreFeedContainerAnimationStates(
+        IEnumerable<FeedContainerAnimationState> states)
+    {
+        foreach (var state in states)
+        {
+            state.Container.RenderTransform = state.RenderTransform;
+            state.Container.Opacity = state.Opacity;
         }
     }
 
