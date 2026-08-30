@@ -217,12 +217,6 @@
                     </Grid>
                 </Border>
 
-                <TextBlock
-                    x:Name="FeedsHeaderText"
-                    Margin="0,12,0,0"
-                    FontSize="14"
-                    FontWeight="SemiBold" />
-
                 <Border
                     Padding="20"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -340,6 +334,12 @@
                         </StackPanel>
                     </Grid>
                 </Border>
+
+                <TextBlock
+                    x:Name="FeedsHeaderText"
+                    Margin="0,12,0,0"
+                    FontSize="14"
+                    FontWeight="SemiBold" />
 
                 <Border
                     Padding="20"
