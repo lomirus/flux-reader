@@ -83,6 +83,10 @@
                     HorizontalAlignment="Center"
                     FontSize="14"
                     Opacity="0.65" />
+                <HyperlinkButton
+                    HorizontalAlignment="Center"
+                    Content="GitHub"
+                    NavigateUri="https://github.com/lomirus/flux-reader" />
             </StackPanel>
         </ScrollViewer>
     </Grid>
