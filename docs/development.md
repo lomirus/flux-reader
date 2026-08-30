@@ -88,14 +88,14 @@ Application data is stored in `%LOCALAPPDATA%\FluxReader`.
 1. Choose a three-part version and build the Setup EXE for each target architecture:
 
    ```powershell
-   .\scripts\Build-Installer.ps1 -Version 1.0.1 -Architecture x64
-   .\scripts\Build-Installer.ps1 -Version 1.0.1 -Architecture arm64
+   .\scripts\Build-Installer.ps1 -Version 1.0.0 -Architecture x64
+   .\scripts\Build-Installer.ps1 -Version 1.0.0 -Architecture arm64
    ```
 
 2. After one online build has populated the NuGet assets and prerequisite cache, verify an offline build when needed:
 
    ```powershell
-   .\scripts\Build-Installer.ps1 -Version 1.0.1 -Architecture x64 -Offline
+   .\scripts\Build-Installer.ps1 -Version 1.0.0 -Architecture x64 -Offline
    ```
 
 3. Collect `FluxReaderSetup-{version}-{architecture}.exe` from `artifacts\installers`.
@@ -111,8 +111,8 @@ An MSI cannot overwrite an already published or installed build with the same ve
 1. Push a unique `vMAJOR.MINOR.PATCH` tag:
 
    ```powershell
-   git tag v1.0.1
-   git push origin v1.0.1
+   git tag v1.0.0
+   git push origin v1.0.0
    ```
 
 2. GitHub Actions validates the tag, runs the tests, and builds x64 and ARM64 Setup executables.
