@@ -81,13 +81,21 @@ public static partial class ArticleContentParser
         !string.IsNullOrEmpty(value) && HtmlMarkupRegex().IsMatch(value);
 
     public static string ToPlainText(string? value, Uri? baseUri = null)
+        => ToPlainText(value, baseUri, includeImageAlternativeText: true);
+
+    private static string ToPlainText(
+        string? value,
+        Uri? baseUri,
+        bool includeImageAlternativeText)
     {
         var html = PrepareHtml(value, baseUri, int.MaxValue);
-        html = HtmlImageRegex().Replace(html, match =>
-        {
-            var alt = GetAttributeValue(match.Groups["attributes"].Value, "alt");
-            return string.IsNullOrWhiteSpace(alt) ? string.Empty : $"\n{alt}\n";
-        });
+        html = includeImageAlternativeText
+            ? HtmlImageRegex().Replace(html, match =>
+            {
+                var alt = GetAttributeValue(match.Groups["attributes"].Value, "alt");
+                return string.IsNullOrWhiteSpace(alt) ? string.Empty : $"\n{alt}\n";
+            })
+            : HtmlImageRegex().Replace(html, string.Empty);
         return HtmlTextConverter.ToPlainText(html, int.MaxValue);
     }
 
@@ -99,7 +107,15 @@ public static partial class ArticleContentParser
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumLength);
         var source = string.IsNullOrWhiteSpace(summary) ? content : summary;
-        var preview = ToPlainText(source, baseUri);
+        var text = ToPlainText(source, baseUri, includeImageAlternativeText: false);
+        var preview = string.Join(
+            ' ',
+            text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return LimitPreviewLength(preview, maximumLength);
+    }
+
+    private static string LimitPreviewLength(string preview, int maximumLength)
+    {
         return preview.Length <= maximumLength
             ? preview
             : string.Concat(preview.AsSpan(0, maximumLength), "…");

@@ -117,6 +117,29 @@ public sealed class ArticleContentParserTests
     }
 
     [TestMethod]
+    public void CreatePreviewText_OmitsImageAlternativeTextAndCollapsesWhitespace()
+    {
+        const string content = """
+            <div>
+              <img src="https://example.com/avatar.png" alt="@ickshonpe">
+              <a href="https://example.com/ickshonpe">ickshonpe</a>
+              pushed to
+              <a href="https://example.com/ui-layout-tree">ui-layout-tree</a>
+
+              in <a href="https://example.com/bevy">ickshonpe/bevy</a>
+            </div>
+            """;
+
+        var preview = ArticleContentParser.CreatePreviewText(
+            "",
+            content,
+            null,
+            256);
+
+        Assert.AreEqual("ickshonpe pushed to ui-layout-tree in ickshonpe/bevy", preview);
+    }
+
+    [TestMethod]
     public void CreateHtmlDocument_DisablesScriptsAndStylesCodeBlocks()
     {
         var document = ArticleHtmlDocumentBuilder.Create(
