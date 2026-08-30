@@ -451,7 +451,6 @@ public sealed partial class MainViewModel : ObservableObject
             return null;
         }
 
-        CurrentFilter = ArticleFilter.All;
         ArticleSearchQuery = string.Empty;
         ApplyNavigationSelection([targetArticle.FeedId], selectedGroupId: null);
         await ReloadArticlesAsync(cancellationToken);
