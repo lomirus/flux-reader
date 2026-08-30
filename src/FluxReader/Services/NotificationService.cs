@@ -1,5 +1,6 @@
-using FluxReader.Core.Models;
+using System.Globalization;
 using FluxReader.Core.Services;
+using FluxReader.Data;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 
@@ -19,7 +20,7 @@ public sealed class NotificationService : IDisposable
         _logPath = logPath;
     }
 
-    public event EventHandler? Activated;
+    public event EventHandler<NotificationInvokedEventArgs>? Activated;
 
     public bool IsAvailable => _registered;
 
@@ -63,7 +64,7 @@ public sealed class NotificationService : IDisposable
     }
 
     public Task ShowNewArticlesAsync(
-        IReadOnlyList<ParsedArticle> articles,
+        IReadOnlyList<InsertedArticle> articles,
         string? feedIconUrl,
         CancellationToken cancellationToken = default)
     {
@@ -87,11 +88,16 @@ public sealed class NotificationService : IDisposable
         foreach (var article in articles)
         {
             var description = ArticleContentParser.CreatePreviewText(
-                article.Summary,
-                article.Content,
-                article.Link,
+                article.Article.Summary,
+                article.Article.Content,
+                article.Article.Link,
                 MaximumArticleDescriptionLength);
-            ShowNewArticle(manager, article.Title, description, iconUri);
+            ShowNewArticle(
+                manager,
+                article.Id,
+                article.Article.Title,
+                description,
+                iconUri);
         }
 
         return Task.CompletedTask;
@@ -99,6 +105,7 @@ public sealed class NotificationService : IDisposable
 
     private void ShowNewArticle(
         AppNotificationManager manager,
+        long articleId,
         string articleTitle,
         string articleDescription,
         Uri? iconUri)
@@ -107,6 +114,7 @@ public sealed class NotificationService : IDisposable
         {
             var builder = new AppNotificationBuilder()
                 .AddArgument("action", "open")
+                .AddArgument("articleId", articleId.ToString(CultureInfo.InvariantCulture))
                 .AddText(articleTitle)
                 .AddText(articleDescription);
             if (iconUri is not null)
@@ -148,8 +156,19 @@ public sealed class NotificationService : IDisposable
         }
     }
 
-    private void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args) =>
-        Activated?.Invoke(this, EventArgs.Empty);
+    private void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
+    {
+        var articleId = args.Arguments.TryGetValue("articleId", out var articleIdValue) &&
+                        long.TryParse(
+                            articleIdValue,
+                            NumberStyles.None,
+                            CultureInfo.InvariantCulture,
+                            out var parsedArticleId) &&
+                        parsedArticleId > 0
+            ? parsedArticleId
+            : (long?)null;
+        Activated?.Invoke(this, new NotificationInvokedEventArgs(articleId));
+    }
 
     private static Uri? TryCreateIconUri(string? value) =>
         Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
@@ -187,4 +206,9 @@ public sealed class NotificationService : IDisposable
             // Logging must not turn optional notification failures into application failures.
         }
     }
+}
+
+public sealed class NotificationInvokedEventArgs(long? articleId) : EventArgs
+{
+    public long? ArticleId { get; } = articleId;
 }

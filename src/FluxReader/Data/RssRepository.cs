@@ -248,6 +248,52 @@ public sealed class RssRepository
         }
     }
 
+    public async Task<Article?> GetArticleAsync(
+        long articleId,
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT a.id, a.feed_id, a.external_id, f.title, a.title, a.link,
+                       a.author, a.published_utc, a.summary, a.content,
+                       a.is_read
+                FROM articles a
+                INNER JOIN feeds f ON f.id = a.feed_id
+                WHERE a.id = $article_id;
+                """;
+            command.Parameters.AddWithValue("$article_id", articleId);
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return null;
+            }
+
+            return new Article
+            {
+                Id = reader.GetInt64(0),
+                FeedId = reader.GetInt64(1),
+                ExternalId = reader.GetString(2),
+                FeedTitle = reader.GetString(3),
+                Title = reader.GetString(4),
+                Link = reader.GetString(5),
+                Author = reader.GetString(6),
+                PublishedAt = ReadDate(reader, 7),
+                Summary = reader.GetString(8),
+                Content = reader.GetString(9),
+                IsRead = reader.GetBoolean(10)
+            };
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<Feed> AddFeedAsync(
         Uri feedUri,
         ParsedFeed parsedFeed,
@@ -357,7 +403,7 @@ public sealed class RssRepository
         }
     }
 
-    public async Task<IReadOnlyList<ParsedArticle>> UpdateFeedAsync(
+    public async Task<IReadOnlyList<InsertedArticle>> UpdateFeedAsync(
         Feed feed,
         ParsedFeed parsedFeed,
         string? etag,
@@ -679,14 +725,14 @@ public sealed class RssRepository
         }
     }
 
-    private async Task<List<ParsedArticle>> UpsertArticlesCoreAsync(
+    private async Task<List<InsertedArticle>> UpsertArticlesCoreAsync(
         SqliteConnection connection,
         long feedId,
         IReadOnlyList<ParsedArticle> articles,
         CancellationToken cancellationToken,
         SqliteTransaction? transaction = null)
     {
-        var insertedArticles = new List<ParsedArticle>();
+        var insertedArticles = new List<InsertedArticle>();
         foreach (var article in articles)
         {
             await using var command = connection.CreateCommand();
@@ -711,9 +757,9 @@ public sealed class RssRepository
             command.Parameters.AddWithValue("$content", article.Content);
             command.Parameters.AddWithValue("$inserted", FormatDate(DateTimeOffset.UtcNow));
 
-            if (await command.ExecuteScalarAsync(cancellationToken) is not null)
+            if (await command.ExecuteScalarAsync(cancellationToken) is long articleId)
             {
-                insertedArticles.Add(article);
+                insertedArticles.Add(new InsertedArticle(articleId, article));
                 continue;
             }
 
@@ -825,3 +871,5 @@ public sealed class RssRepository
     private static string? ReadNullableString(SqliteDataReader reader, int ordinal) =>
         reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
 }
+
+public sealed record InsertedArticle(long Id, ParsedArticle Article);

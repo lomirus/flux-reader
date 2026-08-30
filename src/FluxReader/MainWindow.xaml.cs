@@ -68,8 +68,11 @@ public sealed partial class MainWindow : Window
     private long _articleRenderVersion;
     private CancellationTokenSource? _articleSearchDebounce;
     private bool _isSynchronizingFeedListSelection;
+    private bool _isOpeningNotificationArticle;
     private AppSettings _settings = new();
+    private long? _pendingNotificationArticleId;
     private bool _settingsLoaded;
+    private bool _viewModelInitialized;
 
     private readonly record struct ArticleNavigationRequest(
         long RenderVersion,
@@ -106,6 +109,20 @@ public sealed partial class MainWindow : Window
     }
 
     public MainViewModel ViewModel { get; }
+
+    public void OpenArticleFromNotification(long articleId)
+    {
+        if (articleId <= 0)
+        {
+            return;
+        }
+
+        _pendingNotificationArticleId = articleId;
+        if (_viewModelInitialized)
+        {
+            _ = OpenPendingNotificationArticleAsync();
+        }
+    }
 
     private void SetWindowIcon()
     {
@@ -427,6 +444,8 @@ public sealed partial class MainWindow : Window
         _settingsLoaded = true;
         var articleWebViewInitialization = EnsureArticleWebViewInitializedAsync();
         await ViewModel.InitializeAsync(_lifetime.Token);
+        _viewModelInitialized = true;
+        await OpenPendingNotificationArticleAsync();
 
         if (ViewModel.Feeds.Count > 0 && ViewModel.RefreshCommand.CanExecute(null))
         {
@@ -599,6 +618,10 @@ public sealed partial class MainWindow : Window
         if (e.PropertyName == nameof(MainViewModel.IsBusy))
         {
             UpdateRefreshButtonVisualState();
+            if (!ViewModel.IsBusy && _viewModelInitialized)
+            {
+                _ = OpenPendingNotificationArticleAsync();
+            }
         }
 
         if (e.PropertyName == nameof(MainViewModel.SelectedArticle))
@@ -655,6 +678,74 @@ public sealed partial class MainWindow : Window
         }
 
         StatusNotificationQueue.Show(notification);
+    }
+
+    private async Task OpenPendingNotificationArticleAsync()
+    {
+        if (_isOpeningNotificationArticle ||
+            !_viewModelInitialized ||
+            ViewModel.IsBusy ||
+            _lifetime.IsCancellationRequested)
+        {
+            return;
+        }
+
+        _isOpeningNotificationArticle = true;
+        try
+        {
+            while (_pendingNotificationArticleId is { } articleId)
+            {
+                _pendingNotificationArticleId = null;
+                Article? article;
+                try
+                {
+                    article = await ViewModel.NavigateToArticleAsync(articleId, _lifetime.Token);
+                }
+                catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception exception)
+                {
+                    DiagnosticLog.Error(
+                        "notification.article_navigation_failed",
+                        exception,
+                        new { articleId });
+                    continue;
+                }
+
+                if (article is null)
+                {
+                    DiagnosticLog.Warning(
+                        "notification.article_not_found",
+                        new { articleId });
+                    continue;
+                }
+
+                ArticleSearchBox.Text = string.Empty;
+                CloseSettingsPage();
+                ArticleEmptyView.Visibility = Visibility.Collapsed;
+                ArticleReaderView.Visibility = Visibility.Visible;
+                if (ViewModel.Articles.Contains(article))
+                {
+                    ArticleList.SelectedItem = article;
+                    ArticleList.ScrollIntoView(article);
+                }
+
+                DiagnosticLog.Information(
+                    "notification.article_opened",
+                    new { articleId, article.FeedId });
+            }
+        }
+        finally
+        {
+            _isOpeningNotificationArticle = false;
+            if (_pendingNotificationArticleId is not null &&
+                !_lifetime.IsCancellationRequested)
+            {
+                _ = OpenPendingNotificationArticleAsync();
+            }
+        }
     }
 
     private async void StatusNotificationDetails_Click(object sender, RoutedEventArgs e)

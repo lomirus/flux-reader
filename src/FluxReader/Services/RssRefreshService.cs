@@ -90,7 +90,7 @@ public sealed class RssRefreshService : IDisposable
             await _repository.TouchFeedAsync(feed.Id, iconUrl, cancellationToken);
             return new FeedRefreshResult(
                 iconUrl,
-                Array.Empty<ParsedArticle>(),
+                Array.Empty<InsertedArticle>(),
                 true);
         }
 
@@ -305,5 +305,5 @@ public sealed class RssRefreshService : IDisposable
 
 public sealed record FeedRefreshResult(
     string FeedIconUrl,
-    IReadOnlyList<ParsedArticle> NewArticles,
+    IReadOnlyList<InsertedArticle> NewArticles,
     bool NotModified);

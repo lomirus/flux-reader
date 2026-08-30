@@ -438,6 +438,26 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    public async Task<Article?> NavigateToArticleAsync(
+        long articleId,
+        CancellationToken cancellationToken = default)
+    {
+        var targetArticle = await _repository.GetArticleAsync(articleId, cancellationToken);
+        if (targetArticle is null)
+        {
+            return null;
+        }
+
+        CurrentFilter = ArticleFilter.All;
+        ArticleSearchQuery = string.Empty;
+        ApplyNavigationSelection([targetArticle.FeedId], selectedGroupId: null);
+        await ReloadArticlesAsync(cancellationToken);
+
+        var article = Articles.FirstOrDefault(item => item.Id == articleId) ?? targetArticle;
+        await SelectArticleAsync(article, cancellationToken);
+        return article;
+    }
+
     private bool CanRefresh() => !IsBusy;
 
     [RelayCommand(CanExecute = nameof(CanRefresh))]

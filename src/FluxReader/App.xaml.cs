@@ -9,6 +9,8 @@ namespace FluxReader;
 public partial class App : Application
 {
     private readonly NotificationService _notificationService;
+    private readonly object _pendingNotificationSync = new();
+    private readonly Queue<long> _pendingNotificationArticleIds = [];
     private SystemTrayIcon? _systemTrayIcon;
     private Window? _window;
     private bool _exitRequested;
@@ -56,7 +58,10 @@ public partial class App : Application
     {
         DiagnosticLog.Information("app.launching", new { arguments = args.Arguments });
         var window = new MainWindow();
-        _window = window;
+        lock (_pendingNotificationSync)
+        {
+            _window = window;
+        }
         window.AppWindow.Closing += Window_Closing;
         window.Closed += Window_Closed;
 
@@ -66,6 +71,7 @@ public partial class App : Application
         _systemTrayIcon.RefreshRequested += SystemTrayIcon_RefreshRequested;
         _systemTrayIcon.ExitRequested += SystemTrayIcon_ExitRequested;
         window.Activate();
+        ProcessPendingNotificationActivations();
         DiagnosticLog.MemorySnapshot("app.launched");
     }
 
@@ -105,9 +111,41 @@ public partial class App : Application
             args.Exception,
             new { args.Observed });
 
-    private void NotificationService_Activated(object? sender, EventArgs e)
+    private void NotificationService_Activated(object? sender, NotificationInvokedEventArgs e)
     {
-        _window?.DispatcherQueue.TryEnqueue(ShowMainWindow);
+        Window? window;
+        lock (_pendingNotificationSync)
+        {
+            if (e.ArticleId is { } articleId)
+            {
+                _pendingNotificationArticleIds.Enqueue(articleId);
+            }
+
+            window = _window;
+        }
+
+        window?.DispatcherQueue.TryEnqueue(ProcessPendingNotificationActivations);
+    }
+
+    private void ProcessPendingNotificationActivations()
+    {
+        ShowMainWindow();
+        if (_window is not MainWindow window)
+        {
+            return;
+        }
+
+        long[] articleIds;
+        lock (_pendingNotificationSync)
+        {
+            articleIds = _pendingNotificationArticleIds.ToArray();
+            _pendingNotificationArticleIds.Clear();
+        }
+
+        foreach (var articleId in articleIds)
+        {
+            window.OpenArticleFromNotification(articleId);
+        }
     }
 
     private void Window_Closing(AppWindow sender, AppWindowClosingEventArgs args)
