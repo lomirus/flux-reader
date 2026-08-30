@@ -399,6 +399,12 @@ public sealed partial class MainWindow : Window
         _settingsLoaded = true;
         var articleWebViewInitialization = EnsureArticleWebViewInitializedAsync();
         await ViewModel.InitializeAsync(_lifetime.Token);
+
+        if (ViewModel.Feeds.Count > 0 && ViewModel.RefreshCommand.CanExecute(null))
+        {
+            await ViewModel.RefreshCommand.ExecuteAsync(null);
+        }
+
         try
         {
             await articleWebViewInitialization;
@@ -406,11 +412,6 @@ public sealed partial class MainWindow : Window
         catch (Exception exception)
         {
             DiagnosticLog.Error("article.webview_initialization_failed", exception);
-        }
-
-        if (ViewModel.Feeds.Count > 0 && ViewModel.RefreshCommand.CanExecute(null))
-        {
-            await ViewModel.RefreshCommand.ExecuteAsync(null);
         }
 
         _refreshTimer.Start();
