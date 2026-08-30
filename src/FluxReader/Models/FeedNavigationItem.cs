@@ -110,6 +110,26 @@ public sealed partial class FeedNavigationItem : ObservableObject
         IEnumerable<Feed> feeds,
         ActionLabels labels) => new(group, feeds, labels);
 
+    internal void RemoveFeedChildren(IReadOnlySet<long> feedIds)
+    {
+        var removedChildren = Children
+            .Where(child => child.Feed is { } feed && feedIds.Contains(feed.Id))
+            .ToArray();
+        if (removedChildren.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var child in removedChildren)
+        {
+            child.PropertyChanged -= Child_PropertyChanged;
+            Children.Remove(child);
+        }
+
+        OnPropertyChanged(nameof(UnreadCount));
+        OnPropertyChanged(nameof(UnreadDisplay));
+    }
+
     public sealed record ActionLabels(
         string RefreshFeed,
         string EditFeed,

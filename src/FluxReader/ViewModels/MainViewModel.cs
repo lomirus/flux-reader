@@ -697,7 +697,7 @@ public sealed partial class MainViewModel : ObservableObject
                 .ToArray();
             var selectedGroupId = SelectedGroup?.Id;
             await _repository.DeleteFeedsAsync(deletedFeedIds, cancellationToken);
-            await ReloadFeedsAsync(selectedFeedIds, selectedGroupId, cancellationToken);
+            RemoveDeletedFeeds(deletedFeedIds, selectedFeedIds, selectedGroupId);
             await ReloadArticlesAsync(cancellationToken);
             ShowStatus(
                 normalizedFeeds.Length == 1
@@ -710,6 +710,48 @@ public sealed partial class MainViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    private void RemoveDeletedFeeds(
+        IReadOnlySet<long> deletedFeedIds,
+        IReadOnlyCollection<long> selectedFeedIds,
+        long? selectedGroupId)
+    {
+        for (var index = Feeds.Count - 1; index >= 0; index--)
+        {
+            if (deletedFeedIds.Contains(Feeds[index].Id))
+            {
+                Feeds.RemoveAt(index);
+            }
+        }
+
+        // Deselect deleted rows while their navigation items still exist. This lets
+        // MainWindow synchronize ListView selection without treating the subsequent
+        // collection removals as a new user selection.
+        ApplyNavigationSelection(selectedFeedIds, selectedGroupId);
+
+        foreach (var groupItem in FeedNavigationRows.Where(item => item.IsGroup))
+        {
+            groupItem.RemoveFeedChildren(deletedFeedIds);
+        }
+
+        for (var index = FeedNavigationRows.Count - 1; index >= 0; index--)
+        {
+            if (FeedNavigationRows[index].Feed is { } feed &&
+                deletedFeedIds.Contains(feed.Id))
+            {
+                FeedNavigationRows.RemoveAt(index);
+            }
+        }
+
+        foreach (var feedId in deletedFeedIds)
+        {
+            _feedRefreshErrors.Remove(feedId);
+        }
+
+        OnPropertyChanged(nameof(LastRefreshedAt));
+        UnreadTotal = Feeds.Sum(feed => feed.UnreadCount);
+        OnPropertyChanged(nameof(SelectedArticleNavigationItem));
     }
 
     public async Task AddFeedGroupAsync(string name, CancellationToken cancellationToken = default)
