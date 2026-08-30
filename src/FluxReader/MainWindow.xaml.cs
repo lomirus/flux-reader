@@ -238,6 +238,7 @@ public sealed partial class MainWindow : Window
 
         coreWebView.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.Script);
         coreWebView.WebResourceRequested += ArticleWebView_WebResourceRequested;
+        coreWebView.DOMContentLoaded += ArticleWebView_DOMContentLoaded;
         ArticleWebView.NavigationStarting += ArticleWebView_NavigationStarting;
         ArticleWebView.NavigationCompleted += ArticleWebView_NavigationCompleted;
         coreWebView.NewWindowRequested += ArticleWebView_NewWindowRequested;
@@ -294,6 +295,36 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void ArticleWebView_DOMContentLoaded(
+        CoreWebView2 sender,
+        CoreWebView2DOMContentLoadedEventArgs args)
+    {
+        if (!_articleNavigations.TryGetValue(args.NavigationId, out var navigation))
+        {
+            return;
+        }
+
+        DiagnosticLog.Information(
+            "article.html_dom_content_loaded",
+            new
+            {
+                args.NavigationId,
+                navigation.RenderVersion,
+                currentRenderVersion = _articleRenderVersion,
+                navigation.ArticleId,
+                navigation.FeedId
+            });
+        if (navigation.RenderVersion != _articleRenderVersion)
+        {
+            return;
+        }
+
+        // The document and its inline styles are ready at this point. Reveal it
+        // while images continue loading instead of keeping the loading layer up
+        // until the window load event.
+        ShowArticleContent();
+    }
+
     private void ArticleWebView_NavigationCompleted(
         WebView2 sender,
         CoreWebView2NavigationCompletedEventArgs args)
@@ -328,21 +359,18 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        if (args.IsSuccess)
+        if (!args.IsSuccess)
         {
-            ShowArticleContent();
-            return;
+            HideArticleContent();
+            DiagnosticLog.Warning(
+                "article.html_navigation_failed",
+                new
+                {
+                    articleId = navigation.ArticleId,
+                    feedId = navigation.FeedId,
+                    webErrorStatus = args.WebErrorStatus.ToString()
+                });
         }
-
-        HideArticleContent();
-        DiagnosticLog.Warning(
-            "article.html_navigation_failed",
-            new
-            {
-                articleId = navigation.ArticleId,
-                feedId = navigation.FeedId,
-                webErrorStatus = args.WebErrorStatus.ToString()
-            });
     }
 
     private async void ArticleWebView_NewWindowRequested(
@@ -1728,6 +1756,7 @@ public sealed partial class MainWindow : Window
         if (_articleWebViewConfigured && ArticleWebView.CoreWebView2 is { } coreWebView)
         {
             coreWebView.WebResourceRequested -= ArticleWebView_WebResourceRequested;
+            coreWebView.DOMContentLoaded -= ArticleWebView_DOMContentLoaded;
             coreWebView.NewWindowRequested -= ArticleWebView_NewWindowRequested;
         }
 
