@@ -21,6 +21,7 @@
   <data name="AddFeed" xml:space="preserve"><value>Feed hinzufügen</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Alle Feeds aktualisieren</value></data>
   <data name="RefreshFeed" xml:space="preserve"><value>Feed aktualisieren</value></data>
+  <data name="RefreshGroup" xml:space="preserve"><value>Gruppe aktualisieren</value></data>
   <data name="LastRefreshedAt" xml:space="preserve"><value>Zuletzt aktualisiert: {0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Alle als gelesen markieren</value></data>
   <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>

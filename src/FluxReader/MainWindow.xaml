@@ -241,8 +241,7 @@
                                         <MenuFlyoutItem
                                             Click="RefreshNavigationFeedMenu_Click"
                                             Text="{x:Bind RefreshActionText}"
-                                            Tag="{x:Bind}"
-                                            Visibility="{x:Bind FeedActionVisibility}">
+                                            Tag="{x:Bind}">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon Glyph="&#xE72C;" />
                                             </MenuFlyoutItem.Icon>

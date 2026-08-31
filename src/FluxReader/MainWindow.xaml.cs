@@ -1206,9 +1206,18 @@ public sealed partial class MainWindow : Window
 
     private async void RefreshNavigationFeedMenu_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is MenuFlyoutItem { Tag: FeedNavigationItem { Feed: { } feed } })
+        if (sender is not MenuFlyoutItem { Tag: FeedNavigationItem item })
+        {
+            return;
+        }
+
+        if (item.Feed is { } feed)
         {
             await ViewModel.RefreshFeedAsync(feed, _lifetime.Token);
+        }
+        else if (item.Group is { } group)
+        {
+            await ViewModel.RefreshGroupAsync(group, _lifetime.Token);
         }
     }
 

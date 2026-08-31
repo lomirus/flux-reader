@@ -21,6 +21,7 @@
   <data name="AddFeed" xml:space="preserve"><value>피드 추가</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>모든 피드 새로 고침</value></data>
   <data name="RefreshFeed" xml:space="preserve"><value>피드 새로 고침</value></data>
+  <data name="RefreshGroup" xml:space="preserve"><value>그룹 새로 고침</value></data>
   <data name="LastRefreshedAt" xml:space="preserve"><value>마지막 새로 고침: {0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>모두 읽음으로 표시</value></data>
   <data name="Settings" xml:space="preserve"><value>설정</value></data>

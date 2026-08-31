@@ -21,6 +21,7 @@
   <data name="AddFeed" xml:space="preserve"><value>Agregar fuente</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>Actualizar todas las fuentes</value></data>
   <data name="RefreshFeed" xml:space="preserve"><value>Actualizar fuente</value></data>
+  <data name="RefreshGroup" xml:space="preserve"><value>Actualizar grupo</value></data>
   <data name="LastRefreshedAt" xml:space="preserve"><value>Última actualización: {0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>Marcar todo como leído</value></data>
   <data name="Settings" xml:space="preserve"><value>Configuración</value></data>

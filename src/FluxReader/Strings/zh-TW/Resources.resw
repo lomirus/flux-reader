@@ -21,6 +21,7 @@
   <data name="AddFeed" xml:space="preserve"><value>新增訂閱</value></data>
   <data name="RefreshAllFeeds" xml:space="preserve"><value>重新整理所有訂閱</value></data>
   <data name="RefreshFeed" xml:space="preserve"><value>重新整理此訂閱源</value></data>
+  <data name="RefreshGroup" xml:space="preserve"><value>重新整理此群組</value></data>
   <data name="LastRefreshedAt" xml:space="preserve"><value>上次重新整理：{0}</value></data>
   <data name="MarkAllRead" xml:space="preserve"><value>全部標示為已讀</value></data>
   <data name="Settings" xml:space="preserve"><value>設定</value></data>

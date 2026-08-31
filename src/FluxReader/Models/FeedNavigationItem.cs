@@ -31,7 +31,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
     private FeedNavigationItem(FeedGroup group, IEnumerable<Feed> feeds, ActionLabels labels)
     {
         Group = group;
-        RefreshActionText = labels.RefreshFeed;
+        RefreshActionText = labels.RefreshGroup;
         EditActionText = labels.EditFeed;
         PrimaryActionText = labels.RenameGroup;
         RemoveActionText = labels.RemoveGroup;
@@ -132,6 +132,7 @@ public sealed partial class FeedNavigationItem : ObservableObject
 
     public sealed record ActionLabels(
         string RefreshFeed,
+        string RefreshGroup,
         string EditFeed,
         string ChangeGroup,
         string RemoveFeed,

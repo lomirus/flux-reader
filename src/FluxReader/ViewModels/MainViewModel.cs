@@ -473,6 +473,16 @@ public sealed partial class MainViewModel : ObservableObject
         return RefreshFeedsAsync([feed], cancellationToken);
     }
 
+    public Task RefreshGroupAsync(
+        FeedGroup group,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(group);
+        return RefreshFeedsAsync(
+            Feeds.Where(feed => feed.GroupId == group.Id).ToArray(),
+            cancellationToken);
+    }
+
     private async Task RefreshFeedsAsync(
         IReadOnlyCollection<Feed> feeds,
         CancellationToken cancellationToken = default)
@@ -1247,6 +1257,7 @@ public sealed partial class MainViewModel : ObservableObject
             .ToDictionary(item => item.Group!.Id, item => item.IsExpanded);
         var actionLabels = new FeedNavigationItem.ActionLabels(
             _localization.GetString("RefreshFeed"),
+            _localization.GetString("RefreshGroup"),
             _localization.GetString("EditFeed"),
             _localization.GetString("ChangeGroup"),
             _localization.GetString("Remove"),
