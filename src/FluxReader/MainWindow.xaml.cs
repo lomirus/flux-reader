@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Xml;
@@ -116,6 +117,7 @@ public sealed partial class MainWindow : Window
             app.Localization);
         RootGrid.DataContext = ViewModel;
         RootGrid.ActualThemeChanged += RootGrid_ActualThemeChanged;
+        ViewModel.Articles.CollectionChanged += Articles_CollectionChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         ViewModel.StatusNotificationRequested += ViewModel_StatusNotificationRequested;
         ApplyLocalization();
@@ -1286,6 +1288,14 @@ public sealed partial class MainWindow : Window
         await ViewModel.SelectArticleAsync(article, _lifetime.Token);
     }
 
+    private void Articles_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (ViewModel.SelectedArticle is { } article && ViewModel.Articles.Contains(article))
+        {
+            ArticleList.SelectedItem = article;
+        }
+    }
+
     private async void AllArticles_Click(object sender, RoutedEventArgs e)
     {
         await ViewModel.SelectAllArticlesAsync(_lifetime.Token);
@@ -2251,6 +2261,7 @@ public sealed partial class MainWindow : Window
         Closed -= MainWindow_Closed;
         CloseSettingsPage();
         RootGrid.ActualThemeChanged -= RootGrid_ActualThemeChanged;
+        ViewModel.Articles.CollectionChanged -= Articles_CollectionChanged;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.StatusNotificationRequested -= ViewModel_StatusNotificationRequested;
         if (_articleWebViewConfigured && ArticleWebView.CoreWebView2 is { } coreWebView)
