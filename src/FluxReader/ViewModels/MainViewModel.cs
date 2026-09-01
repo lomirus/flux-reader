@@ -401,7 +401,7 @@ public sealed partial class MainViewModel : ObservableObject
     public async Task SetArticleFilterAsync(ArticleFilter filter, CancellationToken cancellationToken = default)
     {
         CurrentFilter = filter;
-        await ReloadArticlesAsync(cancellationToken);
+        await ReloadArticlesAsync(cancellationToken, preserveSelectedArticle: true);
     }
 
     public async Task SetArticleSearchQueryAsync(

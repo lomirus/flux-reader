@@ -1320,7 +1320,6 @@ public sealed partial class MainWindow : Window
             ? ArticleFilter.Unread
             : ArticleFilter.All;
         await ViewModel.SetArticleFilterAsync(filter, _lifetime.Token);
-        HideArticleReader();
     }
 
     private async void ArticleSearchBox_TextChanged(
