@@ -363,7 +363,7 @@
                     </StackPanel>
                     <Button
                         x:Name="MarkCurrentListReadButton"
-                        Grid.Column="1"
+                        Grid.Column="2"
                         Width="32"
                         Height="32"
                         Margin="8,0"
@@ -373,7 +373,7 @@
                     </Button>
                     <ToggleButton
                         x:Name="UnreadFilterToggleButton"
-                        Grid.Column="2"
+                        Grid.Column="3"
                         Width="32"
                         Height="32"
                         Padding="0"
@@ -382,7 +382,7 @@
                         <FontIcon FontSize="14" Glyph="&#xE8C3;" />
                     </ToggleButton>
                     <TextBlock
-                        Grid.Column="3"
+                        Grid.Column="1"
                         Margin="8,0,0,0"
                         VerticalAlignment="Center"
                         Opacity="0.6"
