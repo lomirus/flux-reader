@@ -283,12 +283,13 @@ public sealed partial class MainWindow : Window
         settings.AreDefaultScriptDialogsEnabled = false;
         settings.AreDevToolsEnabled = false;
         settings.AreHostObjectsAllowed = false;
-        settings.IsWebMessageEnabled = false;
+        settings.IsWebMessageEnabled = true;
         settings.IsStatusBarEnabled = false;
 
         coreWebView.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.Script);
         coreWebView.WebResourceRequested += ArticleWebView_WebResourceRequested;
         coreWebView.DOMContentLoaded += ArticleWebView_DOMContentLoaded;
+        coreWebView.WebMessageReceived += ArticleWebView_WebMessageReceived;
         ArticleWebView.NavigationStarting += ArticleWebView_NavigationStarting;
         ArticleWebView.NavigationCompleted += ArticleWebView_NavigationCompleted;
         coreWebView.NewWindowRequested += ArticleWebView_NewWindowRequested;
@@ -364,15 +365,23 @@ public sealed partial class MainWindow : Window
                 navigation.ArticleId,
                 navigation.FeedId
             });
-        if (navigation.RenderVersion != _articleRenderVersion)
-        {
-            return;
-        }
+        // The second callback runs after the first article frame has been painted.
+        _ = sender.ExecuteScriptAsync($$"""
+            requestAnimationFrame(() => requestAnimationFrame(() =>
+                window.chrome.webview.postMessage({{navigation.RenderVersion}})));
+            """);
+    }
 
-        // The document and its inline styles are ready at this point. Reveal it
-        // while images continue loading instead of keeping the loading layer up
-        // until the window load event.
-        ShowArticleContent();
+    private void ArticleWebView_WebMessageReceived(
+        CoreWebView2 sender,
+        CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        // Article scripts remain disabled; accept only the current host-issued render version.
+        if (long.TryParse(args.WebMessageAsJson, out var renderVersion) &&
+            renderVersion == _articleRenderVersion)
+        {
+            ShowArticleContent();
+        }
     }
 
     private void ArticleWebView_NavigationCompleted(
@@ -420,7 +429,10 @@ public sealed partial class MainWindow : Window
                     feedId = navigation.FeedId,
                     webErrorStatus = args.WebErrorStatus.ToString()
                 });
+            return;
         }
+
+        ShowArticleContent();
     }
 
     private async void ArticleWebView_NewWindowRequested(
@@ -2268,6 +2280,7 @@ public sealed partial class MainWindow : Window
         {
             coreWebView.WebResourceRequested -= ArticleWebView_WebResourceRequested;
             coreWebView.DOMContentLoaded -= ArticleWebView_DOMContentLoaded;
+            coreWebView.WebMessageReceived -= ArticleWebView_WebMessageReceived;
             coreWebView.NewWindowRequested -= ArticleWebView_NewWindowRequested;
         }
 
