@@ -202,7 +202,18 @@ public partial class App : Application
 
     private void ShowMainWindow()
     {
-        _window?.AppWindow.Show(true);
+        if (_window?.AppWindow is not { } appWindow)
+        {
+            return;
+        }
+
+        if (appWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
+        {
+            presenter.Restore(true);
+            return;
+        }
+
+        appWindow.Show(true);
     }
 
     private void DisposeSystemTrayIcon()
