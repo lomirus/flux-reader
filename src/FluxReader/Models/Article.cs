@@ -17,6 +17,8 @@ public sealed partial class Article : ObservableObject
 
     public required string FeedTitle { get; init; }
 
+    public FeedNavigationItem? FeedNavigationItem { get; set; }
+
     public required string Title { get; init; }
 
     public required string Link { get; init; }

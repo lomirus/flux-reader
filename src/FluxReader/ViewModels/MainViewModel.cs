@@ -1186,6 +1186,7 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (var article in articles)
         {
             article.FeedTitleVisibility = feedTitleVisibility;
+            article.FeedNavigationItem = FindFeedNavigationItem(article.FeedId);
         }
 
         var selectedArticle = preserveSelectedArticle ? SelectedArticle : null;
