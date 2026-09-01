@@ -23,6 +23,19 @@ public static class FeedListSelectionResolver
             ? new FeedListSelection(feedIds, groupIds[0])
             : new FeedListSelection(feedIds, GroupId: null);
     }
+
+    public static FeedListSelection ResolveArticleNavigation(
+        IEnumerable<long> selectedFeedIds,
+        long? selectedGroupId,
+        long articleFeedId)
+    {
+        ArgumentNullException.ThrowIfNull(selectedFeedIds);
+
+        var feedIds = selectedFeedIds.ToHashSet();
+        return (feedIds.Count == 0 && selectedGroupId is null) || feedIds.Contains(articleFeedId)
+            ? new FeedListSelection(feedIds, GroupId: null)
+            : new FeedListSelection(new HashSet<long> { articleFeedId }, GroupId: null);
+    }
 }
 
 public sealed record FeedListSelection(

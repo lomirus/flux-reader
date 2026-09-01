@@ -452,7 +452,11 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         ArticleSearchQuery = string.Empty;
-        ApplyNavigationSelection([targetArticle.FeedId], selectedGroupId: null);
+        var selection = FeedListSelectionResolver.ResolveArticleNavigation(
+            _selectedFeedIds,
+            SelectedGroup?.Id,
+            targetArticle.FeedId);
+        ApplyNavigationSelection(selection.FeedIds, selection.GroupId);
         await ReloadArticlesAsync(cancellationToken);
 
         var article = Articles.FirstOrDefault(item => item.Id == articleId) ?? targetArticle;

@@ -49,4 +49,16 @@ public sealed class FeedListSelectionResolverTests
         Assert.IsEmpty(result.FeedIds);
         Assert.IsNull(result.GroupId);
     }
+
+    [TestMethod]
+    public void ResolveArticleNavigation_PreservesMatchingScopeOtherwiseSelectsArticleFeed()
+    {
+        Assert.IsEmpty(FeedListSelectionResolver.ResolveArticleNavigation([], null, 10).FeedIds);
+        CollectionAssert.AreEquivalent(
+            new long[] { 10 },
+            FeedListSelectionResolver.ResolveArticleNavigation([10], null, 10).FeedIds.ToArray());
+        CollectionAssert.AreEquivalent(
+            new long[] { 10 },
+            FeedListSelectionResolver.ResolveArticleNavigation([20], null, 10).FeedIds.ToArray());
+    }
 }
