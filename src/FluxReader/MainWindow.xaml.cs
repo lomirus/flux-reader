@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Xml;
-using CommunityToolkit.WinUI.Behaviors;
 using FluxReader.Core.Services;
 using FluxReader.Models;
 using FluxReader.Services;
@@ -61,6 +60,7 @@ public sealed partial class MainWindow : Window
     {
         Interval = TimeSpan.FromSeconds(30)
     };
+    private readonly DispatcherTimer _statusNotificationTimer = new();
     private readonly Storyboard _refreshIconSpinStoryboard = new();
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
     private readonly Queue<ArticleNavigationRequest> _pendingArticleNavigations = new();
@@ -122,6 +122,7 @@ public sealed partial class MainWindow : Window
         RootGrid.Loaded += RootGrid_Loaded;
         _refreshTimer.Tick += RefreshTimer_Tick;
         _diagnosticTimer.Tick += DiagnosticTimer_Tick;
+        _statusNotificationTimer.Tick += StatusNotificationTimer_Tick;
         Closed += MainWindow_Closed;
     }
 
@@ -946,27 +947,18 @@ public sealed partial class MainWindow : Window
         object? sender,
         StatusNotificationRequestedEventArgs args)
     {
-        var notification = new Notification
+        _statusNotificationTimer.Stop();
+        StatusInfoBar.Title = args.Title ?? string.Empty;
+        StatusInfoBar.Message = args.Message;
+        StatusInfoBar.Severity = args.Severity switch
         {
-            Title = args.Title,
-            Message = args.Message,
-            Severity = args.Severity switch
-            {
-                StatusNotificationSeverity.Success => InfoBarSeverity.Success,
-                StatusNotificationSeverity.Warning => InfoBarSeverity.Warning,
-                StatusNotificationSeverity.Error => InfoBarSeverity.Error,
-                _ => InfoBarSeverity.Informational
-            },
-            Duration = args.Details.Count > 0
-                ? null
-                : args.Severity switch
-                {
-                    StatusNotificationSeverity.Error => null,
-                    StatusNotificationSeverity.Warning => WarningStatusNotificationDuration,
-                    _ => DefaultStatusNotificationDuration
-                }
+            StatusNotificationSeverity.Success => InfoBarSeverity.Success,
+            StatusNotificationSeverity.Warning => InfoBarSeverity.Warning,
+            StatusNotificationSeverity.Error => InfoBarSeverity.Error,
+            _ => InfoBarSeverity.Informational
         };
 
+        StatusInfoBar.ActionButton = null;
         if (args.Details.Count > 0 && !string.IsNullOrWhiteSpace(args.ActionText))
         {
             var detailsButton = new Button
@@ -975,10 +967,29 @@ public sealed partial class MainWindow : Window
                 Tag = args
             };
             detailsButton.Click += StatusNotificationDetails_Click;
-            notification.ActionButton = detailsButton;
+            StatusInfoBar.ActionButton = detailsButton;
         }
 
-        StatusNotificationQueue.Show(notification);
+        StatusInfoBar.IsOpen = true;
+        var duration = args.Details.Count > 0
+            ? null
+            : args.Severity switch
+            {
+                StatusNotificationSeverity.Error => (TimeSpan?)null,
+                StatusNotificationSeverity.Warning => WarningStatusNotificationDuration,
+                _ => DefaultStatusNotificationDuration
+            };
+        if (duration is { } interval)
+        {
+            _statusNotificationTimer.Interval = interval;
+            _statusNotificationTimer.Start();
+        }
+    }
+
+    private void StatusNotificationTimer_Tick(object? sender, object e)
+    {
+        _statusNotificationTimer.Stop();
+        StatusInfoBar.IsOpen = false;
     }
 
     private async Task OpenPendingNotificationArticleAsync()
@@ -1405,7 +1416,7 @@ public sealed partial class MainWindow : Window
         var language = settingsPage.SelectedLanguage;
         App.Current.Localization.SetLanguage(language);
         _settings = _settings with { Language = language };
-        StatusNotificationQueue.Clear();
+        StatusInfoBar.IsOpen = false;
         ApplyLocalization();
         ViewModel.ApplyLocalization();
         settingsPage.ApplyLocalization();
@@ -2258,6 +2269,8 @@ public sealed partial class MainWindow : Window
         _refreshTimer.Tick -= RefreshTimer_Tick;
         _diagnosticTimer.Stop();
         _diagnosticTimer.Tick -= DiagnosticTimer_Tick;
+        _statusNotificationTimer.Stop();
+        _statusNotificationTimer.Tick -= StatusNotificationTimer_Tick;
         _articleSearchDebounce?.Cancel();
         _lifetime.Cancel();
         _articleStylesheetService.Dispose();
