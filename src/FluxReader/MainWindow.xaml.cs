@@ -198,6 +198,11 @@ public sealed partial class MainWindow : Window
                 return;
             }
 
+            var useDarkTheme = RootGrid.ActualTheme == ElementTheme.Dark;
+            ArticleWebView.CoreWebView2.Profile.PreferredColorScheme = useDarkTheme
+                ? CoreWebView2PreferredColorScheme.Dark
+                : CoreWebView2PreferredColorScheme.Light;
+
             IReadOnlyList<WebsiteStylesheetReference> externalStylesheets = [];
             if (_settings.LoadExternalArticleStylesheets && article.ContentBaseUri is { } pageUri)
             {
@@ -213,7 +218,7 @@ public sealed partial class MainWindow : Window
             var document = ArticleHtmlDocumentBuilder.Create(
                 article.DisplayContent,
                 article.ContentBaseUri,
-                RootGrid.ActualTheme == ElementTheme.Dark,
+                useDarkTheme,
                 externalStylesheets);
             var navigation = new ArticleNavigationRequest(
                 renderVersion,
