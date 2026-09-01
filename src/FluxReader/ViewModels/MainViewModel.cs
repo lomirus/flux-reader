@@ -1185,7 +1185,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         var selectedArticle = preserveSelectedArticle ? SelectedArticle : null;
-        if (selectedArticle is not null && articles.Any(article => article.Id == selectedArticle.Id))
+        if (selectedArticle is not null)
         {
             SynchronizeArticles(articles, selectedArticle);
         }
@@ -1200,7 +1200,7 @@ public sealed partial class MainViewModel : ObservableObject
             SelectedArticle = null;
         }
 
-        UpdateArticleCount();
+        UpdateArticleCount(articles.Count);
         OnPropertyChanged(nameof(ArticleListTitle));
     }
 
@@ -1208,9 +1208,14 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var currentArticles = Articles.ToDictionary(article => article.Id);
         currentArticles[selectedArticle.Id] = selectedArticle;
-        var synchronizedArticles = articles
+        IReadOnlyList<Article> synchronizedArticles = articles
             .Select(article => currentArticles.GetValueOrDefault(article.Id) ?? article)
             .ToArray();
+        synchronizedArticles = SelectedItemPreserver.Preserve(
+            synchronizedArticles,
+            selectedArticle,
+            Articles.IndexOf(selectedArticle),
+            article => article.Id);
 
         SynchronizeItems(Articles, synchronizedArticles);
     }
