@@ -1,13 +1,17 @@
+using System.Runtime.InteropServices;
 using FluxReader.Data;
 using FluxReader.Interop;
 using FluxReader.Services;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using WinRT.Interop;
 
 namespace FluxReader;
 
 public partial class App : Application
 {
+    private const int ShowWindowNormally = 5;
+    private const int RestoreWindow = 9;
     private readonly NotificationService _notificationService;
     private readonly object _pendingNotificationSync = new();
     private readonly Queue<long> _pendingNotificationArticleIds = [];
@@ -202,18 +206,20 @@ public partial class App : Application
 
     private void ShowMainWindow()
     {
-        if (_window?.AppWindow is not { } appWindow)
+        if (_window is not { } window)
         {
             return;
         }
 
-        if (appWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
-        {
-            presenter.Restore(true);
-            return;
-        }
-
-        appWindow.Show(true);
+        var showCommand = window.AppWindow.Presenter is OverlappedPresenter
+            {
+                State: OverlappedPresenterState.Minimized
+            }
+                ? RestoreWindow
+                : ShowWindowNormally;
+        var windowHandle = WindowNative.GetWindowHandle(window);
+        ShowWindow(windowHandle, showCommand);
+        SetForegroundWindow(windowHandle);
     }
 
     private void DisposeSystemTrayIcon()
@@ -245,4 +251,14 @@ public partial class App : Application
         _window = null;
         DiagnosticLog.CompleteSession(_exitRequested ? "requested_exit" : "window_closed");
     }
+
+    [DllImport("user32.dll", ExactSpelling = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(nint windowHandle, int command);
+
+    [DllImport("user32.dll", ExactSpelling = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetForegroundWindow(nint windowHandle);
 }
