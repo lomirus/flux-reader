@@ -7,6 +7,7 @@ using FluxReader.Core.Services;
 using FluxReader.Data;
 using FluxReader.Models;
 using FluxReader.Services;
+using Microsoft.UI.Dispatching;
 using Windows.System;
 
 namespace FluxReader.ViewModels;
@@ -21,6 +22,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly HashSet<long> _selectedFeedIds = [];
     private long _articleLoadVersion;
     private long _navigationSelectionVersion;
+    private DispatcherQueue? _dispatcherQueue;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ArticleListTitle))]
@@ -66,6 +68,7 @@ public sealed partial class MainViewModel : ObservableObject
         _refreshService = refreshService;
         _notifications = notifications;
         _localization = localization;
+        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         ApplyLocalization();
     }
 
@@ -459,7 +462,13 @@ public sealed partial class MainViewModel : ObservableObject
         ApplyNavigationSelection(selection.FeedIds, selection.GroupId);
         await ReloadArticlesAsync(cancellationToken);
 
-        var article = Articles.FirstOrDefault(item => item.Id == articleId) ?? targetArticle;
+        var article = Articles.FirstOrDefault(item => item.Id == articleId);
+        if (article is null)
+        {
+            EnsureArticleVisible(targetArticle);
+            article = Articles.FirstOrDefault(item => item.Id == articleId) ?? targetArticle;
+        }
+
         await SelectArticleAsync(article, cancellationToken);
         return article;
     }
@@ -517,7 +526,7 @@ public sealed partial class MainViewModel : ObservableObject
             var outcomes = await TaskConcurrency.WhenAllAsync(
                 feeds,
                 RefreshConcurrencyLimit,
-                RefreshFeedCoreAndNotifyAsync,
+                (feed, token) => RefreshFeedCoreAndApplyAsync(feed, notify: true, token),
                 cancellationToken);
             var newArticleCount = outcomes
                 .Where(outcome => outcome.Result is not null)
@@ -1199,6 +1208,21 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(ArticleListTitle));
     }
 
+    private void EnsureArticleVisible(Article article)
+    {
+        if (Articles.Any(item => item.Id == article.Id))
+        {
+            return;
+        }
+
+        article.FeedTitleVisibility = SelectedFeedCount == 1
+            ? Microsoft.UI.Xaml.Visibility.Collapsed
+            : Microsoft.UI.Xaml.Visibility.Visible;
+        article.FeedNavigationItem = FindFeedNavigationItem(article.FeedId);
+        Articles.Insert(0, article);
+        UpdateArticleCount();
+    }
+
     private void SynchronizeArticles(IReadOnlyList<Article> articles, Article selectedArticle)
     {
         var currentArticles = Articles.ToDictionary(article => article.Id);
@@ -1383,7 +1407,7 @@ public sealed partial class MainViewModel : ObservableObject
             var outcomes = await TaskConcurrency.WhenAllAsync(
                 importedFeeds,
                 RefreshConcurrencyLimit,
-                RefreshFeedCoreAsync,
+                (feed, token) => RefreshFeedCoreAndApplyAsync(feed, notify: false, token),
                 cancellationToken);
             if (cancellationToken.IsCancellationRequested)
             {
@@ -1478,20 +1502,80 @@ public sealed partial class MainViewModel : ObservableObject
             ? uri
             : null;
 
-    private async Task<FeedRefreshOutcome> RefreshFeedCoreAndNotifyAsync(
+    private async Task<FeedRefreshOutcome> RefreshFeedCoreAndApplyAsync(
         Feed feed,
+        bool notify,
         CancellationToken cancellationToken)
     {
         var outcome = await RefreshFeedCoreAsync(feed, cancellationToken);
-        if (outcome.Result is { } result)
+        try
         {
-            await _notifications.ShowNewArticlesAsync(
-                result.NewArticles,
-                result.FeedIconUrl,
-                cancellationToken);
+            await RunOnUiAsync(async () =>
+            {
+                UpdateFeedRefreshError(outcome);
+                if (notify && outcome.Result is { } result)
+                {
+                    await _notifications.ShowNewArticlesAsync(
+                        result.NewArticles,
+                        result.FeedIconUrl,
+                        cancellationToken);
+                }
+
+                await ReloadFeedsAsync(
+                    _selectedFeedIds.ToArray(),
+                    SelectedGroup?.Id,
+                    cancellationToken,
+                    preserveNavigationItems: true);
+                await ReloadArticlesAsync(cancellationToken, preserveSelectedArticle: true);
+            });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Error(
+                "refresh.feed_ui_update_failed",
+                exception,
+                new
+                {
+                    feedId = feed.Id,
+                    feedHost = TryCreateHttpUri(feed.Url)?.Host
+                });
         }
 
         return outcome;
+    }
+
+    private Task RunOnUiAsync(Func<Task> action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        var dispatcher = _dispatcherQueue ?? DispatcherQueue.GetForCurrentThread();
+        if (dispatcher is null || dispatcher.HasThreadAccess)
+        {
+            return action();
+        }
+
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!dispatcher.TryEnqueue(async () =>
+        {
+            try
+            {
+                await action();
+                completion.TrySetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+        }))
+        {
+            completion.TrySetException(new InvalidOperationException("Unable to enqueue UI work."));
+        }
+
+        return completion.Task;
     }
 
     private async Task<FeedRefreshOutcome> RefreshFeedCoreAsync(
@@ -1527,14 +1611,19 @@ public sealed partial class MainViewModel : ObservableObject
     {
         foreach (var outcome in outcomes)
         {
-            if (outcome.Error is null)
-            {
-                _feedRefreshErrors.Remove(outcome.Feed.Id);
-            }
-            else
-            {
-                _feedRefreshErrors[outcome.Feed.Id] = GetRefreshErrorMessage(outcome.Error);
-            }
+            UpdateFeedRefreshError(outcome);
+        }
+    }
+
+    private void UpdateFeedRefreshError(FeedRefreshOutcome outcome)
+    {
+        if (outcome.Error is null)
+        {
+            _feedRefreshErrors.Remove(outcome.Feed.Id);
+        }
+        else
+        {
+            _feedRefreshErrors[outcome.Feed.Id] = GetRefreshErrorMessage(outcome.Error);
         }
     }
 

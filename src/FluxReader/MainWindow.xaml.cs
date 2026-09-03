@@ -1015,7 +1015,6 @@ public sealed partial class MainWindow : Window
     {
         if (_isOpeningNotificationArticle ||
             !_viewModelInitialized ||
-            ViewModel.IsBusy ||
             _lifetime.IsCancellationRequested)
         {
             return;
@@ -1057,11 +1056,7 @@ public sealed partial class MainWindow : Window
                 CloseSettingsPage();
                 ArticleEmptyView.Visibility = Visibility.Collapsed;
                 ArticleReaderView.Visibility = Visibility.Visible;
-                if (ViewModel.Articles.Contains(article))
-                {
-                    ArticleList.SelectedItem = article;
-                    ArticleList.ScrollIntoView(article);
-                }
+                SelectArticleInList(article, scrollIntoView: true);
 
                 DiagnosticLog.Information(
                     "notification.article_opened",
@@ -1307,9 +1302,24 @@ public sealed partial class MainWindow : Window
 
     private void Articles_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (ViewModel.SelectedArticle is { } article && ViewModel.Articles.Contains(article))
+        if (ViewModel.SelectedArticle is { } article)
         {
-            ArticleList.SelectedItem = article;
+            SelectArticleInList(article, scrollIntoView: false);
+        }
+    }
+
+    private void SelectArticleInList(Article article, bool scrollIntoView)
+    {
+        var listArticle = ViewModel.Articles.FirstOrDefault(item => item.Id == article.Id);
+        if (listArticle is null)
+        {
+            return;
+        }
+
+        ArticleList.SelectedItem = listArticle;
+        if (scrollIntoView)
+        {
+            ArticleList.ScrollIntoView(listArticle);
         }
     }
 
