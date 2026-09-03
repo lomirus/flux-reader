@@ -1311,7 +1311,7 @@ public sealed partial class MainWindow : Window
     private void SelectArticleInList(Article article, bool scrollIntoView)
     {
         var listArticle = ViewModel.Articles.FirstOrDefault(item => item.Id == article.Id);
-        if (listArticle is null)
+        if (listArticle is null || ReferenceEquals(ArticleList.SelectedItem, listArticle))
         {
             return;
         }

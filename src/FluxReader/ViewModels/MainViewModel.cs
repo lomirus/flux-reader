@@ -1188,10 +1188,9 @@ public sealed partial class MainViewModel : ObservableObject
             article.FeedNavigationItem = FindFeedNavigationItem(article.FeedId);
         }
 
-        var selectedArticle = preserveSelectedArticle ? SelectedArticle : null;
-        if (selectedArticle is not null)
+        if (preserveSelectedArticle)
         {
-            SynchronizeArticles(articles, selectedArticle);
+            SynchronizeArticles(articles, SelectedArticle);
         }
         else
         {
@@ -1219,22 +1218,139 @@ public sealed partial class MainViewModel : ObservableObject
             ? Microsoft.UI.Xaml.Visibility.Collapsed
             : Microsoft.UI.Xaml.Visibility.Visible;
         article.FeedNavigationItem = FindFeedNavigationItem(article.FeedId);
-        Articles.Insert(0, article);
+        Articles.Insert(FindArticleInsertIndex(article), article);
         UpdateArticleCount();
     }
 
-    private void SynchronizeArticles(IReadOnlyList<Article> articles, Article selectedArticle)
+    private void ApplyCompletedFeedToUi(FeedRefreshOutcome outcome)
+    {
+        var feed = Feeds.FirstOrDefault(item => item.Id == outcome.Feed.Id);
+        if (feed is not null)
+        {
+            if (outcome.Result is { } result)
+            {
+                if (!string.IsNullOrEmpty(result.FeedIconUrl))
+                {
+                    feed.IconUrl = result.FeedIconUrl;
+                }
+
+                feed.LastRefreshedAt = DateTimeOffset.UtcNow;
+                feed.LastRefreshError = null;
+                if (result.NewArticles.Count > 0)
+                {
+                    feed.UnreadCount += result.NewArticles.Count;
+                }
+            }
+            else if (outcome.Error is not null)
+            {
+                feed.LastRefreshError = GetRefreshErrorMessage(outcome.Error);
+            }
+        }
+
+        UnreadTotal = Feeds.Sum(item => item.UnreadCount);
+        OnPropertyChanged(nameof(LastRefreshedAt));
+
+        if (outcome.Result is { NewArticles.Count: > 0 } refreshResult)
+        {
+            InsertNewArticles(outcome.Feed, refreshResult.NewArticles);
+        }
+    }
+
+    private void InsertNewArticles(Feed refreshedFeed, IReadOnlyList<InsertedArticle> insertedArticles)
+    {
+        var feed = Feeds.FirstOrDefault(item => item.Id == refreshedFeed.Id) ?? refreshedFeed;
+        if (!IsFeedVisibleInCurrentArticleList(feed.Id, feed.GroupId))
+        {
+            return;
+        }
+
+        var searchQuery = ArticleSearchQuery;
+        var feedTitleVisibility = SelectedFeedCount == 1
+            ? Microsoft.UI.Xaml.Visibility.Collapsed
+            : Microsoft.UI.Xaml.Visibility.Visible;
+        var navigationItem = FindFeedNavigationItem(feed.Id);
+        var insertedCount = 0;
+        foreach (var inserted in insertedArticles
+                     .OrderByDescending(item => item.Article.PublishedAt)
+                     .ThenByDescending(item => item.Id))
+        {
+            if (Articles.Any(item => item.Id == inserted.Id) ||
+                ArticleSearchMatcher.GetMatchRank(
+                    inserted.Article.Title,
+                    inserted.Article.Summary,
+                    inserted.Article.Content,
+                    searchQuery) == ArticleSearchMatcher.NoMatchRank)
+            {
+                continue;
+            }
+
+            var article = new Article
+            {
+                Id = inserted.Id,
+                FeedId = feed.Id,
+                ExternalId = inserted.Article.ExternalId,
+                FeedTitle = feed.Title,
+                Title = inserted.Article.Title,
+                Link = inserted.Article.Link?.AbsoluteUri ?? string.Empty,
+                Author = inserted.Article.Author,
+                PublishedAt = inserted.Article.PublishedAt,
+                Summary = inserted.Article.Summary,
+                Content = inserted.Article.Content,
+                IsRead = false,
+                FeedTitleVisibility = feedTitleVisibility,
+                FeedNavigationItem = navigationItem
+            };
+            Articles.Insert(FindArticleInsertIndex(article), article);
+            insertedCount++;
+        }
+
+        if (insertedCount > 0)
+        {
+            UpdateArticleCount();
+        }
+    }
+
+    private bool IsFeedVisibleInCurrentArticleList(long feedId, long? feedGroupId) =>
+        _selectedFeedIds.Count > 0
+            ? _selectedFeedIds.Contains(feedId)
+            : SelectedGroup is null || SelectedGroup.Id == feedGroupId;
+
+    private int FindArticleInsertIndex(Article article)
+    {
+        var articleTime = article.PublishedAt ?? DateTimeOffset.MinValue;
+        for (var index = 0; index < Articles.Count; index++)
+        {
+            var current = Articles[index];
+            var currentTime = current.PublishedAt ?? DateTimeOffset.MinValue;
+            var timeCompare = articleTime.CompareTo(currentTime);
+            if (timeCompare > 0 || (timeCompare == 0 && article.Id > current.Id))
+            {
+                return index;
+            }
+        }
+
+        return Articles.Count;
+    }
+
+    private void SynchronizeArticles(IReadOnlyList<Article> articles, Article? selectedArticle)
     {
         var currentArticles = Articles.ToDictionary(article => article.Id);
-        currentArticles[selectedArticle.Id] = selectedArticle;
+        if (selectedArticle is not null)
+        {
+            currentArticles[selectedArticle.Id] = selectedArticle;
+        }
+
         IReadOnlyList<Article> synchronizedArticles = articles
             .Select(article => currentArticles.GetValueOrDefault(article.Id) ?? article)
             .ToArray();
-        synchronizedArticles = SelectedItemPreserver.Preserve(
-            synchronizedArticles,
-            selectedArticle,
-            Articles.IndexOf(selectedArticle),
-            article => article.Id);
+        if (selectedArticle is not null)
+        {
+            synchronizedArticles = SelectedItemPreserver.Preserve(
+                synchronizedArticles,
+                selectedArticle,
+                Articles.IndexOf(selectedArticle),
+                article => article.Id);
+        }
 
         SynchronizeItems(Articles, synchronizedArticles);
     }
@@ -1513,6 +1629,7 @@ public sealed partial class MainViewModel : ObservableObject
             await RunOnUiAsync(async () =>
             {
                 UpdateFeedRefreshError(outcome);
+                ApplyCompletedFeedToUi(outcome);
                 if (notify && outcome.Result is { } result)
                 {
                     await _notifications.ShowNewArticlesAsync(
@@ -1520,13 +1637,6 @@ public sealed partial class MainViewModel : ObservableObject
                         result.FeedIconUrl,
                         cancellationToken);
                 }
-
-                await ReloadFeedsAsync(
-                    _selectedFeedIds.ToArray(),
-                    SelectedGroup?.Id,
-                    cancellationToken,
-                    preserveNavigationItems: true);
-                await ReloadArticlesAsync(cancellationToken, preserveSelectedArticle: true);
             });
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
