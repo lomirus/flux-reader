@@ -517,7 +517,7 @@ public sealed partial class MainViewModel : ObservableObject
             var outcomes = await TaskConcurrency.WhenAllAsync(
                 feeds,
                 RefreshConcurrencyLimit,
-                RefreshFeedCoreAsync,
+                RefreshFeedCoreAndNotifyAsync,
                 cancellationToken);
             var newArticleCount = outcomes
                 .Where(outcome => outcome.Result is not null)
@@ -538,16 +538,6 @@ public sealed partial class MainViewModel : ObservableObject
                 cancellationToken,
                 preserveNavigationItems: true);
             await ReloadArticlesAsync(cancellationToken, preserveSelectedArticle: true);
-
-            foreach (var result in outcomes
-                         .Select(outcome => outcome.Result)
-                         .OfType<FeedRefreshResult>())
-            {
-                await _notifications.ShowNewArticlesAsync(
-                    result.NewArticles,
-                    result.FeedIconUrl,
-                    cancellationToken);
-            }
 
             if (feeds.Count == 1 && failures.Length == 1)
             {
@@ -1487,6 +1477,22 @@ public sealed partial class MainViewModel : ObservableObject
         (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
             ? uri
             : null;
+
+    private async Task<FeedRefreshOutcome> RefreshFeedCoreAndNotifyAsync(
+        Feed feed,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await RefreshFeedCoreAsync(feed, cancellationToken);
+        if (outcome.Result is { } result)
+        {
+            await _notifications.ShowNewArticlesAsync(
+                result.NewArticles,
+                result.FeedIconUrl,
+                cancellationToken);
+        }
+
+        return outcome;
+    }
 
     private async Task<FeedRefreshOutcome> RefreshFeedCoreAsync(
         Feed feed,

@@ -11,6 +11,7 @@ public sealed class NotificationService : IDisposable
     private const int MaximumArticleDescriptionLength = 256;
     private readonly string _logPath;
     private readonly object _logSync = new();
+    private readonly object _showSync = new();
     private AppNotificationManager? _manager;
     private bool _registered;
 
@@ -79,25 +80,29 @@ public sealed class NotificationService : IDisposable
         cancellationToken.ThrowIfCancellationRequested();
         var iconUri = TryCreateIconUri(feedIconUrl);
 
-        manager = _manager;
-        if (!_registered || manager is null)
+        lock (_showSync)
         {
-            return Task.CompletedTask;
-        }
+            manager = _manager;
+            if (!_registered || manager is null)
+            {
+                return Task.CompletedTask;
+            }
 
-        foreach (var article in articles)
-        {
-            var description = ArticleContentParser.CreatePreviewText(
-                article.Article.Summary,
-                article.Article.Content,
-                article.Article.Link,
-                MaximumArticleDescriptionLength);
-            ShowNewArticle(
-                manager,
-                article.Id,
-                article.Article.Title,
-                description,
-                iconUri);
+            foreach (var article in articles)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var description = ArticleContentParser.CreatePreviewText(
+                    article.Article.Summary,
+                    article.Article.Content,
+                    article.Article.Link,
+                    MaximumArticleDescriptionLength);
+                ShowNewArticle(
+                    manager,
+                    article.Id,
+                    article.Article.Title,
+                    description,
+                    iconUri);
+            }
         }
 
         return Task.CompletedTask;
