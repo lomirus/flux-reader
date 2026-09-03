@@ -97,6 +97,17 @@
                 <Setter Property="MinHeight" Value="{StaticResource FeedNavigationRowHeight}" />
                 <Setter Property="Padding" Value="0" />
             </Style>
+
+            <!-- Default InfoBarCloseButtonStyle is top-aligned and inherits ButtonPadding (11,5,11,6), which shifts the glyph up on compact toasts. -->
+            <Style
+                x:Key="StatusInfoBarCloseButtonStyle"
+                BasedOn="{StaticResource InfoBarCloseButtonStyle}"
+                TargetType="Button">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
         </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
@@ -619,7 +630,8 @@
             Grid.Row="2"
             Margin="16"
             HorizontalAlignment="Center"
-            VerticalAlignment="Top"
+            VerticalAlignment="Bottom"
+            CloseButtonStyle="{StaticResource StatusInfoBarCloseButtonStyle}"
             IsClosable="True"
             MaxWidth="720" />
 
