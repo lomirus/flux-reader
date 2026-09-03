@@ -7,7 +7,7 @@ using FluxReader.Core.Services;
 using FluxReader.Data;
 using FluxReader.Models;
 using FluxReader.Services;
-using Microsoft.UI.Dispatching;
+using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 using Windows.System;
 
 namespace FluxReader.ViewModels;
