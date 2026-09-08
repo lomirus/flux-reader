@@ -81,7 +81,17 @@ Application data is stored in `%LOCALAPPDATA%\FluxReader`.
 
 - RSS, Atom, and OPML parsing disables XML DTDs and external resolution and limits document size.
 - Article HTML is sanitized to remove scripts, forms, frames, embedded objects, and unsafe attributes. Only approved elements and HTTP(S) / `mailto:` links remain.
-- WebView2 disables scripts, developer tools, host objects, and web messages. Article links always open in the system browser.
+- Article documents enforce `script-src 'none'` through CSP, and WebView2 blocks script resource requests. The script engine is enabled so host-injected animation callbacks can run; article scripts remain blocked. Developer tools and host objects are disabled. Web messages are limited to the current host-issued render version from the `about:blank` article document. Article links always open in the system browser.
+
+## Article presentation regression checks
+
+Verify these in the Windows 11 app after changing WebView2 loading or visibility:
+
+- Switch repeatedly between articles in both light and dark themes. Keep the opaque loading layer over the WebView until its first frame; watch for old content, blank frames, or black flashes.
+- Load an article with an image response delayed by several seconds, then one whose image fails. Text must become visible before the image request completes. The `article.html_first_frame_ready` diagnostic should precede `article.html_navigation_completed` for slow images.
+- Include empty and image-only articles. Their loading layer must also be removed after a frame without waiting for images.
+- Switch again while an article is still loading. A previous article's DOM, frame-ready, or completion notification must not reveal the new article prematurely.
+- Confirm article scripts and event handlers cannot run. Do not disable the WebView2 script engine to enforce this: that also prevents the host's animation callbacks and leaves the loading layer waiting indefinitely. Keep sanitization, CSP, and script request blocking in place.
 
 ## Build installers
 

@@ -284,7 +284,10 @@ public sealed partial class MainWindow : Window
         }
 
         var settings = coreWebView.Settings;
-        settings.IsScriptEnabled = false;
+        // Host-injected requestAnimationFrame callbacks require the script engine.
+        // ArticleHtmlDocumentBuilder blocks article scripts with CSP; the HTML
+        // sanitizer and resource filter also remove/block their execution paths.
+        settings.IsScriptEnabled = true;
         settings.AreDefaultScriptDialogsEnabled = false;
         settings.AreDevToolsEnabled = false;
         settings.AreHostObjectsAllowed = false;
@@ -351,7 +354,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void ArticleWebView_DOMContentLoaded(
+    private async void ArticleWebView_DOMContentLoaded(
         CoreWebView2 sender,
         CoreWebView2DOMContentLoadedEventArgs args)
     {
@@ -370,21 +373,48 @@ public sealed partial class MainWindow : Window
                 navigation.ArticleId,
                 navigation.FeedId
             });
-        // The second callback runs after the first article frame has been painted.
-        _ = sender.ExecuteScriptAsync($$"""
-            requestAnimationFrame(() => requestAnimationFrame(() =>
-                window.chrome.webview.postMessage({{navigation.RenderVersion}})));
-            """);
+        if (navigation.RenderVersion != _articleRenderVersion)
+        {
+            return;
+        }
+
+        try
+        {
+            // DOM readiness is earlier than painting. Keep the opaque loading
+            // layer until a frame has been painted, without waiting for images.
+            await sender.ExecuteScriptAsync($$"""
+                requestAnimationFrame(() => requestAnimationFrame(() =>
+                    window.chrome.webview.postMessage({{navigation.RenderVersion}})));
+                """);
+        }
+        catch (Exception exception)
+        {
+            if (navigation.RenderVersion != _articleRenderVersion || _lifetime.IsCancellationRequested)
+            {
+                return;
+            }
+
+            HideArticleContent();
+            DiagnosticLog.Error("article.html_first_frame_failed", exception, new
+            {
+                navigation.RenderVersion,
+                navigation.ArticleId,
+                navigation.FeedId
+            });
+        }
     }
 
     private void ArticleWebView_WebMessageReceived(
         CoreWebView2 sender,
         CoreWebView2WebMessageReceivedEventArgs args)
     {
-        // Article scripts remain disabled; accept only the current host-issued render version.
-        if (long.TryParse(args.WebMessageAsJson, out var renderVersion) &&
+        // NavigateToString uses about:blank. Accept only the current host-issued
+        // render version; late callbacks from an earlier article must be ignored.
+        if (args.Source.Equals("about:blank", StringComparison.OrdinalIgnoreCase) &&
+            long.TryParse(args.WebMessageAsJson, out var renderVersion) &&
             renderVersion == _articleRenderVersion)
         {
+            DiagnosticLog.Information("article.html_first_frame_ready", new { renderVersion });
             ShowArticleContent();
         }
     }
@@ -434,10 +464,9 @@ public sealed partial class MainWindow : Window
                     feedId = navigation.FeedId,
                     webErrorStatus = args.WebErrorStatus.ToString()
                 });
-            return;
         }
-
-        ShowArticleContent();
+        // Successful navigation also waits for images. Only the first-frame
+        // message may reveal the document, including when navigation ends first.
     }
 
     private async void ArticleWebView_NewWindowRequested(
