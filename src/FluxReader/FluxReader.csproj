@@ -7,6 +7,11 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <!-- Apply a concrete RID for run/publish so WebView2 native assets land next
+         to the exe. Skip it during restore so NuGet still downloads
+         Microsoft.Windows.SDK.NET.Ref (RID any). -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(MSBuildRestoreSessionId)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(MSBuildRestoreSessionId)' == ''">win-x64</RuntimeIdentifier>
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType>
     <EnableMsixTooling>true</EnableMsixTooling>
