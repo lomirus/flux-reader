@@ -21,6 +21,7 @@ internal sealed class SystemTrayIcon : IDisposable
     private const uint NotifyIconIconFlag = 0x0002;
     private const uint NotifyIconTipFlag = 0x0004;
     private const uint NotifyIconAdd = 0x0000;
+    private const uint NotifyIconModify = 0x0001;
     private const uint NotifyIconDelete = 0x0002;
     private const uint LeftButtonUp = 0x0202;
     private const uint RightButtonUp = 0x0205;
@@ -34,28 +35,29 @@ internal sealed class SystemTrayIcon : IDisposable
     private readonly LocalizationService _localization;
     private readonly nint _windowHandle;
     private readonly nint _iconHandle;
+    private readonly nint _unreadIconHandle;
     private readonly uint _taskbarCreatedMessage;
     private readonly WindowSubclassProcedure _windowSubclassProcedure;
     private bool _iconAdded;
     private bool _subclassInstalled;
     private bool _disposed;
+    private bool _hasUnreadArticles;
 
-    public SystemTrayIcon(Window window, LocalizationService localization, string iconPath)
+    public SystemTrayIcon(Window window, LocalizationService localization, string iconPath, string unreadIconPath)
     {
         _localization = localization;
         _windowHandle = WindowNative.GetWindowHandle(window);
         _windowSubclassProcedure = WindowSubclassCallback;
         _taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
-        _iconHandle = LoadImage(
-            nint.Zero,
-            iconPath,
-            ImageIcon,
-            0,
-            0,
-            LoadFromFile | LoadDefaultSize);
-        if (_iconHandle == nint.Zero)
+        _iconHandle = LoadIcon(iconPath);
+        try
         {
-            throw new Win32Exception(Marshal.GetLastWin32Error());
+            _unreadIconHandle = LoadIcon(unreadIconPath);
+        }
+        catch
+        {
+            DestroyIcon(_iconHandle);
+            throw;
         }
 
         _subclassInstalled = SetWindowSubclass(
@@ -66,6 +68,7 @@ internal sealed class SystemTrayIcon : IDisposable
         if (!_subclassInstalled)
         {
             var error = Marshal.GetLastWin32Error();
+            DestroyIcon(_unreadIconHandle);
             DestroyIcon(_iconHandle);
             throw new Win32Exception(error);
         }
@@ -77,11 +80,43 @@ internal sealed class SystemTrayIcon : IDisposable
         }
     }
 
+    private static nint LoadIcon(string iconPath)
+    {
+        var iconHandle = LoadImage(
+            nint.Zero,
+            iconPath,
+            ImageIcon,
+            0,
+            0,
+            LoadFromFile | LoadDefaultSize);
+        if (iconHandle == nint.Zero)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+
+        return iconHandle;
+    }
+
     public event EventHandler? OpenRequested;
 
     public event EventHandler? RefreshRequested;
 
     public event EventHandler? ExitRequested;
+
+    public void SetHasUnreadArticles(bool hasUnreadArticles)
+    {
+        if (_disposed || _hasUnreadArticles == hasUnreadArticles)
+        {
+            return;
+        }
+
+        _hasUnreadArticles = hasUnreadArticles;
+        var iconData = CreateIconData();
+        if (_iconAdded && !ShellNotifyIcon(NotifyIconModify, ref iconData))
+        {
+            DiagnosticLog.Warning("tray.icon_update_failed", new { hasUnreadArticles });
+        }
+    }
 
     public void Dispose()
     {
@@ -104,6 +139,7 @@ internal sealed class SystemTrayIcon : IDisposable
             _subclassInstalled = false;
         }
 
+        DestroyIcon(_unreadIconHandle);
         DestroyIcon(_iconHandle);
     }
 
@@ -121,7 +157,7 @@ internal sealed class SystemTrayIcon : IDisposable
         Id = TrayIconId,
         Flags = NotifyIconMessageFlag | NotifyIconIconFlag | NotifyIconTipFlag,
         CallbackMessage = TrayIconMessage,
-        IconHandle = _iconHandle,
+        IconHandle = _hasUnreadArticles ? _unreadIconHandle : _iconHandle,
         Tip = "FluxReader",
         Info = string.Empty,
         InfoTitle = string.Empty

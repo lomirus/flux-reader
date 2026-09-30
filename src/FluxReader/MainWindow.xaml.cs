@@ -144,9 +144,10 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void SetWindowIcon()
+    internal void SetWindowIcon(bool hasUnreadArticles = false)
     {
-        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "fluxreader-icon.ico");
+        var iconName = hasUnreadArticles ? "fluxreader-icon-unread.ico" : "fluxreader-icon.ico";
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", iconName);
         if (File.Exists(iconPath))
         {
             AppWindow.SetIcon(iconPath);

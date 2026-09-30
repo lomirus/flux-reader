@@ -1,7 +1,9 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using FluxReader.Data;
 using FluxReader.Interop;
 using FluxReader.Services;
+using FluxReader.ViewModels;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using WinRT.Interop;
@@ -18,6 +20,7 @@ public partial class App : Application
     private SystemTrayIcon? _systemTrayIcon;
     private Window? _window;
     private bool _exitRequested;
+    private bool _hasUnreadArticles;
 
     public App()
     {
@@ -74,10 +77,13 @@ public partial class App : Application
         window.Closed += Window_Closed;
 
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "fluxreader-icon.ico");
-        _systemTrayIcon = new SystemTrayIcon(window, Localization, iconPath);
+        var unreadIconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "fluxreader-icon-unread.ico");
+        _systemTrayIcon = new SystemTrayIcon(window, Localization, iconPath, unreadIconPath);
         _systemTrayIcon.OpenRequested += SystemTrayIcon_OpenRequested;
         _systemTrayIcon.RefreshRequested += SystemTrayIcon_RefreshRequested;
         _systemTrayIcon.ExitRequested += SystemTrayIcon_ExitRequested;
+        window.ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        UpdateUnreadIndicator();
         window.Activate();
         ProcessPendingNotificationActivations();
         DiagnosticLog.MemorySnapshot("app.launched");
@@ -169,6 +175,32 @@ public partial class App : Application
         sender.Hide();
     }
 
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.UnreadTotal))
+        {
+            UpdateUnreadIndicator();
+        }
+    }
+
+    private void UpdateUnreadIndicator()
+    {
+        if (_window is not MainWindow window)
+        {
+            return;
+        }
+
+        var hasUnreadArticles = window.ViewModel.UnreadTotal > 0;
+        if (_hasUnreadArticles == hasUnreadArticles)
+        {
+            return;
+        }
+
+        window.SetWindowIcon(hasUnreadArticles);
+        _systemTrayIcon?.SetHasUnreadArticles(hasUnreadArticles);
+        _hasUnreadArticles = hasUnreadArticles;
+    }
+
     private void SystemTrayIcon_OpenRequested(object? sender, EventArgs e)
     {
         _window?.DispatcherQueue.TryEnqueue(ShowMainWindow);
@@ -238,6 +270,11 @@ public partial class App : Application
 
     private void Window_Closed(object sender, WindowEventArgs args)
     {
+        if (sender is MainWindow mainWindow)
+        {
+            mainWindow.ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        }
+
         if (sender is Window window)
         {
             window.AppWindow.Closing -= Window_Closing;
