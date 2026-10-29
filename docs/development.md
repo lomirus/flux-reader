@@ -83,6 +83,14 @@ Application data is stored in `%LOCALAPPDATA%\FluxReader`.
 - Article HTML is sanitized to remove scripts, forms, frames, embedded objects, and unsafe attributes. Only approved elements and HTTP(S) / `mailto:` links remain.
 - Article documents enforce `script-src 'none'` through CSP, and WebView2 blocks script resource requests. The script engine is enabled so host-injected animation callbacks can run; article scripts remain blocked. Developer tools and host objects are disabled. Web messages are limited to the current host-issued render version from the `about:blank` article document. Article links always open in the system browser.
 
+## Back navigation regression checks
+
+Verify these in the Windows 11 app after changing settings or about page navigation:
+
+- Open About and press the mouse back side button (XBUTTON1) over empty space, the page header, and the GitHub link. Each press must return to the reader, just like the on-screen back arrow.
+- Repeat on Settings, including over a selector, a number input, and the scrollable content. Reopen Settings and verify its controls still work.
+- Left, right, middle, and forward side button clicks must not close either page. The mouse back side button on the reader must not reopen a closed page.
+
 ## Article presentation regression checks
 
 Verify these in the Windows 11 app after changing WebView2 loading or visibility:

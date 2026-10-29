@@ -9,6 +9,7 @@ using FluxReader.ViewModels;
 using FluxReader.Interop;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -117,6 +118,11 @@ public sealed partial class MainWindow : Window
             app.Localization);
         RootGrid.DataContext = ViewModel;
         RootGrid.ActualThemeChanged += RootGrid_ActualThemeChanged;
+        // Receive the back side button even when a child control handles pointer input.
+        SettingsFrame.AddHandler(
+            UIElement.PointerPressedEvent,
+            new PointerEventHandler(SettingsFrame_PointerPressed),
+            handledEventsToo: true);
         ViewModel.Articles.CollectionChanged += Articles_CollectionChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         ViewModel.StatusNotificationRequested += ViewModel_StatusNotificationRequested;
@@ -1731,6 +1737,19 @@ public sealed partial class MainWindow : Window
     private void SettingsPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
 
     private void AboutPage_BackRequested(object? sender, EventArgs e) => CloseSettingsPage();
+
+    private void SettingsFrame_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (SettingsFrame.Visibility != Visibility.Visible ||
+            SettingsFrame.Content is not (SettingsPage or AboutPage) ||
+            e.GetCurrentPoint(SettingsFrame).Properties.PointerUpdateKind != PointerUpdateKind.XButton1Pressed)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        CloseSettingsPage();
+    }
 
     private void CloseSettingsPage()
     {
