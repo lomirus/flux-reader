@@ -88,6 +88,7 @@ Application data is stored in `%LOCALAPPDATA%\FluxReader`.
 Verify these in the Windows 11 app after changing WebView2 loading or visibility:
 
 - Switch repeatedly between articles in both light and dark themes. Keep the opaque loading layer over the WebView until its first frame; watch for old content, blank frames, or black flashes.
+- Confirm the article background matches the WinUI theme surface, including after changing the app or system theme and with external stylesheets enabled. Pass the theme background to the HTML document explicitly; transparent HTML with a dark color scheme can expose Chromium's `#121212` canvas.
 - Load an article with an image response delayed by several seconds, then one whose image fails. Text must become visible before the image request completes. The `article.html_first_frame_ready` diagnostic should precede `article.html_navigation_completed` for slow images.
 - Include empty and image-only articles. Their loading layer must also be removed after a frame without waiting for images.
 - Switch again while an article is still loading. A previous article's DOM, frame-ready, or completion notification must not reveal the new article prematurely.

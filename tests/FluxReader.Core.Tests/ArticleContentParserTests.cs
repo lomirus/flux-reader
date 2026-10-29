@@ -145,12 +145,13 @@ public sealed class ArticleContentParserTests
         var document = ArticleHtmlDocumentBuilder.Create(
             "<pre><code>message = client.messages.create()</code></pre>",
             null,
-            useDarkTheme: true);
+            useDarkTheme: true,
+            backgroundColor: "#202020");
 
         StringAssert.Contains(document, "script-src 'none'");
         StringAssert.Contains(document, "frame-src 'none'");
         StringAssert.Contains(document, "color-scheme: dark");
-        StringAssert.Contains(document, "background: transparent");
+        StringAssert.Contains(document, "background: #202020");
         StringAssert.Contains(document, "font-family: \"Cascadia Mono\"");
         StringAssert.Contains(document, "<pre><code>message = client.messages.create()</code></pre>");
     }
@@ -161,11 +162,13 @@ public sealed class ArticleContentParserTests
         var withoutStylesheets = ArticleHtmlDocumentBuilder.Create(
             "<p>Article</p>",
             new Uri("https://example.com/articles/entry"),
-            useDarkTheme: false);
+            useDarkTheme: false,
+            backgroundColor: "#FFFFFF");
         var withStylesheets = ArticleHtmlDocumentBuilder.Create(
             "<p>Article</p>",
             new Uri("https://example.com/articles/entry"),
             useDarkTheme: false,
+            backgroundColor: "#FFFFFF",
             [
                 new WebsiteStylesheetReference(
                     new Uri("https://cdn.example.com/site.css?theme=reader&v=2"),

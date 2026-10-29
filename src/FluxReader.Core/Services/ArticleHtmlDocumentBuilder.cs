@@ -8,6 +8,7 @@ public static class ArticleHtmlDocumentBuilder
         string? content,
         Uri? baseUri,
         bool useDarkTheme,
+        string backgroundColor,
         IReadOnlyList<WebsiteStylesheetReference>? externalStylesheets = null)
     {
         var fragment = ArticleContentParser.PrepareHtml(content, baseUri);
@@ -35,13 +36,13 @@ public static class ArticleHtmlDocumentBuilder
                   font-size: 16px;
                   line-height: 1.625;
                   color: CanvasText;
-                  background: transparent;
+                  background: {{backgroundColor}};
                 }
                 html, body {
                   min-height: 100%;
                   margin: 0;
                   padding: 0;
-                  background: transparent;
+                  background: {{backgroundColor}};
                 }
                 body {
                   padding-block-end: 24px;

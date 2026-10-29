@@ -106,7 +106,7 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         UpdateTitleBarButtonColors();
-        ArticleWebView.DefaultBackgroundColor = Colors.Transparent;
+        ArticleWebView.DefaultBackgroundColor = ((SolidColorBrush)ArticleLoadingView.Background).Color;
 
         var app = App.Current;
         _articleStylesheetService = new ArticleStylesheetService(app.Proxy);
@@ -216,10 +216,15 @@ public sealed partial class MainWindow : Window
                 }
             }
 
+            // Use the WinUI theme surface explicitly: a transparent HTML page
+            // can expose Chromium's darker canvas when color-scheme is dark.
+            var backgroundColor = ((SolidColorBrush)ArticleLoadingView.Background).Color;
+            ArticleWebView.DefaultBackgroundColor = backgroundColor;
             var document = ArticleHtmlDocumentBuilder.Create(
                 article.DisplayContent,
                 article.ContentBaseUri,
                 useDarkTheme,
+                $"#{backgroundColor.R:X2}{backgroundColor.G:X2}{backgroundColor.B:X2}",
                 externalStylesheets);
             var navigation = new ArticleNavigationRequest(
                 renderVersion,
