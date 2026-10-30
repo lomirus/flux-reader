@@ -74,6 +74,7 @@ public sealed partial class MainWindow : Window
     private bool _articleWebViewConfigured;
     private Task<CoreWebView2Environment>? _articleWebViewEnvironmentTask;
     private Task? _articleWebViewInitializationTask;
+    private Uri? _articleImageBaseUri;
     private long _articleRenderVersion;
     private CancellationTokenSource? _articleSearchDebounce;
     private bool _isSynchronizingFeedListSelection;
@@ -86,7 +87,8 @@ public sealed partial class MainWindow : Window
     private readonly record struct ArticleNavigationRequest(
         long RenderVersion,
         long ArticleId,
-        long FeedId);
+        long FeedId,
+        Uri? ContentBaseUri);
 
     private sealed record FeedContainerAnimationState(
         ListViewItem Container,
@@ -235,7 +237,8 @@ public sealed partial class MainWindow : Window
             var navigation = new ArticleNavigationRequest(
                 renderVersion,
                 article.Id,
-                article.FeedId);
+                article.FeedId,
+                article.ContentBaseUri);
             _pendingArticleNavigations.Enqueue(navigation);
             ArticleWebView.NavigateToString(document);
         }
@@ -306,7 +309,14 @@ public sealed partial class MainWindow : Window
         settings.IsWebMessageEnabled = true;
         settings.IsStatusBarEnabled = false;
 
-        coreWebView.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.Script);
+        coreWebView.AddWebResourceRequestedFilter(
+            "*",
+            CoreWebView2WebResourceContext.Script,
+            CoreWebView2WebResourceRequestSourceKinds.All);
+        coreWebView.AddWebResourceRequestedFilter(
+            "*",
+            CoreWebView2WebResourceContext.Image,
+            CoreWebView2WebResourceRequestSourceKinds.Document);
         coreWebView.WebResourceRequested += ArticleWebView_WebResourceRequested;
         coreWebView.DOMContentLoaded += ArticleWebView_DOMContentLoaded;
         coreWebView.WebMessageReceived += ArticleWebView_WebMessageReceived;
@@ -316,7 +326,7 @@ public sealed partial class MainWindow : Window
         _articleWebViewConfigured = true;
     }
 
-    private static void ArticleWebView_WebResourceRequested(
+    private void ArticleWebView_WebResourceRequested(
         CoreWebView2 sender,
         CoreWebView2WebResourceRequestedEventArgs args)
     {
@@ -327,6 +337,17 @@ public sealed partial class MainWindow : Window
                 403,
                 "Blocked",
                 "Content-Type: text/plain");
+            return;
+        }
+
+        // NavigateToString uses about:blank, so Chromium cannot derive the
+        // article's origin for image hosts that require a website Referer.
+        if (args.ResourceContext == CoreWebView2WebResourceContext.Image &&
+            !args.Request.Headers.Contains("Referer") &&
+            Uri.TryCreate(args.Request.Uri, UriKind.Absolute, out var imageUri) &&
+            ArticleImageRequestPolicy.GetReferer(_articleImageBaseUri, imageUri) is { } referer)
+        {
+            args.Request.Headers.SetHeader("Referer", referer);
         }
     }
 
@@ -340,6 +361,7 @@ public sealed partial class MainWindow : Window
         if (_pendingArticleNavigations.TryDequeue(out var navigation))
         {
             _articleNavigations[args.NavigationId] = navigation;
+            _articleImageBaseUri = navigation.ContentBaseUri;
             DiagnosticLog.Information(
                 "article.html_navigation_started",
                 new
