@@ -1,6 +1,7 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using System.Xml;
 using FluxReader.Core.Services;
 using FluxReader.Models;
@@ -37,6 +38,9 @@ public sealed partial class MainWindow : Window
     private const double MaximumArticleListPaneWidth = 720;
     private const double MinimumReaderPaneWidth = 360;
     private const double SplitterWidth = 8;
+    // Served in memory, never over the network. A stable origin lets Chromium
+    // reuse its image cache; HTTP also preserves articles with HTTP resources.
+    private const string ArticleDocumentOrigin = "http://article.fluxreader.invalid/";
     private const int DefaultRefreshIntervalMinutes = 15;
     private static readonly string[] FeedSelectionIndicatorBrushResourceKeys =
     [
@@ -65,8 +69,9 @@ public sealed partial class MainWindow : Window
     private readonly DispatcherTimer _statusNotificationTimer = new();
     private readonly Storyboard _refreshIconSpinStoryboard = new();
     private readonly Storyboard _statusInfoBarEntranceStoryboard = new();
-    private readonly Queue<ArticleNavigationRequest> _pendingArticleNavigations = new();
     private readonly Dictionary<ulong, ArticleNavigationRequest> _articleNavigations = new();
+    private ArticleNavigationRequest? _pendingArticleNavigation;
+    private ArticleNavigationRequest? _articleDocument;
     private readonly ArticleStylesheetService _articleStylesheetService;
     private readonly SolidColorBrush _transparentFeedSelectionIndicatorBrush = new(Colors.Transparent);
     private long _statusInfoBarIsOpenCallbackToken;
@@ -84,11 +89,13 @@ public sealed partial class MainWindow : Window
     private bool _settingsLoaded;
     private bool _viewModelInitialized;
 
-    private readonly record struct ArticleNavigationRequest(
+    private sealed record ArticleNavigationRequest(
         long RenderVersion,
         long ArticleId,
         long FeedId,
-        Uri? ContentBaseUri);
+        Uri? ContentBaseUri,
+        string DocumentUri,
+        string Html);
 
     private sealed record FeedContainerAnimationState(
         ListViewItem Container,
@@ -193,6 +200,8 @@ public sealed partial class MainWindow : Window
         var renderVersion = ++_articleRenderVersion;
         if (article is null)
         {
+            _pendingArticleNavigation = null;
+            _articleDocument = null;
             HideArticleContent();
             return;
         }
@@ -238,9 +247,12 @@ public sealed partial class MainWindow : Window
                 renderVersion,
                 article.Id,
                 article.FeedId,
-                article.ContentBaseUri);
-            _pendingArticleNavigations.Enqueue(navigation);
-            ArticleWebView.NavigateToString(document);
+                article.ContentBaseUri,
+                $"{ArticleDocumentOrigin}articles/{article.Id}?render={renderVersion}",
+                document);
+            _articleDocument = navigation;
+            _pendingArticleNavigation = navigation;
+            ArticleWebView.CoreWebView2.Navigate(navigation.DocumentUri);
         }
         catch (Exception exception)
         {
@@ -260,7 +272,8 @@ public sealed partial class MainWindow : Window
                     webView2LoaderExists = File.Exists(
                         Path.Combine(AppContext.BaseDirectory, "WebView2Loader.dll"))
                 });
-            _pendingArticleNavigations.Clear();
+            _pendingArticleNavigation = null;
+            _articleDocument = null;
             HideArticleContent();
         }
     }
@@ -310,6 +323,10 @@ public sealed partial class MainWindow : Window
         settings.IsStatusBarEnabled = false;
 
         coreWebView.AddWebResourceRequestedFilter(
+            ArticleDocumentOrigin + "*",
+            CoreWebView2WebResourceContext.All,
+            CoreWebView2WebResourceRequestSourceKinds.All);
+        coreWebView.AddWebResourceRequestedFilter(
             "*",
             CoreWebView2WebResourceContext.Script,
             CoreWebView2WebResourceRequestSourceKinds.All);
@@ -330,6 +347,25 @@ public sealed partial class MainWindow : Window
         CoreWebView2 sender,
         CoreWebView2WebResourceRequestedEventArgs args)
     {
+        if (args.Request.Uri.StartsWith(ArticleDocumentOrigin, StringComparison.OrdinalIgnoreCase))
+        {
+            // Only the exact current document can be served. Unknown paths and
+            // stale navigations must never fall through to a network request.
+            var document = _articleDocument;
+            var isCurrentDocument = document is not null &&
+                document.RenderVersion == _articleRenderVersion &&
+                args.ResourceContext == CoreWebView2WebResourceContext.Document &&
+                args.Request.Method == "GET" &&
+                args.Request.Uri.Equals(document.DocumentUri, StringComparison.Ordinal);
+            args.Response = sender.Environment.CreateWebResourceResponse(
+                new MemoryStream(Encoding.UTF8.GetBytes(isCurrentDocument ? document!.Html : string.Empty))
+                    .AsRandomAccessStream(),
+                isCurrentDocument ? 200 : 404,
+                isCurrentDocument ? "OK" : "Not Found",
+                "Content-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nX-Content-Type-Options: nosniff");
+            return;
+        }
+
         if (args.ResourceContext == CoreWebView2WebResourceContext.Script)
         {
             args.Response = sender.Environment.CreateWebResourceResponse(
@@ -340,7 +376,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        // NavigateToString uses about:blank, so Chromium cannot derive the
+        // The document suppresses its virtual Referer. Supply the original
         // article's origin for image hosts that require a website Referer.
         if (args.ResourceContext == CoreWebView2WebResourceContext.Image &&
             !args.Request.Headers.Contains("Referer") &&
@@ -355,11 +391,13 @@ public sealed partial class MainWindow : Window
         WebView2 sender,
         CoreWebView2NavigationStartingEventArgs args)
     {
-        // NavigateToString does not expose its navigation ID. The request is
-        // enqueued immediately before the call, so the next starting navigation
-        // is the reliable point at which to associate the ID.
-        if (_pendingArticleNavigations.TryDequeue(out var navigation))
+        // Associate only the host-issued URL, rather than whichever navigation
+        // happens to start next during a rapid article switch.
+        if (_pendingArticleNavigation is { } navigation &&
+            navigation.RenderVersion == _articleRenderVersion &&
+            args.Uri.Equals(navigation.DocumentUri, StringComparison.Ordinal))
         {
+            _pendingArticleNavigation = null;
             _articleNavigations[args.NavigationId] = navigation;
             _articleImageBaseUri = navigation.ContentBaseUri;
             DiagnosticLog.Information(
@@ -382,6 +420,11 @@ public sealed partial class MainWindow : Window
         }
 
         args.Cancel = true;
+        if (args.Uri.StartsWith(ArticleDocumentOrigin, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
         if (TryCreateExternalArticleUri(args.Uri, out var uri))
         {
             await Windows.System.Launcher.LaunchUriAsync(uri);
@@ -442,9 +485,10 @@ public sealed partial class MainWindow : Window
         CoreWebView2 sender,
         CoreWebView2WebMessageReceivedEventArgs args)
     {
-        // NavigateToString uses about:blank. Accept only the current host-issued
-        // render version; late callbacks from an earlier article must be ignored.
-        if (args.Source.Equals("about:blank", StringComparison.OrdinalIgnoreCase) &&
+        // Match both the host-issued URL and version; late callbacks from an
+        // earlier article must not reveal the document for a new selection.
+        if (_articleDocument is { } document &&
+            args.Source.Equals(document.DocumentUri, StringComparison.Ordinal) &&
             long.TryParse(args.WebMessageAsJson, out var renderVersion) &&
             renderVersion == _articleRenderVersion)
         {
@@ -508,6 +552,11 @@ public sealed partial class MainWindow : Window
         CoreWebView2NewWindowRequestedEventArgs args)
     {
         args.Handled = true;
+        if (args.Uri.StartsWith(ArticleDocumentOrigin, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
         if (TryCreateExternalArticleUri(args.Uri, out var uri))
         {
             await Windows.System.Launcher.LaunchUriAsync(uri);

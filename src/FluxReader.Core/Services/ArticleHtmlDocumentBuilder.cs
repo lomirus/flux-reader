@@ -25,6 +25,7 @@ public static class ArticleHtmlDocumentBuilder
             <html lang="">
             <head>
               <meta charset="utf-8">
+              <meta name="referrer" content="no-referrer">
               <meta http-equiv="Content-Security-Policy"
                     content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'{{externalStyleSources}}; img-src https: http: data:; media-src https: http:; font-src 'none'; connect-src 'none'; frame-src 'none'; child-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none'">
               <meta name="viewport" content="width=device-width, initial-scale=1">

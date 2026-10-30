@@ -150,6 +150,7 @@ public sealed class ArticleContentParserTests
 
         StringAssert.Contains(document, "script-src 'none'");
         StringAssert.Contains(document, "frame-src 'none'");
+        StringAssert.Contains(document, "<meta name=\"referrer\" content=\"no-referrer\">");
         StringAssert.Contains(document, "color-scheme: dark");
         StringAssert.Contains(document, "background: #202020");
         StringAssert.Contains(document, "font-family: \"Cascadia Mono\"");
