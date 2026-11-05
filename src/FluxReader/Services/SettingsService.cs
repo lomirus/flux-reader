@@ -71,4 +71,5 @@ public sealed record AppSettings(
     int RequestTimeoutSeconds = SettingsService.DefaultRequestTimeoutSeconds,
     bool LoadExternalArticleStylesheets = false,
     ProxyMode ProxyMode = ProxyMode.System,
-    string CustomProxyAddress = "");
+    string CustomProxyAddress = "",
+    bool ShowUnreadOnly = false);

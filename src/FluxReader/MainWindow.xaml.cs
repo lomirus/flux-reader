@@ -621,6 +621,7 @@ public sealed partial class MainWindow : Window
         ApplySavedPaneWidths();
         ApplyRefreshInterval(_settings.RefreshIntervalMinutes);
         ViewModel.RefreshConcurrencyLimit = _settings.RefreshConcurrencyLimit;
+        ViewModel.CurrentFilter = _settings.ShowUnreadOnly ? ArticleFilter.Unread : ArticleFilter.All;
         ApplyRequestTimeout(_settings.RequestTimeoutSeconds);
         ResetSettingsFrame();
         _settingsLoaded = true;
@@ -1038,6 +1039,12 @@ public sealed partial class MainWindow : Window
 
     private async void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainViewModel.CurrentFilter) && _settingsLoaded)
+        {
+            _settings = _settings with { ShowUnreadOnly = ViewModel.IsUnreadFilterEnabled };
+            await SaveSettingsAsync();
+        }
+
         if (e.PropertyName == nameof(MainViewModel.SelectedFeedIds))
         {
             SynchronizeFeedListSelection();
