@@ -18,9 +18,9 @@ public partial class App : Application
     private readonly object _pendingNotificationSync = new();
     private readonly Queue<long> _pendingNotificationArticleIds = [];
     private SystemTrayIcon? _systemTrayIcon;
+    private TaskbarUnreadIndicator? _taskbarUnreadIndicator;
     private Window? _window;
     private bool _exitRequested;
-    private bool _hasUnreadArticles;
 
     public App()
     {
@@ -79,6 +79,8 @@ public partial class App : Application
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "fluxreader-icon.ico");
         var unreadIconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "fluxreader-icon-unread.ico");
         _systemTrayIcon = new SystemTrayIcon(window, Localization, iconPath, unreadIconPath);
+        _taskbarUnreadIndicator = new TaskbarUnreadIndicator(window, Localization);
+        _systemTrayIcon.TaskbarButtonCreated += SystemTrayIcon_TaskbarButtonCreated;
         _systemTrayIcon.OpenRequested += SystemTrayIcon_OpenRequested;
         _systemTrayIcon.RefreshRequested += SystemTrayIcon_RefreshRequested;
         _systemTrayIcon.ExitRequested += SystemTrayIcon_ExitRequested;
@@ -191,14 +193,13 @@ public partial class App : Application
         }
 
         var hasUnreadArticles = window.ViewModel.UnreadTotal > 0;
-        if (_hasUnreadArticles == hasUnreadArticles)
-        {
-            return;
-        }
-
-        window.SetWindowIcon(hasUnreadArticles);
+        _taskbarUnreadIndicator?.SetHasUnreadArticles(hasUnreadArticles);
         _systemTrayIcon?.SetHasUnreadArticles(hasUnreadArticles);
-        _hasUnreadArticles = hasUnreadArticles;
+    }
+
+    private void SystemTrayIcon_TaskbarButtonCreated(object? sender, EventArgs e)
+    {
+        _taskbarUnreadIndicator?.OnTaskbarButtonCreated();
     }
 
     private void SystemTrayIcon_OpenRequested(object? sender, EventArgs e)
@@ -256,12 +257,16 @@ public partial class App : Application
 
     private void DisposeSystemTrayIcon()
     {
+        _taskbarUnreadIndicator?.Dispose();
+        _taskbarUnreadIndicator = null;
+
         if (_systemTrayIcon is null)
         {
             return;
         }
 
         _systemTrayIcon.OpenRequested -= SystemTrayIcon_OpenRequested;
+        _systemTrayIcon.TaskbarButtonCreated -= SystemTrayIcon_TaskbarButtonCreated;
         _systemTrayIcon.RefreshRequested -= SystemTrayIcon_RefreshRequested;
         _systemTrayIcon.ExitRequested -= SystemTrayIcon_ExitRequested;
         _systemTrayIcon.Dispose();

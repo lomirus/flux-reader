@@ -78,3 +78,44 @@ finally {
 }
 
 Write-Output "Generated $outputPath ($frameCount resolutions)."
+
+# The shell positions this standalone status dot over the taskbar base icon.
+$overlayPath = Join-Path $repositoryRoot 'assets\brand\fluxreader-unread-overlay.ico'
+$overlayBitmap = [Drawing.Bitmap]::new(16, 16)
+$overlayGraphics = [Drawing.Graphics]::FromImage($overlayBitmap)
+$overlayBrush = [Drawing.SolidBrush]::new([Drawing.ColorTranslator]::FromHtml('#F04747'))
+$overlayPng = [IO.MemoryStream]::new()
+$overlayStream = [IO.MemoryStream]::new()
+$overlayWriter = [IO.BinaryWriter]::new($overlayStream)
+try {
+    $overlayGraphics.SmoothingMode = [Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    # Keep the required 16 px canvas, but use a small centered status dot.
+    # Filling this canvas makes the dot dominate Windows 11 taskbar icons.
+    $overlayGraphics.FillEllipse($overlayBrush, [single]4.5, [single]4.5, [single]7, [single]7)
+    $overlayBitmap.Save($overlayPng, [Drawing.Imaging.ImageFormat]::Png)
+    $overlayBytes = $overlayPng.ToArray()
+    $overlayWriter.Write([uint16]0)
+    $overlayWriter.Write([uint16]1)
+    $overlayWriter.Write([uint16]1)
+    $overlayWriter.Write([byte]16)
+    $overlayWriter.Write([byte]16)
+    $overlayWriter.Write([byte]0)
+    $overlayWriter.Write([byte]0)
+    $overlayWriter.Write([uint16]1)
+    $overlayWriter.Write([uint16]32)
+    $overlayWriter.Write([uint32]$overlayBytes.Length)
+    $overlayWriter.Write([uint32]22)
+    $overlayWriter.Write($overlayBytes)
+    $overlayWriter.Flush()
+    [IO.File]::WriteAllBytes($overlayPath, $overlayStream.ToArray())
+}
+finally {
+    $overlayWriter.Dispose()
+    $overlayStream.Dispose()
+    $overlayPng.Dispose()
+    $overlayBrush.Dispose()
+    $overlayGraphics.Dispose()
+    $overlayBitmap.Dispose()
+}
+
+Write-Output "Generated $overlayPath (16 px status overlay)."

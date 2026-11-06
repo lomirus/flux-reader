@@ -37,6 +37,7 @@ internal sealed class SystemTrayIcon : IDisposable
     private readonly nint _iconHandle;
     private readonly nint _unreadIconHandle;
     private readonly uint _taskbarCreatedMessage;
+    private readonly uint _taskbarButtonCreatedMessage;
     private readonly WindowSubclassProcedure _windowSubclassProcedure;
     private bool _iconAdded;
     private bool _subclassInstalled;
@@ -49,6 +50,7 @@ internal sealed class SystemTrayIcon : IDisposable
         _windowHandle = WindowNative.GetWindowHandle(window);
         _windowSubclassProcedure = WindowSubclassCallback;
         _taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
+        _taskbarButtonCreatedMessage = RegisterWindowMessage("TaskbarButtonCreated");
         _iconHandle = LoadIcon(iconPath);
         try
         {
@@ -102,6 +104,8 @@ internal sealed class SystemTrayIcon : IDisposable
     public event EventHandler? RefreshRequested;
 
     public event EventHandler? ExitRequested;
+
+    public event EventHandler? TaskbarButtonCreated;
 
     public void SetHasUnreadArticles(bool hasUnreadArticles)
     {
@@ -191,6 +195,13 @@ internal sealed class SystemTrayIcon : IDisposable
             _iconAdded = false;
             AddIcon();
             return nint.Zero;
+        }
+
+        // Share the shell message hook with the taskbar indicator. Explorer sends
+        // this after initial creation, restoring a hidden window, and restarting.
+        if (_taskbarButtonCreatedMessage != 0 && message == _taskbarButtonCreatedMessage)
+        {
+            TaskbarButtonCreated?.Invoke(this, EventArgs.Empty);
         }
 
         return DefSubclassProc(windowHandle, message, wParam, lParam);

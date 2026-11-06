@@ -77,6 +77,15 @@ Application data is stored in `%LOCALAPPDATA%\FluxReader`.
 | `notifications.log` | Notification registration, delivery, or unregistration failures; created only after a failure |
 | `notification-icons\`, `WebView2\` | Local notification icon cache and article-view data |
 
+## Unread indicator smoke test
+
+- Pin FluxReader to the taskbar and start it with unread articles. Confirm a red status dot appears on the taskbar button and the tray icon.
+- Mark all articles read and confirm both dots disappear. Mark an article unread and confirm both dots return.
+- Repeat after restarting the app, minimizing/restoring it, and closing it to the tray and reopening it.
+- Restart Windows Explorer while unread articles remain and confirm both indicators are restored.
+
+The taskbar uses `ITaskbarList3.SetOverlayIcon` after `TaskbarButtonCreated`, because pinned buttons can retain their shortcut's base icon despite `AppWindow.SetIcon`. Windows controls the overlay's position. Its 16 px canvas contains a centered 7 px dot so the indicator does not dominate the app icon. The tray continues to use its separate unread icon.
+
 ## Content safety boundaries
 
 - RSS, Atom, and OPML parsing disables XML DTDs and external resolution and limits document size.
